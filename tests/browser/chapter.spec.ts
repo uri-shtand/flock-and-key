@@ -734,3 +734,40 @@ test("Pitsi barks in an illustrated dialogue turn before the chase starts", asyn
   await expect(page.getByRole("status")).toContainText("כל הכבוד");
   expect(errors).toEqual([]);
 });
+
+test("Pitsi follows the farm path from the foreground to the barn during the chase", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await quiet(page);
+  await start(page, "פיצי במרדף");
+  const scene = page.locator("canvas");
+  await scene.screenshot({
+    path: test.info().outputPath("pitsi-path-start.png"),
+  });
+  for (let index = 0; index < 8; index++) {
+    await page.getByRole("textbox").fill(await expectedWord(page));
+    await expect(page.getByRole("textbox")).toBeDisabled();
+    await page
+      .getByRole("button", { name: "המשך עכשיו ←", exact: true })
+      .click();
+    if (index === 3 || index === 7) {
+      await page.waitForTimeout(700);
+      await scene.screenshot({
+        path: test
+          .info()
+          .outputPath(
+            index === 3 ? "pitsi-path-middle.png" : "pitsi-path-end.png",
+          ),
+      });
+    }
+  }
+  await expect(
+    page.getByRole("heading", { name: "פעמון קטן עטוף בחוט צמר" }),
+  ).toBeVisible();
+  expect(errors).toEqual([]);
+});

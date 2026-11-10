@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import type { GameCommand, WorldView } from "../bridge";
+import { FARM_PATH, pitsiPathPosition, pointOnFarmPath } from "../farmPath";
 export class FarmScene extends Phaser.Scene {
   private dog?: Phaser.GameObjects.Container;
   private view: WorldView = {
@@ -18,19 +19,26 @@ export class FarmScene extends Phaser.Scene {
   }
   command(command: GameCommand) {
     if (command.type === "world") {
+      const walking =
+        command.view.stage === this.view.stage &&
+        command.view.step > this.view.step;
       this.view = command.view;
-      this.draw();
+      this.draw(walking);
     } else if (this.dog) {
       this.tweens.add({
-        targets: this.dog,
-        y: this.dog.y - 15,
+        // Celebrate with the body, leaving the paws and the walking path alone.
+        targets: this.dog.list[0],
+        scaleY: 1.13,
         duration: 160,
         yoyo: true,
         ease: "Sine.easeOut",
       });
     }
   }
-  private draw() {
+  private draw(walking = false) {
+    const previous = this.dog?.active
+      ? { x: this.dog.x, y: this.dog.y }
+      : undefined;
     this.tweens.killAll();
     this.children.removeAll(true);
     const { stage, step, total, equipped, revealed } = this.view;
@@ -52,10 +60,9 @@ export class FarmScene extends Phaser.Scene {
     // Winding path, barn and post office.
     g.lineStyle(47, 0xf4d093)
       .beginPath()
-      .moveTo(220, 400)
-      .lineTo(420, 310)
-      .lineTo(700, 260)
-      .strokePath();
+      .moveTo(FARM_PATH[0].x, FARM_PATH[0].y);
+    for (const point of FARM_PATH.slice(1)) g.lineTo(point.x, point.y);
+    g.strokePath();
     g.fillStyle(0xd77456).fillRoundedRect(675, 147, 182, 136, 5);
     g.fillStyle(0x663e51).fillTriangle(655, 155, 765, 75, 877, 155);
     g.fillStyle(revealed ? 0xffd785 : 0x61473e).fillRect(738, 209, 62, 74);
@@ -78,18 +85,22 @@ export class FarmScene extends Phaser.Scene {
       3,
     );
     for (let x = 30, i = 0; x < 960; x += 55, i++) {
+      if (x > 325 && x < 455) continue; // Gate opening where the path crosses the fence.
       const colors = [0xedb1a8, 0xf5d58a, 0x97bcd3, 0xc5add5];
       g.lineStyle(
         6,
         equipped.includes("rainbow") ? colors[i % 4] : 0xe3d4aa,
       ).lineBetween(x, 310, x, 352);
     }
-    g.lineStyle(4, 0xe3d4aa).lineBetween(0, 325, 960, 325);
+    g.lineStyle(4, 0xe3d4aa)
+      .lineBetween(0, 325, 325, 325)
+      .lineBetween(455, 325, 960, 325);
     if (stage === 1)
       for (let i = 0; i < 8; i++) {
+        const mark = pointOnFarmPath(0.15 + (i / 7) * 0.8);
         g.fillStyle(i < step ? 0x634c3f : 0x9f997f, 0.85)
-          .fillEllipse(340 + i * 40, 340 - i * 7, 10, 15)
-          .fillEllipse(355 + i * 40, 350 - i * 7, 10, 15);
+          .fillEllipse(mark.x - 6, mark.y - 5, 8, 11)
+          .fillEllipse(mark.x + 6, mark.y + 5, 8, 11);
       }
     if (stage === 2) {
       g.fillStyle(0xfaf1d9).fillRect(342, 242, 65, 40);
@@ -137,11 +148,18 @@ export class FarmScene extends Phaser.Scene {
         this.add.rectangle(25, -34, 46, 7, 0x483e48),
         this.add.rectangle(25, -45, 29, 20, 0x483e48),
       );
-    this.dog = this.add.container(
-      320 + Math.min(step / total, 1) * 300,
-      stage === 1 ? 353 : 369,
-      dogParts,
-    );
+    const destination = pitsiPathPosition(step, total);
+    this.dog = this.add.container(destination.x, destination.y, dogParts);
+    if (walking && previous) {
+      this.dog.setPosition(previous.x, previous.y);
+      this.tweens.add({
+        targets: this.dog,
+        x: destination.x,
+        y: destination.y,
+        duration: 550,
+        ease: "Sine.easeInOut",
+      });
+    }
     if (equipped.includes("duck")) {
       this.add.ellipse(855, 348, 118, 60, 0xf3cc52);
       this.add.circle(885, 305, 35, 0xf3cc52);
