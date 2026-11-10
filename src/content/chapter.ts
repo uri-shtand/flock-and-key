@@ -1,6 +1,6 @@
 import vocabulary from "./words.json";
 export type Mode = "guided" | "blind" | "spelling" | "speed";
-export type CharacterId = "dad" | "tom" | "postman" | "narrator";
+export type CharacterId = "dad" | "tom" | "postman" | "pitsi" | "narrator";
 export type DialogueLine = { speaker: CharacterId; text: string };
 export type Word = (typeof vocabulary)[number];
 export const words: Word[] = vocabulary;
@@ -84,6 +84,7 @@ export const stages: {
         speaker: "tom",
         text: "ההזמנה מזכירה את האסם, והעקבות מובילים ישר אליו. פיצי, קדימה!",
       },
+      { speaker: "pitsi", text: "הב! הב!" },
       {
         speaker: "narrator",
         text: "מהאסם נשמע צלצול חלש. פיצי זוקף אוזניים ויוצא לדרך.",

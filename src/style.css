@@ -1368,3 +1368,41 @@ button.danger-button:hover:not(:disabled) {
     inset 0 2px #d18275,
     0 7px #6e302e;
 }
+/* Pitsi's opening bark is a character turn, with room for a full-body drawing. */
+.character-pitsi {
+  --bubble: #fff0bd;
+  gap: 12px;
+}
+.character-pitsi .character-portrait {
+  flex: 0 0 158px;
+  width: 158px;
+  height: 132px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  transform: none;
+}
+.character-pitsi .speech-bubble {
+  flex: 0 1 220px;
+}
+.dialogue .character-pitsi .speech-bubble p {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #705125;
+  padding: 3px 0;
+}
+@media (max-width: 600px) {
+  .character-pitsi .character-portrait {
+    flex-basis: 120px;
+    width: 120px;
+    height: 100px;
+  }
+  .dialogue .character-pitsi .speech-bubble p {
+    font-size: 1.45rem;
+  }
+}
+.character-pitsi .character-portrait svg {
+  transform: scaleX(-1);
+}

@@ -699,3 +699,38 @@ test("music is picked at stage entry, stays through tasks and resumes, and respe
   await expect.poll(async () => (await music()).path).not.toBe(chosen);
   expect((await music()).paused).toBe(true);
 });
+
+test("Pitsi barks in an illustrated dialogue turn before the chase starts", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await quiet(page);
+  await page
+    .getByRole("button")
+    .filter({ has: page.getByText("פיצי במרדף", { exact: true }) })
+    .click();
+  const introduction = page.getByRole("list", { name: "שיחת הדמויות" });
+  await expect(
+    introduction.getByRole("img", {
+      name: "פיצי כלב הרועים, נובח ומוכן לצאת למרדף",
+    }),
+  ).toBeVisible();
+  await expect(
+    introduction.getByRole("listitem").filter({ hasText: "הב! הב!" }),
+  ).toContainText("פיצי");
+  await page.screenshot({
+    path: test.info().outputPath("pitsi-chase-intro.png"),
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", { name: "מכירים את המשימה ←", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "מוכנים, מתחילים ←", exact: true })
+    .click();
+  await expect(page.getByRole("textbox")).toBeFocused();
+  await page.getByRole("textbox").fill(await expectedWord(page));
+  await expect(page.getByRole("status")).toContainText("כל הכבוד");
+  expect(errors).toEqual([]);
+});

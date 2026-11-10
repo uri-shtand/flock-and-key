@@ -1,9 +1,11 @@
+import { PitsiIllustration } from "./PitsiIllustration";
 import type { CharacterId, DialogueLine } from "../content/chapter";
 const names: Record<CharacterId, string> = {
   dad: "אבא",
   tom: "תום",
   postman: "הדוור",
   narrator: "בינתיים בחווה",
+  pitsi: "פיצי",
 };
 
 // Original vector portraits: UI illustrations, no learning state or external assets.
@@ -12,6 +14,7 @@ export function CharacterPortrait({
 }: {
   character: Exclude<CharacterId, "narrator">;
 }) {
+  if (character === "pitsi") return <PitsiIllustration />;
   const dad = character === "dad",
     postman = character === "postman";
   return (
