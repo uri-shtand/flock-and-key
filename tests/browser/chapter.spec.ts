@@ -637,3 +637,65 @@ test("a failed parent reset keeps the history available and reports failure", as
     page.getByRole("button", { name: "ממשיכים מאיפה שעצרנו", exact: true }),
   ).toBeVisible();
 });
+
+test("music is picked at stage entry, stays through tasks and resumes, and respects mute", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const clips: HTMLAudioElement[] = [];
+    (window as unknown as { observedMusic: HTMLAudioElement[] }).observedMusic =
+      clips;
+    window.Audio = new Proxy(window.Audio, {
+      construct(target, args) {
+        const clip = Reflect.construct(target, args) as HTMLAudioElement;
+        if (String(args[0]).endsWith(".wav")) clips.push(clip);
+        return clip;
+      },
+    });
+  });
+  const music = () =>
+    page.evaluate(() => {
+      const clip = (
+        window as unknown as { observedMusic: HTMLAudioElement[] }
+      ).observedMusic.at(-1)!;
+      return { path: clip.getAttribute("src"), paused: clip.paused };
+    });
+  await quiet(page);
+  await start(page);
+  const chosen = (await music()).path;
+  expect(chosen).toMatch(/^\/audio\/.+\.wav$/);
+  expect(chosen).not.toBe("/audio/farm-theme.wav");
+  expect((await music()).paused).toBe(true);
+  await page.getByRole("button", { name: "מוזיקה כבויה", exact: true }).click();
+  await expect.poll(async () => (await music()).paused).toBe(false);
+  await submit(page, "דג");
+  await expect(page.getByTestId("target-word")).toHaveText("גל");
+  expect((await music()).path).toBe(chosen);
+  await page.getByRole("button", { name: "הפסקה", exact: true }).click();
+  await expect.poll(async () => (await music()).paused).toBe(true);
+  await page.getByRole("button", { name: "ממשיכים", exact: true }).click();
+  await expect.poll(async () => (await music()).paused).toBe(false);
+  expect((await music()).path).toBe(chosen);
+  await page.getByRole("button", { name: "שמירה ויציאה", exact: true }).click();
+  await page
+    .getByRole("button", { name: "ממשיכים מאיפה שעצרנו", exact: true })
+    .click();
+  expect((await music()).path).toBe(chosen);
+  await page.getByRole("button", { name: "מוזיקה פועלת", exact: true }).click();
+  for (let index = 1; index < 8; index++) {
+    await page
+      .getByRole("button", { name: "קשה כרגע? ממשיכים בסיפור", exact: true })
+      .click();
+    await page
+      .getByRole("button", {
+        name: index === 7 ? "לרמז שמצאנו ←" : "למשימה הבאה ←",
+        exact: true,
+      })
+      .click();
+  }
+  await page
+    .getByRole("button", { name: "ממשיכים בעקבות הרמז ←", exact: true })
+    .click();
+  await expect.poll(async () => (await music()).path).not.toBe(chosen);
+  expect((await music()).paused).toBe(true);
+});

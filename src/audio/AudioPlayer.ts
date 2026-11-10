@@ -1,13 +1,27 @@
+import { musicTracks, pickBackgroundTrack } from "./Music";
+
 export class AudioPlayer {
   private music: HTMLAudioElement;
   private speech: HTMLAudioElement | null = null;
   private musicOn = false;
+  private stageKey: string | null = null;
   private onSpeaking: (value: boolean) => void;
   constructor(onSpeaking: (value: boolean) => void) {
     this.onSpeaking = onSpeaking;
-    this.music = new Audio("/audio/farm-theme.wav");
+    this.music = new Audio(musicTracks[0].path);
     this.music.loop = true;
     this.music.volume = 0.16;
+  }
+  beginStage(key: string) {
+    if (key === this.stageKey) return;
+    this.stageKey = key;
+    const track = pickBackgroundTrack(this.music.getAttribute("src") ?? "");
+    const wasPlaying = this.musicOn && !this.music.paused;
+    this.music.pause();
+    this.music.src = track.path;
+    this.music.currentTime = 0;
+    this.music.load();
+    if (wasPlaying) void this.music.play().catch(() => {});
   }
   setMusic(on: boolean) {
     this.musicOn = on;

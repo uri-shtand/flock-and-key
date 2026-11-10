@@ -1,6 +1,6 @@
 # Flock & Key
 
-A Hebrew typing and spelling mystery for a child aged 12. The playable prototype contains one story chapter, four mini-games, 120 useful words, prerecorded Hebrew speech, original background music, local progress, cosmetic rewards and a parent dashboard with JSON/CSV export.
+A Hebrew typing and spelling mystery for a child aged 12. The playable prototype contains one story chapter, four mini-games, 120 useful words, prerecorded Hebrew speech, six original background music loops, local progress, cosmetic rewards and a parent dashboard with JSON/CSV export.
 
 ## Run on Windows
 
@@ -13,7 +13,7 @@ npm run dev
 
 Open http://localhost:5173 and choose **יוצאים לחקירה**. The chapter connects sign painting, following tracks, reconstructing letters and an optional pace challenge. You can also enter each mini-game directly. Help and skipping remain free; speed never blocks story completion.
 
-Use a physical Hebrew keyboard. Music and speech have separate controls. The first interaction enables browser audio. Progress and purchased decorations survive refresh in the same browser profile and origin. **להורים** opens the local results dashboard and export controls. Export does not yet provide in-game restore/import.
+Use a physical Hebrew keyboard. Music and speech have separate controls. Each stage picks a random background track, avoiding an immediate repeat; task changes and pause/resume keep the chosen music. The first interaction enables browser audio. Progress and purchased decorations survive refresh in the same browser profile and origin. **להורים** opens the local results dashboard and export controls. Export does not yet provide in-game restore/import.
 
 The chapter targets 12–15 minutes, but its actual duration, enjoyment and learning effect still need testing with the child. Replay rotates spelling vocabulary and revisits difficult words. Short recall after seeing a word is tracked separately from independent spelling.
 
@@ -48,4 +48,4 @@ The lockfile is preserved. See [architecture](docs/architecture.md), [product de
 
 ## Audio preparation
 
-The speech clips are already included. `python3 scripts/prepare-speech.py` prepares missing clips using a build-time network request with authored vocabulary only. `python3 scripts/prepare-music.py` regenerates the original background track. See [audio provenance](public/audio/README.md). Human review of Hebrew pronunciation is still needed.
+The speech clips are already included. `python3 scripts/prepare-speech.py` prepares missing clips using a build-time network request with authored vocabulary only. `python3 scripts/prepare-music.py` regenerates all six original background tracks. See [audio provenance](public/audio/README.md). Human review of Hebrew pronunciation is still needed.

@@ -1,0 +1,16 @@
+[
+  { "id": "farm", "title": "בוקר בחווה", "path": "/audio/farm-theme.wav" },
+  { "id": "meadow", "title": "טיול באחו", "path": "/audio/meadow-walk.wav" },
+  { "id": "trail", "title": "בעקבות פיצי", "path": "/audio/curious-trail.wav" },
+  {
+    "id": "letters",
+    "title": "מכתבים בדרך",
+    "path": "/audio/letters-on-the-way.wav"
+  },
+  { "id": "bells", "title": "חזרה באסם", "path": "/audio/barn-rehearsal.wav" },
+  {
+    "id": "evening",
+    "title": "ערב שקט בחווה",
+    "path": "/audio/evening-farm.wav"
+  }
+]

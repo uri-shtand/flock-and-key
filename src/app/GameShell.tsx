@@ -85,6 +85,11 @@ export function GameShell() {
     };
   }, []);
   useEffect(() => {
+    if (screen === "game" && session) {
+      audio.current?.beginStage(`${session.id}:${session.stage}`);
+    }
+  }, [screen, session?.id, session?.stage]);
+  useEffect(() => {
     audio.current?.setMusic(
       progress.settings.music && screen !== "parent" && !paused,
     );
