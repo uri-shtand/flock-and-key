@@ -1,0 +1,4 @@
+* text=auto
+*.sh text eol=lf
+# Markdown uses two trailing spaces for deliberate hard line breaks.
+*.md whitespace=-blank-at-eol

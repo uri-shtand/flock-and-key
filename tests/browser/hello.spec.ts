@@ -1,0 +1,22 @@
+import { test, expect } from '@playwright/test';
+test('Phaser and Hebrew HTML input work together and progress survives reload', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await expect(page.getByText('המנוע מוכן')).toBeVisible();
+  await expect(page.locator('canvas')).toHaveCount(1);
+  const input = page.getByRole('textbox');
+  await input.fill('דק');
+  await input.press('Enter');
+  await expect(page.getByRole('status')).toContainText('עוד ניסיון');
+  await expect(page.getByTestId('completed')).toHaveText('0');
+  await input.fill('דג');
+  await input.press('Enter');
+  await expect(page.getByRole('status')).toContainText('כל הכבוד');
+  await expect(page.getByTestId('completed')).toHaveText('1');
+  await page.reload();
+  await expect(page.getByText('המנוע מוכן')).toBeVisible();
+  await expect(page.getByTestId('completed')).toHaveText('1');
+  await expect(page.locator('canvas')).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
