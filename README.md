@@ -1,47 +1,51 @@
 # Flock & Key
 
-A Hebrew typing and spelling mystery for a child aged 10–12. This repository currently contains a working Hello World, not the full game.
+A Hebrew typing and spelling mystery for a child aged 12. The playable prototype contains one story chapter, four mini-games, 120 useful words, prerecorded Hebrew speech, original background music, local progress, cosmetic rewards and a parent dashboard with JSON/CSV export.
 
 ## Run on Windows
 
-Install Git and Node.js 24 LTS (npm included). In PowerShell:
+Install Git and Node.js 24 LTS (npm included). From the repository in PowerShell:
 
 ```powershell
-New-Item -ItemType Directory -Force C:\Workspace | Out-Null
-Set-Location C:\Workspace
-git clone --branch setup/phaser-react https://github.com/uri-shtand/flock-and-key.git
-Set-Location flock-and-key
 npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. Type `דג` and press Enter: the sheep walks to the gate and a completion count is saved locally. Try another answer to see gentle feedback. Refresh to check persistence. Stop the server with Ctrl+C.
+Open http://localhost:5173 and choose **יוצאים לחקירה**. The chapter connects sign painting, following tracks, reconstructing letters and an optional pace challenge. You can also enter each mini-game directly. Help and skipping remain free; speed never blocks story completion.
 
-The first scaffold was prepared in a Linux cloud environment at `/workspace/flock-and-key`; it has not been installed on the user's Windows computer.
+Use a physical Hebrew keyboard. Music and speech have separate controls. The first interaction enables browser audio. Progress and purchased decorations survive refresh in the same browser profile and origin. **להורים** opens the local results dashboard and export controls. Export does not yet provide in-game restore/import.
+
+The chapter targets 12–15 minutes, but its actual duration, enjoyment and learning effect still need testing with the child. Replay rotates spelling vocabulary and revisits difficult words. Short recall after seeing a word is tracked separately from independent spelling.
 
 ## Commands
 
 - `npm run dev` — Vite development server with hot reload.
 - `npm run typecheck` — strict TypeScript checking.
-- `npm test` — learning-rule and persistence tests.
+- `npm test` — learning, content and persistence tests.
 - `npm run build` — typecheck and production output in `dist/`.
 - `npm run preview` — serve the production build locally.
-- `npx playwright install chromium` then `npm run test:e2e` — browser integration tests.
+- `npx playwright install chromium` then `npm run test:e2e` — browser integration tests. On Linux, Chromium may also require system libraries (`npx playwright install-deps chromium`).
 
-The dev/preview server listens on all interfaces for cloud previews. For loopback only, run `npm run dev -- --host 127.0.0.1`.
+The dev/preview server listens on all interfaces. For loopback only, run `npm run dev -- --host 127.0.0.1`. Keep the same hostname and port when checking saved progress.
 
-## Architecture
+## Architecture and content
 
 | Path | Responsibility |
 | --- | --- |
-| `src/app/` | React shell and task state |
-| `src/components/` | HTML inputs and Phaser lifecycle |
-| `src/game/` | Phaser scenes and typed visual-command bridge |
-| `src/typing/` | Pure answer and learning logic |
-| `src/content/` | Data-driven challenges |
-| `src/progress/` | Versioned local storage with safe fallback |
-| `docs/design/` | Original Hebrew GDD, preserved as supplied |
+| `src/app/` | React story/task state and navigation |
+| `src/components/` | Real HTML input, Hebrew keyboard, parent dashboard and Phaser lifecycle |
+| `src/game/` | Illustrated world and typed visual commands |
+| `src/typing/` | Pure validation, edit metrics, comparison, scoring and content selection |
+| `src/content/` | Chapter, prizes and authored Hebrew vocabulary |
+| `src/progress/` | Versioned local progress, validation and export |
+| `src/audio/` | Local playback, speech ducking and cleanup |
+| `public/audio/` | Bundled speech and original music, with provenance notes |
+| `docs/design/` | Original supplied GDD, preserved intact |
 
-React owns the challenge state and all keyboard/text input. Phaser draws the world and receives visual commands; global Phaser keyboard capture is disabled. Each React mount creates one game and destroys it on cleanup, including StrictMode remounts. There is no server, account, external font, remote asset or runtime AI requirement.
+React owns all learning state and text input. Phaser draws the world; global keyboard capture is disabled. No account, backend, remote font, runtime AI or remote speech service is required. Static assets are served with the application; this version does not install an offline service worker.
 
-Phaser 4.2.1 was verified against this scaffold. All direct dependencies are pinned and `package-lock.json` is committed for reproducible installs. See [architecture notes](docs/architecture.md) and [development roadmap](docs/roadmap.md).
+The lockfile is preserved. See [architecture](docs/architecture.md), [product decisions](docs/prototype-decisions.he.md), [chapter script and four worked examples](docs/chapter-one.he.md), and [roadmap](docs/roadmap.md).
+
+## Audio preparation
+
+The speech clips are already included. `python3 scripts/prepare-speech.py` prepares missing clips using a build-time network request with authored vocabulary only. `python3 scripts/prepare-music.py` regenerates the original background track. See [audio provenance](public/audio/README.md). Human review of Hebrew pronunciation is still needed.
