@@ -1,5 +1,7 @@
 # Architecture decisions
 
+The fifth mini-game is not implemented yet. Its proposed integration and runtime are documented in [שומרי השערים — architecture](minigame-five-architecture.he.md), with a separate [build plan](minigame-five-build-plan.he.md).
+
 ## Browser-first 2D
 
 Phaser 4.2.1 renders the farm, trail, post office, animals and cosmetics using primitives. React owns story phases (`intro`, `warmup`, `play`, `clue`, `ending`), HTML input, keyboard help, audio preferences and all learning state. Vite builds strict TypeScript; Node 24 LTS is the development baseline. Production needs only a static web host.

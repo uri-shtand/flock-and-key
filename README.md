@@ -50,6 +50,9 @@ React owns all learning state and text input. Phaser draws the world; global key
 
 The lockfile is preserved. See [architecture](docs/architecture.md), [product decisions](docs/prototype-decisions.he.md), [chapter script and four worked examples](docs/chapter-one.he.md), and [roadmap](docs/roadmap.md).
 
+The fifth mini-game has an approved design: [שומרי השערים — design](docs/minigame-five.he.md). It is not implemented yet.
+See its [planned architecture](docs/minigame-five-architecture.he.md) and [build plan](docs/minigame-five-build-plan.he.md).
+
 ## Audio preparation
 
 The speech clips are already included. `python3 scripts/prepare-speech.py` prepares missing clips using a build-time network request with authored vocabulary only. `python3 scripts/prepare-music.py` regenerates all six original background tracks. See [audio provenance](public/audio/README.md). Human review of Hebrew pronunciation is still needed.
