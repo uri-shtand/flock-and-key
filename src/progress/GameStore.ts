@@ -1,3 +1,4 @@
+import type { Difficulty } from "../content/difficulty";
 import {
   stages,
   prizes,
@@ -5,7 +6,7 @@ import {
   type Mode,
   type PrizeId,
 } from "../content/chapter";
-import { chooseSpelling, typingSet, type Attempt } from "../typing/Learning";
+import { chooseSpelling, typingSet, stageSuccess, type Attempt } from "../typing/Learning";
 export type Phase = "intro" | "warmup" | "play" | "clue" | "ending";
 export type Task = { mode: Mode; wordId: string; expected: string };
 export type Draft = {
@@ -27,6 +28,9 @@ export type Session = {
   endedAt?: string;
   status: "active" | "completed" | "abandoned";
   standalone: boolean;
+  difficulty: Difficulty;
+  stageDifficulties?: Difficulty[];
+  ratedStages?: number[];
   stage: number;
   index: number;
   phase: Phase;
@@ -46,7 +50,8 @@ export type GameProgress = {
   owned: PrizeId[];
   equipped: PrizeId[];
   knownCodes: string[];
-  settings: { music: boolean; speech: boolean };
+  recommendations?: Partial<Record<Mode, Difficulty>>;
+  settings: { music: boolean; speech: boolean; difficulty?: Difficulty };
 };
 export const STORAGE_KEY = "flock-and-key:game:v2";
 export function emptyDraft(): Draft {
@@ -94,15 +99,17 @@ export function updateSession(
 }
 export function newSession(p: GameProgress, mode?: Mode): GameProgress {
   const seed = p.sessions.length;
-  const typed = typingSet(seed);
-  const tasks = stages.map((stage) =>
+  const stageDifficulties = stages.map((s) => p.recommendations?.[s.mode] ?? 1);
+  const startStage = mode ? stages.findIndex((s) => s.mode === mode) : 0;
+  const difficulty = stageDifficulties[startStage];
+  const tasks = stages.map((stage, index) =>
     stage.mode === "spelling"
-      ? chooseSpelling(allAttempts(p), seed).map((id) => ({
+      ? chooseSpelling(allAttempts(p), seed, stageDifficulties[index]).map((id) => ({
           mode: stage.mode,
           wordId: id,
           expected: wordById(id)!.text,
         }))
-      : typed.map((expected) => ({
+      : typingSet(seed + index * 3, stageDifficulties[index]).map((expected) => ({
           mode: stage.mode,
           wordId: "typing:" + expected,
           expected,
@@ -113,6 +120,9 @@ export function newSession(p: GameProgress, mode?: Mode): GameProgress {
     startedAt: new Date().toISOString(),
     status: "active",
     standalone: Boolean(mode),
+    difficulty,
+    stageDifficulties,
+    ratedStages: [],
     stage: mode ? stages.findIndex((s) => s.mode === mode) : 0,
     index: 0,
     phase: "intro",
@@ -133,6 +143,36 @@ export function newSession(p: GameProgress, mode?: Mode): GameProgress {
       : s,
   );
   return { ...p, sessions: [...sessions, session], currentId: session.id };
+}
+// Only the not-yet-started mini-game can change its word set.
+export function selectDifficulty(p: GameProgress, level: Difficulty): GameProgress {
+  return updateSession(p, (s) => {
+    if (s.phase !== "warmup" || s.index !== 0 || s.attempts.some((a) => a.mode === stages[s.stage].mode)) return s;
+    const mode = stages[s.stage].mode;
+    const seed = Math.max(0, p.sessions.findIndex((x) => x.id === s.id));
+    const group: Task[] = mode === "spelling"
+      ? chooseSpelling(allAttempts(p), seed, level).map((id) => ({ mode, wordId: id, expected: wordById(id)!.text }))
+      : typingSet(seed + s.stage * 3, level).map((expected) => ({ mode, wordId: "typing:" + expected, expected }));
+    return { ...s, difficulty: level,
+      stageDifficulties: stages.map((_, index) => index === s.stage ? level : (s.stageDifficulties?.[index] ?? s.difficulty)),
+      tasks: s.tasks.map((tasks, index) => index === s.stage ? group : tasks),
+    };
+  });
+}
+export function recordStageCompletion(p: GameProgress): GameProgress {
+  const s = activeSession(p);
+  if (!s || s.ratedStages?.includes(s.stage)) return p;
+  const finished = s.phase === "clue" ||
+    (s.phase === "play" && s.index === s.tasks[s.stage].length - 1 && s.draft.done);
+  if (!finished) return p;
+  const success = stageSuccess(s.tasks[s.stage], s.attempts, s.stage);
+  const mode = stages[s.stage].mode;
+  // Unsuccessful runs leave the stored proposal unchanged.
+  const proposed = success >= 0.8
+    ? Math.min(3, s.difficulty + 1) as Difficulty
+    : p.recommendations?.[mode] ?? 1;
+  return updateSession({ ...p, recommendations: { ...p.recommendations, [mode]: proposed } },
+    (current) => ({ ...current, ratedStages: [...(current.ratedStages ?? []), current.stage] }));
 }
 const record = (x: unknown): x is Record<string, unknown> =>
   typeof x === "object" && x !== null && !Array.isArray(x);
@@ -199,6 +239,9 @@ function validSession(s: unknown): boolean {
     (s.endedAt !== undefined && typeof s.endedAt !== "string") ||
     !["active", "completed", "abandoned"].includes(String(s.status)) ||
     typeof s.standalone !== "boolean" ||
+    (s.stageDifficulties !== undefined && (!Array.isArray(s.stageDifficulties) || s.stageDifficulties.length !== 4 || !s.stageDifficulties.every((d) => [1, 2, 3].includes(d)))) ||
+    (s.ratedStages !== undefined && (!Array.isArray(s.ratedStages) || !s.ratedStages.every((n) => integer(n) && n <= 3))) ||
+    (s.difficulty !== undefined && ![1, 2, 3].includes(s.difficulty as number)) ||
     !integer(s.stage) ||
     s.stage > 3 ||
     !integer(s.index) ||
@@ -255,9 +298,11 @@ export function loadGame(): { progress: GameProgress; warning: string } {
         (id) => x.owned instanceof Array && x.owned.includes(id),
       ) ||
       !strings(x.knownCodes) ||
+      (x.recommendations !== undefined && (!record(x.recommendations) || !Object.entries(x.recommendations).every(([mode, level]) => modes.includes(mode) && [1, 2, 3].includes(level as number)))) ||
       !record(x.settings) ||
       typeof x.settings.music !== "boolean" ||
-      typeof x.settings.speech !== "boolean"
+      typeof x.settings.speech !== "boolean" ||
+      (x.settings.difficulty !== undefined && ![1, 2, 3].includes(x.settings.difficulty as number))
     )
       throw Error("invalid");
     const progress = x as unknown as GameProgress;
@@ -266,6 +311,11 @@ export function loadGame(): { progress: GameProgress; warning: string } {
       !progress.sessions.some((s) => s.id === progress.currentId)
     )
       throw Error("missing session");
+    for (const session of progress.sessions) {
+      session.difficulty ??= 1;
+      session.stageDifficulties ??= stages.map(() => session.difficulty);
+      session.ratedStages ??= [];
+    }
     return { progress, warning: "" };
   } catch {
     return {

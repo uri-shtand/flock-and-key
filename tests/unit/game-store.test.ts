@@ -7,6 +7,7 @@ import {
   newSession,
   saveGame,
   resetGame,
+  selectDifficulty,
   STORAGE_KEY,
 } from "../../src/progress/GameStore";
 afterEach(() => vi.unstubAllGlobals());
@@ -137,4 +138,65 @@ it("does not discard the live progress if persisting a reset fails", () => {
   });
   expect(resetGame(p)).toBeNull();
   expect(JSON.stringify(p)).toBe(before);
+});
+
+it("loads older saves without difficulty and validates new difficulty values", () => {
+  const p = newSession(initialProgress());
+  const old = JSON.parse(JSON.stringify(p));
+  delete old.sessions[0].difficulty;
+  vi.stubGlobal("localStorage", { getItem: () => JSON.stringify(old) });
+  const restored = loadGame();
+  expect(restored.warning).toBe("");
+  expect(restored.progress.sessions[0].difficulty).toBe(1);
+  expect(restored.progress.sessions[0].tasks).toEqual(p.sessions[0].tasks);
+  for (const bad of [0, 4, "3", null]) {
+    old.settings.difficulty = bad;
+    expect(loadGame().warning).not.toBe("");
+  }
+});
+it("captures the selected difficulty for each new session", () => {
+  const p = initialProgress();
+  p.recommendations = { guided: 3 };
+  const started = newSession(p);
+  expect(started.sessions[0].difficulty).toBe(3);
+  started.recommendations = { guided: 1 };
+  const next = newSession(started);
+  expect(next.sessions[0].difficulty).toBe(3);
+  expect(next.sessions[1].difficulty).toBe(1);
+  expect(Math.max(...next.sessions[0].tasks[0].map((t) => t.expected.length))).toBeGreaterThan(7);
+});
+
+it("lets warmup select this mini-game only and never rewrites an active task", () => {
+  const p = newSession(initialProgress());
+  p.sessions[0].phase = "warmup";
+  const changed = selectDifficulty(p, 3);
+  expect(changed.sessions[0].difficulty).toBe(3);
+  expect(changed.sessions[0].tasks[0]).not.toEqual(p.sessions[0].tasks[0]);
+  expect(changed.sessions[0].tasks.slice(1)).toEqual(p.sessions[0].tasks.slice(1));
+  expect(changed.recommendations).toBeUndefined();
+  changed.sessions[0].phase = "play";
+  expect(selectDifficulty(changed, 1).sessions[0]).toEqual(changed.sessions[0]);
+});
+it("validates per-game recommendations and retains them on refresh", () => {
+  const p = initialProgress();
+  p.recommendations = { guided: 2, spelling: 3 };
+  vi.stubGlobal("localStorage", { getItem: () => JSON.stringify(p) });
+  expect(loadGame().progress.recommendations).toEqual(p.recommendations);
+  for (const recommendations of [{ guided: "2" }, { spelling: 4 }, { other: 1 }, []]) {
+    vi.stubGlobal("localStorage", { getItem: () => JSON.stringify({ ...p, recommendations }) });
+    expect(loadGame().warning).not.toBe("");
+  }
+});
+
+it("migrates a legacy chapter's level for every stage without changing its words", () => {
+  const p = newSession(initialProgress());
+  const old = JSON.parse(JSON.stringify(p));
+  old.sessions[0].difficulty = 3;
+  delete old.sessions[0].stageDifficulties;
+  delete old.sessions[0].ratedStages;
+  vi.stubGlobal("localStorage", { getItem: () => JSON.stringify(old) });
+  const loaded = loadGame();
+  expect(loaded.warning).toBe("");
+  expect(loaded.progress.sessions[0].stageDifficulties).toEqual([3, 3, 3, 3]);
+  expect(loaded.progress.sessions[0].tasks).toEqual(p.sessions[0].tasks);
 });

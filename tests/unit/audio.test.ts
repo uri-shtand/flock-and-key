@@ -97,3 +97,22 @@ it("keeps mute and speech ducking when choosing another background track", () =>
   expect(music.paused).toBe(true);
   player.destroy();
 });
+
+it("lets the child change a tune without overlapping players or changing stage identity", () => {
+  vi.stubGlobal("Audio", FakeAudio);
+  vi.spyOn(Math, "random").mockReturnValue(0);
+  const player = new AudioPlayer(vi.fn());
+  player.beginStage("one");
+  const music = FakeAudio.clips[0];
+  const before = music.src;
+  player.nextTrack();
+  expect(music.src).not.toBe(before);
+  expect(music.paused).toBe(true);
+  expect(FakeAudio.clips).toHaveLength(1);
+  const selected = music.src;
+  music.currentTime = 12;
+  player.beginStage("one");
+  expect(music.src).toBe(selected);
+  expect(music.currentTime).toBe(12);
+  player.destroy();
+});

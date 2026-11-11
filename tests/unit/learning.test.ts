@@ -8,10 +8,12 @@ import {
   chooseSpelling,
   differences,
   editMetrics,
+  typingSet,
+  stageSuccess,
   reward,
   type Attempt,
 } from "../../src/typing/Learning";
-import { initialProgress, newSession } from "../../src/progress/GameStore";
+import { initialProgress, newSession, recordStageCompletion } from "../../src/progress/GameStore";
 const attempt = (changes: Partial<Attempt> = {}): Attempt => ({
   id: "a",
   task: 1,
@@ -101,7 +103,7 @@ describe("authored content", () => {
     );
     expect(keyFor("ף")?.code).toBe("Semicolon");
   });
-  it("varies spelling across sessions, repeats two probes and uses introduced keys in typing", () => {
+  it("varies spelling across sessions and keeps two short-recall probes", () => {
     const first = chooseSpelling([], 0),
       second = chooseSpelling([], 1);
     expect(first).not.toEqual(second);
@@ -112,7 +114,67 @@ describe("authored content", () => {
       ).size,
     ).toBe(8);
     const s = newSession(initialProgress()).sessions[0];
-    for (const t of s.tasks.flat().filter((t) => t.mode !== "spelling"))
-      for (const letter of t.expected) expect("דגכחלי").toContain(letter);
+    expect(s.difficulty).toBe(1);
+    expect(s.tasks[0].map((t) => t.expected)).not.toEqual(s.tasks[1].map((t) => t.expected));
   });
+});
+
+it("expands vocabulary with difficulty and orders each set from shorter to longer", () => {
+  const averages: number[] = [];
+  for (const difficulty of [1, 2, 3] as const) {
+    const seen = new Set<string>();
+    for (let seed = 0; seed < 30; seed++) {
+      const typed = typingSet(seed, difficulty);
+      expect(typed).toHaveLength(8);
+      expect(new Set(typed).size).toBe(8);
+      const lengths = typed.map((text) => text.length);
+      expect(lengths).toEqual([...lengths].sort((a, b) => a - b));
+      typed.forEach((text) => { seen.add(text); for (const letter of text) expect(keyFor(letter)).toBeDefined(); });
+      const spelling = chooseSpelling([], seed, difficulty);
+      expect(spelling).toHaveLength(10);
+      expect(new Set(spelling.slice(0, 8)).size).toBe(8);
+      expect(spelling.slice(-2)).toEqual(spelling.slice(0, 2));
+      const spellingLengths = spelling.slice(0, 8).map((id) => words.find((w) => w.id === id)!.text.length);
+      expect(spellingLengths).toEqual([...spellingLengths].sort((a, b) => a - b));
+      expect(Math.max(...spellingLengths)).toBe([0, 4, 5, 7][difficulty]);
+    }
+    expect(seen.size).toBeGreaterThan(20);
+    averages.push(typingSet(0, difficulty).reduce((sum, text) => sum + text.length, 0));
+  }
+  expect(averages[0]).toBeLessThan(averages[1]);
+  expect(averages[1]).toBeLessThan(averages[2]);
+});
+
+it("raises only the completed game's proposal at 80%, once, capped at three", () => {
+  const tasks = Array.from({ length: 5 }, (_, i) => ({ mode: "guided" as const, wordId: `word${i}`, expected: "בית" }));
+  const p = newSession(initialProgress());
+  const s = p.sessions[0];
+  s.tasks[0] = tasks;
+  s.phase = "clue";
+  s.attempts = tasks.map((_, i) => attempt({ task: i, mode: "guided", correct: i < 4, aid: "keyboard" }));
+  expect(stageSuccess(tasks, s.attempts, 0)).toBe(0.8);
+  const next = recordStageCompletion(p);
+  expect(next.recommendations).toEqual({ guided: 2 });
+  expect(recordStageCompletion(next)).toBe(next);
+  expect(p.recommendations).toBeUndefined();
+  s.difficulty = 3;
+  expect(recordStageCompletion(p).recommendations?.guided).toBe(3);
+  s.attempts[3].correct = false;
+  expect(recordStageCompletion(p).recommendations?.guided).toBe(1);
+  p.recommendations = { guided: 2 };
+  expect(recordStageCompletion(p).recommendations?.guided).toBe(2);
+  // A later correction doesn't erase the first answer's error.
+  s.attempts.push(attempt({ task: 3, mode: "guided", correct: true }));
+  expect(stageSuccess(tasks, s.attempts, 0)).toBe(0.6);
+});
+it("excludes spelling recall probes and does not promote copying or hints as mastery", () => {
+  const tasks = ["a", "b", "c", "d", "e", "a", "b"].map((wordId) => ({ mode: "spelling" as const, wordId }));
+  const attempts = tasks.map((_, i) => attempt({ task: 200 + i, correct: true }));
+  expect(stageSuccess(tasks, attempts, 2)).toBe(1);
+  attempts[1].aid = "copy";
+  expect(stageSuccess(tasks, attempts, 2)).toBe(0.8);
+  attempts[2].aid = "hint";
+  expect(stageSuccess(tasks, attempts, 2)).toBe(0.6);
+  attempts[0].skipped = true;
+  expect(stageSuccess(tasks, attempts, 2)).toBe(0.4);
 });

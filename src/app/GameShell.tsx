@@ -1,3 +1,4 @@
+import { difficultyLevels } from "../content/difficulty";
 import { DadCratePrompt, CrateBackdrop } from "../components/CrateTask";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PhaserStage } from "../components/PhaserStage";
@@ -28,6 +29,8 @@ import {
   newSession,
   saveGame,
   resetGame,
+  selectDifficulty,
+  recordStageCompletion,
   updateSession,
   type Draft,
   type GameProgress,
@@ -409,14 +412,14 @@ export function GameShell() {
             message += ` הקצב עלה מ־${before} ל־${now} תווים נכונים בדקה, בלי ירידה בדיוק.`;
         }
       }
-      return updateSession(
+      return recordStageCompletion(updateSession(
         { ...p, balance: p.balance + points, earned: p.earned + points },
         (x) => ({
           ...x,
           attempts: [...x.attempts, a],
           draft: { ...x.draft, done: correct || skipped, message },
         }),
-      );
+      ));
     });
     if (skipped || isCorrectAnswer(answer, task.expected))
       bridge.current?.send({ type: "celebrate" });
@@ -430,7 +433,7 @@ export function GameShell() {
   ) {
     audio.current?.stopSpeech();
     setProgress((p) =>
-      updateSession(p, (s) => {
+      recordStageCompletion(updateSession(p, (s) => {
         if (
           !s.draft.done ||
           s.phase !== "play" ||
@@ -456,7 +459,7 @@ export function GameShell() {
                 ]
               : s.exposedWords,
         };
-      }),
+      })),
     );
   }
   function nextStage() {
@@ -472,6 +475,7 @@ export function GameShell() {
         return {
           ...s,
           stage: s.stage + 1,
+          difficulty: s.stageDifficulties?.[s.stage + 1] ?? s.difficulty,
           index: 0,
           phase: "intro",
           draft: emptyDraft(),
@@ -533,10 +537,10 @@ export function GameShell() {
     <main
       className={
         screen === "game"
-          ? `playing${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
+          ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
           : screen === "home"
             ? "home-screen"
-            : undefined
+            : screen === "shop" ? "shop-screen" : undefined
       }
     >
       <header className="topbar">
@@ -559,6 +563,9 @@ export function GameShell() {
             onClick={() => setSetting("music")}
           >
             מוזיקה {progress.settings.music ? "פועלת" : "כבויה"}
+          </button>
+          <button className="icon-button" onClick={() => audio.current?.nextTrack()}>
+            מנגינה אחרת
           </button>
           <button
             className="icon-button"
@@ -631,9 +638,109 @@ export function GameShell() {
                 )}
               </div>
             </section>
+            {screen === "game" && session?.phase === "intro" && (
+              <div className="mission-brief">
+                <span className="mission-marker" aria-hidden="true">
+                  !
+                </span>
+                <div>
+                  <h2>{stage.mission.title}</h2>
+                  <p>{stage.mission.instruction}</p>
+                </div>
+              </div>
+            )}
+            {screen === "game" && session?.phase === "warmup" && (
+              <div className="preparation-help">
+                {stage.mode === "spelling" ? (
+                  <>
+                    <p>
+                      תשמעו מילה בתוך משפט. האיות לא יוצג מראש. Enter בודק
+                      את התשובה; הרמזים כאן כשצריך.
+                    </p>
+                    <p>שתי מילים יחזרו בסוף כדי לראות מה נשאר בזיכרון.</p>
+                    {!progress.settings.speech && (
+                      <p className="warning">
+                        ההקראה כבויה. אפשר להפעיל אותה למעלה, או להיעזר
+                        בהצגת המילה כתרגול העתקה.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      המקשים למשימות הקרובות:{" "}
+                      <b>
+                        {[
+                          ...new Set(
+                            session.tasks[session.stage].flatMap((t) => [
+                              ...t.expected,
+                            ]),
+                          ),
+                        ].join(" · ")}
+                      </b>
+                    </p>
+
+                  </>
+                )}
+                {stage.mode === "speed" && (
+                  <fieldset>
+                    <legend>באיזה קצב?</legend>
+                    <label>
+                      <input
+                        type="radio"
+                        name="pace"
+                        checked={!session.timed}
+                        onChange={() =>
+                          setProgress((p) =>
+                            updateSession(p, (s) => ({
+                              ...s,
+                              timed: false,
+                            })),
+                          )
+                        }
+                      />{" "}
+                      קצב רגוע
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="pace"
+                        checked={session.timed}
+                        onChange={() =>
+                          setProgress((p) =>
+                            updateSession(p, (s) => ({
+                              ...s,
+                              timed: true,
+                            })),
+                          )
+                        }
+                      />{" "}
+                      אתגר קצב אישי
+                    </label>
+                  </fieldset>
+                )}
+              </div>
+            )}
+            {screen === "game" && session?.phase === "play" && task && draft &&
+              (task.mode === "guided" || draft.keyboard) && (
+                <HebrewKeyboard
+                  next={task.mode === "spelling" ? undefined : next}
+                  physical={physical}
+                />
+              )}
             {screen === "game" &&
               stage.mode === "guided" &&
-              session?.phase !== "ending" && <HandGuide />}
+              session?.phase === "play" && <HandGuide />}
+            {screen === "game" && session && !session.standalone &&
+              clues.length > 0 &&
+              (session.phase === "play" || session.phase === "clue") && (
+                <aside className="clue-notebook">
+                  <b>מחברת הבלש</b>
+                  {clues.map((s) => (
+                    <span key={s.mode}>✦ {s.clue}</span>
+                  ))}
+                </aside>
+              )}
           </div>
           {screen === "home" && (
             <section className="panel home">
@@ -704,6 +811,7 @@ export function GameShell() {
                       : `רמז ${session.stage + 1} מתוך 4`}
                   </span>
                   <h1>{stage.title}</h1>
+                  {session.phase !== "intro" && session.phase !== "warmup" && <span className="session-level">רמה {session.difficulty}</span>}
                 </div>
                 <button className="text-button" onClick={leave}>
                   שמירה ויציאה
@@ -720,52 +828,6 @@ export function GameShell() {
                   {session.phase === "intro" && (
                     <div className="dialogue">
                       <DialoguePanel lines={stage.dialogue} />
-                      <div className="mission-brief">
-                        <span className="mission-marker" aria-hidden="true">
-                          !
-                        </span>
-                        <div>
-                          <h2>{stage.mission.title}</h2>
-                          <p>{stage.mission.instruction}</p>
-                        </div>
-                      </div>
-                      {stage.mode === "speed" && (
-                        <fieldset>
-                          <legend>באיזה קצב?</legend>
-                          <label>
-                            <input
-                              type="radio"
-                              name="pace"
-                              checked={!session.timed}
-                              onChange={() =>
-                                setProgress((p) =>
-                                  updateSession(p, (s) => ({
-                                    ...s,
-                                    timed: false,
-                                  })),
-                                )
-                              }
-                            />{" "}
-                            קצב רגוע
-                          </label>
-                          <label>
-                            <input
-                              type="radio"
-                              name="pace"
-                              checked={session.timed}
-                              onChange={() =>
-                                setProgress((p) =>
-                                  updateSession(p, (s) => ({
-                                    ...s,
-                                    timed: true,
-                                  })),
-                                )
-                              }
-                            />{" "}
-                            אתגר קצב אישי
-                          </label>
-                        </fieldset>
-                      )}
                       <button onClick={warmup}>מכירים את המשימה ←</button>
                     </div>
                   )}
@@ -776,41 +838,28 @@ export function GameShell() {
                           ? "הקשיבו, דמיינו, כתבו"
                           : "חימום קצר לפני שיוצאים"}
                       </h2>
-                      {stage.mode === "spelling" ? (
-                        <>
-                          <p>
-                            תשמעו מילה בתוך משפט. האיות לא יוצג מראש. Enter בודק
-                            את התשובה; הרמזים כאן כשצריך.
-                          </p>
-                          <p>שתי מילים יחזרו בסוף כדי לראות מה נשאר בזיכרון.</p>
-                          {!progress.settings.speech && (
-                            <p className="warning">
-                              ההקראה כבויה. אפשר להפעיל אותה למעלה, או להיעזר
-                              בהצגת המילה כתרגול העתקה.
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <p>
-                            המקשים למשימות הקרובות:{" "}
-                            <b>
-                              {[
-                                ...new Set(
-                                  session.tasks[session.stage].flatMap((t) => [
-                                    ...t.expected,
-                                  ]),
-                                ),
-                              ].join(" · ")}
-                            </b>
-                          </p>
-                          <HebrewKeyboard next={next || "ד"} />
-                          <p className="muted">
-                            אפשר לנסות להניח את האצבעות כפי שמוצע. אין צורך
-                            למהר, ואפשר תמיד לפתוח עזרה.
-                          </p>
-                        </>
-                      )}
+                      <fieldset className="difficulty-picker">
+                        <legend>באיזו רמה משחקים?</legend>
+                        <div className="difficulty-options">
+                          {difficultyLevels.map(({ level, title, description }) => (
+                            <label key={level}>
+                              <input
+                                type="radio"
+                                name="difficulty"
+                                value={level}
+                                checked={session.difficulty === level}
+                                onChange={() => setProgress((p) => selectDifficulty(p, level))}
+                              />
+                              <span>
+                                <b>{level} · {title}</b>
+                                <small>{description}</small>
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        <p>הצעת המשחק: רמה {progress.recommendations?.[stage.mode] ?? 1}. אפשר לבחור כל רמה.</p>
+                        <p>80% מילים נכונות בניסיון הראשון בלי רמז או העתקה יעלו את ההצעה לפעם הבאה. מילות הזיכרון החוזרות לא נספרות.</p>
+                      </fieldset>
                       <button onClick={begin}>מוכנים, מתחילים ←</button>
                     </div>
                   )}
@@ -838,7 +887,11 @@ export function GameShell() {
                           </span>
                           {task.mode === "spelling" ? (
                             <>
-                              <h2>איזו מילה שמעתם?</h2>
+                              {draft.hint >= 2 ? (
+                                <p className="target-word" data-testid="revealed-word">{task.expected}</p>
+                              ) : draft.hint === 1 ? (
+                                <h2 className="hint">האות הראשונה: <b>{task.expected[0]}</b></h2>
+                              ) : <h2>איזו מילה שמעתם?</h2>}
                               <button
                                 className="secondary"
                                 onClick={playWord}
@@ -848,19 +901,6 @@ export function GameShell() {
                               >
                                 ◖ השמעת המילה והמשפט
                               </button>
-                              {draft.hint === 1 && (
-                                <p className="hint">
-                                  האות הראשונה: <b>{task.expected[0]}</b>
-                                </p>
-                              )}
-                              {draft.hint >= 2 && (
-                                <p
-                                  className="target-word"
-                                  data-testid="revealed-word"
-                                >
-                                  {task.expected}
-                                </p>
-                              )}
                             </>
                           ) : (
                             <p
@@ -926,7 +966,7 @@ export function GameShell() {
                         >
                           {task.mode === "guided" && <CrateBackdrop />}
                           <div
-                            className={`input-row${task.mode === "guided" ? " crate-lettering" : ""}`}
+                            className={`input-row${task.mode === "guided" ? " crate-lettering" : ""}${task.expected.length > 6 ? " long-word" : ""}`}
                           >
                             <input
                               ref={input}
@@ -1014,9 +1054,14 @@ export function GameShell() {
                           </div>
                         </div>
                         {task.mode === "guided" && (
-                          <button disabled={draft.done} type="submit">
-                            סיימתי לצבוע ←
-                          </button>
+                          <div className="crate-submit-actions">
+                            <button disabled={draft.done} type="submit">
+                              סיימתי לצבוע ←
+                            </button>
+                            <span className="crate-submit-hint">
+                              אפשר ומומלץ ללחוץ על <kbd dir="ltr">Enter ↵</kbd>
+                            </span>
+                          </div>
                         )}
                       </form>
                       <p
@@ -1066,12 +1111,6 @@ export function GameShell() {
                             קשה כרגע? ממשיכים בסיפור
                           </button>
                         </div>
-                      )}
-                      {(task.mode === "guided" || draft.keyboard) && (
-                        <HebrewKeyboard
-                          next={task.mode === "spelling" ? undefined : next}
-                          physical={physical}
-                        />
                       )}
                       {draft.done && (
                         <div className="completion-actions">
@@ -1161,16 +1200,6 @@ export function GameShell() {
                   )}
                 </>
               )}
-              {!session.standalone &&
-                clues.length > 0 &&
-                session.phase !== "ending" && (
-                  <aside className="clue-notebook">
-                    <b>מחברת הבלש</b>
-                    {clues.map((s) => (
-                      <span key={s.mode}>✦ {s.clue}</span>
-                    ))}
-                  </aside>
-                )}
             </section>
           )}
           {screen === "shop" && (

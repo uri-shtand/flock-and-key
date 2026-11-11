@@ -5,6 +5,7 @@ Read README.md and docs/architecture.md before changing the application. The sup
 ## Product constraints
 
 - Hebrew, RTL, desktop browser, physical Hebrew keyboard.
+- Home and all child-facing game screens must fit the desktop viewport without vertical or horizontal scrolling. Verify at 1024×600, 1280×720 and 1440×900, including help, feedback and resume states. Keep text readable; arrange content or split steps instead of clipping or hiding controls.
 - Story and gentle feedback come first. Mistakes never block progression indefinitely.
 - Typing and spelling metrics are separate; copying does not prove independent spelling mastery.
 - Basic help is free. Speed challenges are optional and never fail the story.

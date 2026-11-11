@@ -4,7 +4,6 @@ export type CharacterId = "dad" | "tom" | "postman" | "pitsi" | "narrator";
 export type DialogueLine = { speaker: CharacterId; text: string };
 export type Word = (typeof vocabulary)[number];
 export const words: Word[] = vocabulary;
-export const typingWords = ["דג", "גל", "יד", "גיל", "גג", "דלי", "חיל", "כלי"];
 export const stages: {
   mode: Mode;
   title: string;

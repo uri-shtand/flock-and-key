@@ -888,7 +888,7 @@ footer {
 }
 .dialogue .speech-bubble p {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.2rem;
   line-height: 1.65;
 }
 .narration {
@@ -900,7 +900,7 @@ footer {
   padding: 5px 12px;
 }
 .dialogue .narration p {
-  font-size: 0.9rem;
+  font-size: 1.15rem;
   margin: 0;
 }
 .narration > span {
@@ -932,11 +932,11 @@ footer {
   box-shadow: 0 3px #ba893e;
 }
 .mission-brief h2 {
-  font-size: 1rem;
+  font-size: 1.2rem;
   margin: 0 0 5px;
 }
 .dialogue .mission-brief p {
-  font-size: 0.88rem;
+  font-size: 1.12rem;
   margin: 0;
   line-height: 1.75;
 }
@@ -1000,7 +1000,7 @@ button.text-button:hover:not(:disabled) {
     padding: 11px 13px;
   }
   .dialogue .speech-bubble p {
-    font-size: 0.92rem;
+    font-size: 1.2rem;
   }
   .mission-brief {
     padding: 13px;
@@ -1131,8 +1131,11 @@ button.text-button:hover:not(:disabled) {
   text-align: center;
   font-size: clamp(2rem, 4.5vw, 3.8rem);
   font-weight: 800;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.02em;
   caret-color: #294b61;
+}
+.crate-lettering.long-word input:not([type]) {
+  font-size: clamp(1.3rem, 2.7vw, 2.6rem);
 }
 .crate-lettering input:not([type]):focus {
   border-color: #365a72;
@@ -1155,6 +1158,25 @@ button.text-button:hover:not(:disabled) {
 .crate-form > label {
   color: #5c4935;
 }
+.crate-submit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.crate-submit-hint {
+  font-size: 0.9rem;
+  color: #526456;
+}
+.crate-submit-hint kbd {
+  display: inline-block;
+  font: inherit;
+  font-weight: 700;
+  padding: 1px 6px;
+  border: 1px solid #a6b8aa;
+  border-radius: 5px;
+  background: #edf2e7;
+}
 @media (max-width: 600px) {
   .crate-lettering {
     inset: 30% 21% 18% 14%;
@@ -1163,160 +1185,59 @@ button.text-button:hover:not(:disabled) {
     padding: 17px 14px;
   }
 }
-/* A desktop game menu fits beside the farm, rather than below a full-width
-   illustration. No overflow is hidden: smaller/zoomed windows can still scroll. */
+/* Give the desktop menu room to read; shorter windows may scroll. */
+.difficulty-picker {
+  margin: 22px 0;
+  padding: 14px;
+  border: 2px solid #ccb98f;
+  border-radius: 16px;
+  min-width: 0;
+}
+.difficulty-picker legend { font-size: 1.15rem; font-weight: 700; padding: 0 8px; }
+.difficulty-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.difficulty-options label { display: flex; gap: 8px; align-items: baseline; padding: 12px 10px; border: 2px solid #d5c6a6; border-radius: 12px; cursor: pointer; }
+.difficulty-options label:has(:checked) { border-color: #356e68; background: #ddf0e5; }
+.difficulty-options label:focus-within { outline: 3px solid #f39c50; outline-offset: 2px; }
+.difficulty-options input { accent-color: #356e68; flex-shrink: 0; }
+.difficulty-options small { display: block; font-size: 0.88rem; line-height: 1.5; margin-top: 5px; }
+.difficulty-picker p { font-size: 0.88rem; margin: 12px 0 0; }
+.session-level { font-size: 1rem; color: #45665b; }
 @media (min-width: 960px) {
   main.home-screen {
-    max-width: 1440px;
+    max-width: 1840px;
     min-height: 100svh;
     display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.1fr);
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
     grid-template-rows: auto 1fr auto;
-    gap: 0 24px;
-    padding: 14px 24px 6px;
+    gap: 0 28px;
+    padding: 20px 32px 12px;
     align-items: center;
   }
   .home-screen > .topbar,
   .home-screen > .warning,
-  .home-screen > footer {
-    grid-column: 1 / -1;
-  }
-  .home-screen > .topbar {
-    padding: 4px 0 16px;
-  }
+  .home-screen > footer { grid-column: 1 / -1; }
   .home-screen > .world-column {
     grid-column: 1;
+    align-self: start;
+    position: sticky;
+    top: 24px;
   }
-  .home-screen > .home {
-    grid-column: 2;
-    margin: 0;
-    padding: 22px;
-  }
-  .home-screen .home h1 {
-    font-size: 1.9rem;
-    margin: 6px 0 10px;
-  }
-  .home-screen .lead {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 10px;
-  }
-  .home-screen .actions {
-    gap: 9px;
-    margin: 12px 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  .home-screen .actions:has(> button:nth-child(3)) {
-    grid-template-columns: 1.4fr 0.65fr 1fr;
-  }
-  .home-screen .actions button {
-    font-size: 0.85rem;
-    padding: 10px 12px;
-  }
-  .home-screen .home > .muted {
-    margin: 0;
-    font-size: 0.73rem;
-  }
-  .home-screen .home > h2 {
-    font-size: 1.05rem;
-    margin: 16px 0 10px;
-  }
-  .home-screen .game-menu {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-  .home-screen .game-tile {
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr);
-    column-gap: 10px;
-    row-gap: 2px;
-    align-items: center;
-    padding: 12px;
-    min-height: 82px;
-  }
-  .home-screen .tile-emblem {
-    grid-column: 1;
-    grid-row: 1 / 3;
-    width: 38px;
-    height: 38px;
-    font-size: 1.5rem;
-    margin: 0;
-  }
-  .home-screen .tile-number {
-    position: absolute;
-    top: 5px;
-    left: 8px;
-    font-size: 0.58rem;
-  }
-  .home-screen .game-tile b {
-    grid-column: 2;
-    grid-row: 1;
-    font-size: 0.9rem;
-    padding-left: 8px;
-  }
-  .home-screen .game-tile small {
-    grid-column: 2;
-    grid-row: 2;
-    font-size: 0.68rem;
-  }
-  .home-screen > footer {
-    padding: 12px 0 3px;
-  }
+  .home-screen > .home { grid-column: 2; margin: 0; padding: clamp(22px, 2vw, 36px); }
+  .home-screen .home h1 { font-size: clamp(2rem, 2.7vw, 3rem); margin: 8px 0 14px; }
+  .home-screen .lead { font-size: 1.2rem; line-height: 1.7; }
+  .home-screen .actions { gap: 12px; margin: 20px 0; }
+  .home-screen .actions button { font-size: 1.05rem; padding: 14px 20px; }
+  .home-screen .home > .muted { font-size: 1rem; }
+  .home-screen .home > h2 { font-size: 1.4rem; margin: 24px 0 14px; }
+  .home-screen .game-menu { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .home-screen .game-tile { padding: 20px; min-height: 150px; }
+  .home-screen .game-tile b { font-size: 1.2rem; }
+  .home-screen .game-tile small { font-size: 1rem; }
+  .home-screen .tile-number { font-size: 0.85rem; }
+  main.playing { max-width: 1640px; }
 }
-@media (min-width: 960px) and (max-height: 700px) {
-  main.home-screen {
-    padding-top: 8px;
-    gap: 0 18px;
-  }
-  .home-screen > .topbar {
-    padding-bottom: 10px;
-  }
-  .home-screen > .home {
-    padding: 16px 18px;
-  }
-  .home-screen .home h1 {
-    font-size: 1.65rem;
-    margin: 4px 0 8px;
-  }
-  .home-screen .lead {
-    font-size: 0.86rem;
-    line-height: 1.5;
-    margin-bottom: 8px;
-  }
-  .home-screen .actions {
-    margin: 8px 0 10px;
-  }
-  .home-screen .actions button {
-    padding: 8px 10px;
-    font-size: 0.78rem;
-  }
-  .home-screen .home > .muted {
-    font-size: 0.68rem;
-    line-height: 1.5;
-  }
-  .home-screen .home > h2 {
-    margin: 12px 0 8px;
-    font-size: 1rem;
-  }
-  .home-screen .game-menu {
-    gap: 10px;
-  }
-  .home-screen .game-tile {
-    min-height: 68px;
-    padding: 8px 10px;
-    column-gap: 8px;
-  }
-  .home-screen .game-tile b {
-    font-size: 0.82rem;
-  }
-  .home-screen .game-tile small {
-    font-size: 0.64rem;
-  }
-  .home-screen > footer {
-    padding: 8px 0 2px;
-    font-size: 0.68rem;
-  }
+@media (max-width: 1100px) {
+  .difficulty-options { grid-template-columns: 1fr; }
 }
 button.reset-button {
   background: #f4d4c9;
@@ -1405,4 +1326,189 @@ button.danger-button:hover:not(:disabled) {
 }
 .character-pitsi .character-portrait svg {
   transform: scaleX(-1);
+}
+
+/* Child-facing desktop screens fit the viewport by arranging content, never clipping it. */
+@media (min-width: 960px) {
+  main.home-screen, main.playing, main.shop-screen {
+    max-width: 1840px;
+    min-height: 100svh;
+    padding: 12px 24px 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr);
+    grid-template-rows: auto 1fr auto;
+    gap: 0 22px;
+    align-items: center;
+  }
+  main.playing { align-items: start; }
+  .shop-screen > .topbar, .shop-screen > footer, .shop-screen > .warning { grid-column: 1 / -1; }
+  .shop-screen > .world-column { grid-column: 1; }
+  .shop-screen > .panel { grid-column: 2; margin: 0; }
+  .topbar { padding: 4px 0 14px; }
+  main.home-screen { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr); }
+  .home-screen > .world-column { position: static; align-self: center; }
+  .home-screen > .home, .playing .play-panel, .shop-screen > .panel { padding: 18px 22px; }
+  .home-screen .home h1 { font-size: clamp(1.9rem, 2.7vw, 2.8rem); margin: 4px 0 10px; }
+  .home-screen .lead { font-size: 1.1rem; line-height: 1.5; margin-bottom: 12px; }
+  .home-screen .actions { margin: 14px 0 12px; }
+  .home-screen .actions button { padding: 10px 15px; font-size: 1rem; }
+  .home-screen .home > .muted { margin: 0; font-size: 0.95rem; }
+  .home-screen .home > h2 { margin: 16px 0 10px; font-size: 1.25rem; }
+  .home-screen .game-menu { gap: 12px; }
+  .home-screen .game-tile {
+    min-height: 120px;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 2px;
+    padding: 16px;
+    align-items: center;
+  }
+  .home-screen .tile-emblem { grid-column: 1; grid-row: 1 / 3; width: 46px; height: 46px; margin: 0; font-size: 1.7rem; }
+  .home-screen .tile-number { position: absolute; top: 2px; left: 8px; font-size: 0.7rem; }
+  .home-screen .game-tile b { grid-column: 2; font-size: 1.2rem; }
+  .home-screen .game-tile small { grid-column: 2; font-size: 0.95rem; }
+  main > footer { padding: 10px 0 0; }
+  .playing .world-column { position: static; }
+  .playing .section-title h1 { margin: 2px 0; }
+  .session-level { font-size: 0.9rem; }
+  .playing .section-title { margin-bottom: 8px; }
+  .playing .dialogue-thread { gap: 12px; margin: 8px 0 16px; }
+  .playing .speech-bubble { padding: 10px 14px; }
+  .playing .mission-brief { padding: 12px 14px; margin: 12px 0; }
+  .playing .difficulty-picker { margin: 10px 0 16px; padding: 10px; }
+  .playing .difficulty-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .playing .difficulty-options label { margin: 0; padding: 8px; gap: 5px; }
+  .playing .difficulty-picker p { font-size: 0.85rem; margin-top: 8px; }
+  .playing .task-progress { margin: 6px 0 10px; }
+  .playing .crate-workspace { height: clamp(115px, 23svh, 210px); aspect-ratio: auto; margin: 4px 0 8px; }
+  .playing .task-card { min-height: 0; padding: 10px; margin-bottom: 12px; }
+  .playing .feedback { margin: 8px 0; min-height: 27px; }
+  .playing .success { padding: 7px 10px; }
+  .playing .keyboard { margin: 10px auto 0; padding: 8px; }
+  .playing .keyboard p { margin-top: 5px; min-height: 0; }
+  .playing .completion-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+  .playing .completion-actions p { margin: 0; }
+  .playing .hand-guide { margin-top: 12px; padding: 10px; }
+  .playing .hand-guide svg { max-height: 130px; }
+  .playing .hand-guide h2 { margin-bottom: 4px; }
+  .playing .hand-guide p { margin: 4px 0 0; }
+  .playing .clue-notebook { margin-top: 12px; padding-top: 8px; gap: 4px; }
+  .playing .clue-card { padding: 18px; margin: 12px 0; }
+  .playing .stats-grid { margin: 12px 0; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .playing .stats-grid > div { padding: 10px; }
+  .shop-screen .shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .shop-screen .prize { padding: 10px; }
+}
+@media (min-width: 960px) and (max-height: 760px) {
+  main.home-screen, main.playing, main.shop-screen { padding: 8px 20px 6px; gap: 0 18px; }
+  .topbar { padding-bottom: 10px; }
+  .home-screen > .home, .playing .play-panel, .shop-screen > .panel { padding: 12px 16px; }
+  .home-screen .home h1 { font-size: 1.9rem; }
+  .home-screen .actions { margin: 10px 0; }
+  .home-screen .actions button { padding: 8px 12px; }
+  .home-screen .game-tile { min-height: 100px; padding: 12px; }
+  .home-screen .game-tile b { font-size: 1.1rem; }
+  .home-screen .game-tile small { font-size: 0.9rem; }
+  .home-screen .home > h2 { margin: 10px 0 8px; }
+  .playing button { padding: 8px 12px; }
+  .playing .text-button { padding: 4px 6px; }
+  .playing .character-portrait { flex-basis: 58px; width: 58px; height: 65px; }
+  .playing .dialogue-thread { gap: 8px; margin-bottom: 10px; }
+  .playing .speech-bubble { padding: 7px 12px; }
+  .playing .dialogue .speech-bubble p, .playing .dialogue .narration p { font-size: 1.08rem; }
+  .playing .mission-brief { padding: 8px 12px; margin: 8px 0; }
+  .playing .dialogue .mission-brief p { font-size: 1rem; }
+  .playing .dialogue .mission-brief h2 { font-size: 1.1rem; }
+  .playing .stage { max-height: 26svh; }
+  .playing .hand-guide svg { max-height: 110px; }
+  .playing .hand-guide .eyebrow { display: none; }
+  .playing .key { max-width: 30px; aspect-ratio: 1.35; }
+  .playing .key-row { margin-bottom: 4px; }
+  .playing .keyboard p { font-size: 0.75rem; }
+  .playing .task-card h2 { font-size: 1.15rem; margin: 4px 0 8px; }
+  .playing input:not([type]) { padding: 7px 12px; }
+  .playing .target-word { font-size: 2rem; margin: 3px 0; }
+  .playing .pace { margin-bottom: 6px; }
+  .playing .clue-card { padding: 12px; }
+  .playing .ending > h2 { font-size: 1.4rem; }
+  .playing .ending p { margin-bottom: 8px; }
+  .playing .character-pitsi .character-portrait { flex-basis: 120px; width: 120px; height: 100px; }
+}
+@media (min-width: 960px) {
+  .playing .world-column > .keyboard { color: var(--ink); }
+  .playing .world-column > .clue-notebook { background: var(--paper); color: var(--ink); border-radius: 12px; padding: 10px 14px; }
+}
+@media (min-width: 960px) and (max-height: 760px) {
+  .playing .crate-prompt { padding: 8px 12px; }
+  .playing .crate-prompt-word { font-size: 2.3rem; letter-spacing: 0.02em; padding: 3px 0; }
+  .playing .world-column .scene-heading, .playing .world-column .world-caption { padding: 7px 14px; }
+  .playing .hand-guide { margin-top: 8px; padding: 6px 10px; }
+  .playing .hand-guide svg { max-height: 72px; }
+  .playing .hand-guide h2 { font-size: 1rem; }
+  .playing .hand-guide p { margin: 0; }
+  .playing .world-column > .keyboard { margin-top: 8px; }
+  .playing .help-actions { margin-bottom: 6px; gap: 6px; }
+}
+@media (min-width: 960px) {
+  .playing .world-column > .mission-brief { color: var(--ink); }
+  .playing .world-column > .mission-brief p { font-size: 1.08rem; line-height: 1.6; margin: 0; }
+}
+.preparation-help { color: var(--ink); background: var(--paper); border: 3px solid var(--outline); border-radius: 16px; padding: 14px; margin-top: 12px; }
+.preparation-help > p:last-child { margin-bottom: 0; }
+.preparation-help fieldset { margin: 8px 0 0; }
+@media (min-width: 960px) and (max-height: 760px) {
+  .preparation-help { padding: 10px 12px; margin-top: 8px; }
+  .preparation-help p { margin-bottom: 8px; }
+  .preparation-help .warning { padding: 8px; }
+  .playing .preparation-help fieldset { padding: 6px 8px; }
+  .playing .preparation-help fieldset label { margin-left: 10px; }
+}
+@media (min-width: 960px) {
+  .playing .section-title > div { display: grid; grid-template-columns: auto auto; column-gap: 12px; align-items: center; }
+  .playing .section-title .eyebrow { grid-column: 1 / -1; }
+  .playing .session-level { grid-column: 2; }
+  .playing .crate-workspace { width: min(100%, clamp(238px, 47.6svh, 434px)); margin-inline: auto; }
+}
+@media (min-width: 960px) and (max-height: 760px) {
+  .playing .key { line-height: 1; }
+  .playing .crate-prompt .speech-bubble { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; padding: 7px 10px; align-items: center; }
+  .playing .crate-prompt .character-name { margin: 0; }
+  .playing .crate-prompt .speech-bubble p { font-size: 0.8rem; }
+  .playing .crate-prompt-word { grid-column: 1 / -1; line-height: 1.15; }
+  .playing .hand-guide svg { max-height: 56px; }
+  .playing .hand-guide h2 { line-height: 1.2; }
+  .playing .hand-guide p { display: none; }
+}
+@media (min-width: 960px) {
+  .playing .topbar .brand { padding: 0; }
+}
+@media (min-width: 960px) and (max-height: 760px) {
+  .playing .envelope { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; }
+  .playing .envelope > .eyebrow { grid-column: 1 / -1; }
+  .playing .envelope > h2 { grid-column: 1; margin: 0; }
+  .playing .envelope > button { grid-column: 2; }
+  .playing .envelope > .target-word, .playing .envelope > .hint { grid-column: 1; margin: 0; padding: 0; }
+  .playing input:not([type]) { line-height: 1.2; }
+}
+@media (min-width: 960px) and (max-height: 760px) {
+  .shop-screen .shop-grid { gap: 10px; }
+  .shop-screen .prize { padding: 8px; }
+  .shop-screen .prize-icon { font-size: 1.6rem; line-height: 1; }
+  .shop-screen .prize h2 { font-size: 0.95rem; line-height: 1.3; margin: 4px 0; }
+  .shop-screen .prize p { margin: 4px 0; }
+  .shop-screen .prize button { padding: 6px 10px; line-height: 1.2; }
+  .shop-screen .section-title button { padding: 8px 12px; }
+  .shop-screen .section-title h1 { margin-bottom: 8px; }
+}
+@media (min-width: 960px) and (max-height: 760px) {
+  /* Keep the whole Phaser illustration visible when its frame becomes shorter. */
+  .playing .stage canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
+}
+@media (min-width: 960px) and (max-height: 640px) {
+  .home-screen > .home { padding-block: 8px; }
+  .home-screen .game-tile { min-height: 88px; }
+  .home-screen .home h1 { margin: 2px 0 8px; }
+  .home-screen .lead { margin-bottom: 8px; }
+  .home-screen .home > h2 { margin: 8px 0 6px; }
 }

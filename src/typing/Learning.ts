@@ -1,4 +1,5 @@
-import { words, typingWords, type Mode } from "../content/chapter";
+import { typingVocabulary, type Difficulty } from "../content/difficulty";
+import { words, wordById, type Mode } from "../content/chapter";
 export type Aid = "independent" | "keyboard" | "hint" | "copy" | "recall";
 export type Attempt = {
   id: string;
@@ -155,11 +156,16 @@ export function previousComparable(
         !a.pasted,
     );
 }
-export function chooseSpelling(history: Attempt[], seed: number): string[] {
+export function chooseSpelling(
+  history: Attempt[],
+  seed: number,
+  difficulty: Difficulty = 1,
+): string[] {
   const last = new Map<string, Attempt>();
   for (const a of history.filter((a) => a.mode === "spelling"))
     last.set(a.wordId, a);
-  const scored = words
+  const pool = words.filter((word) => word.text.length <= [0, 4, 5, 7][difficulty]);
+  const scored = pool
     .map((word, index) => {
       const a = last.get(word.id);
       const priority =
@@ -180,10 +186,62 @@ export function chooseSpelling(history: Attempt[], seed: number): string[] {
     if (!topics.has(entry.word.topic) && selected.length < 8) add(entry);
   for (const entry of scored)
     if (!topics.has(entry.word.topic) && selected.length < 8) add(entry);
+  // Include the longest eligible words, then build up to them. The two final
+  // probes still measure short recall, separately from independent spelling.
+  const longest = Math.max(...pool.map((word) => word.text.length));
+  if (!selected.some((id) => wordById(id)!.text.length === longest)) {
+    const entry = scored.find((e) => e.word.text.length === longest)!;
+    const sameTopic = selected.findIndex((id) => wordById(id)!.topic === entry.word.topic);
+    selected[sameTopic >= 0 ? sameTopic : selected.length - 1] = entry.word.id;
+  }
+  selected.sort((a, b) => wordById(a)!.text.length - wordById(b)!.text.length);
   return [...selected, selected[0], selected[1]];
 }
-export function typingSet(seed: number): string[] {
-  return typingWords.map(
-    (_, i) => typingWords[(i + seed) % typingWords.length],
-  );
+export function typingSet(seed: number, difficulty: Difficulty = 1): string[] {
+  const pool = [
+    ...new Set(
+      ([1, 2, 3] as const)
+        .filter((level) => level <= difficulty)
+        .flatMap((level) => typingVocabulary[level]),
+    ),
+  ];
+  const targets = {
+    1: [2, 2, 3, 3, 3, 4, 4, 4],
+    2: [3, 3, 4, 4, 5, 5, 6, 6],
+    3: [4, 5, 5, 6, 6, 7, 8, 10],
+  }[difficulty];
+  const selected: string[] = [];
+  for (const length of targets) {
+    const available = pool.filter((text) => !selected.includes(text));
+    const distance = Math.min(
+      ...available.map((text) => Math.abs(text.length - length)),
+    );
+    const candidates = available.filter(
+      (text) => Math.abs(text.length - length) === distance,
+    );
+    selected.push(candidates[seed % candidates.length]);
+  }
+  return selected.sort((a, b) => a.length - b.length);
+}
+
+// First submissions keep retries from turning every completed game into 100%.
+// Spelling recall probes and supported copying are not independent spelling evidence.
+export function stageSuccess(
+  tasks: { mode: Mode; wordId: string }[],
+  attempts: Attempt[],
+  stage: number,
+): number {
+  const seen = new Set<string>();
+  const scored = tasks.map((task, index) => ({ task, index })).filter(({ task }) => {
+    if (task.mode !== "spelling") return true;
+    if (seen.has(task.wordId)) return false;
+    seen.add(task.wordId);
+    return true;
+  });
+  const correct = scored.filter(({ index }) => {
+    const first = attempts.find((a) => a.task === stage * 100 + index);
+    return first?.correct && !first.skipped && !first.pasted &&
+      (first.aid === "independent" || first.aid === "keyboard");
+  }).length;
+  return scored.length ? correct / scored.length : 0;
 }

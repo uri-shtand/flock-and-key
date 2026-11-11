@@ -15,6 +15,9 @@ export class AudioPlayer {
   beginStage(key: string) {
     if (key === this.stageKey) return;
     this.stageKey = key;
+    this.nextTrack();
+  }
+  nextTrack() {
     const track = pickBackgroundTrack(this.music.getAttribute("src") ?? "");
     const wasPlaying = this.musicOn && !this.music.paused;
     this.music.pause();
