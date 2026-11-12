@@ -25,6 +25,7 @@ const CONTROLS = [
 // The virtual keys preserve the physical left-to-right home-row order.
 const HOME_ROW = keyboardRows[1];
 const ART = "/assets/gates/";
+const ART_VERSION = "farm-v2-20261112";
 
 function initial(): Game {
   return {
@@ -179,7 +180,7 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
   return (
     <section className="gate-prototype" dir="rtl">
       <div className="gate-prototype-toolbar">
-        <div><h1>שומרי השערים <small>אב־טיפוס · שני שערים</small></h1><p>לחצו על האות של השער. מנוף אחד מפעיל את כולם.</p></div>
+        <div><h1>שומרי השערים <small>אב־טיפוס · שני שערים · Farm v2</small></h1><p>לחצו על האות של השער. מנוף אחד מפעיל את כולם.</p></div>
         <div className="gate-prototype-stats">
           <strong>⭐ {game.score}</strong>
           <span>⚙️ {game.lever ? "המנוף עובד…" : "המנוף פנוי"}</span>
@@ -197,12 +198,12 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
       >
         <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" role="img"
           aria-label="מכלאת כבשים במרכז; שביל אחד שמאלה ושביל אחד ימינה, ושני שערים עם אותיות גדולות">
-          <image href={ART + "farm-background.svg"} x="0" y="0" width="1600" height="900" />
+          <image href={ART + "farm-background.svg?v=" + ART_VERSION} x="0" y="0" width="1600" height="900" />
           {game.sheep.map((sheep) => {
             const point = sheepPosition(sheep.lane, sheep.progress);
             const facesRight = (sheep.lane === 1) === (game.phase !== "back");
             return (
-              <image key={sheep.id} href={ART + "sheep.svg"}
+              <image key={sheep.id} href={ART + "sheep.svg?v=" + ART_VERSION}
                 x={facesRight ? point.x - 54 : point.x + 54} y={point.y - 46}
                 width="108" height="78"
                 transform={facesRight ? undefined : "translate(" + (2 * point.x) + " 0) scale(-1 1)"}
@@ -215,9 +216,9 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
             const active = game.lever?.gate === index;
             return (
               <g key={control.code}>
-                <image href={ART + (gate.open ? "wooden-gate-open.svg" : "wooden-gate.svg")}
+                <image href={ART + (gate.open ? "wooden-gate-open.svg" : "wooden-gate.svg") + "?v=" + ART_VERSION}
                   x={x - 88} y="500" width="176" height="142" />
-                <image href={ART + "blank-gate-sign.svg"} x={x - 100} y="297" width="200" height="139"/>
+                <image href={ART + "blank-gate-sign.svg?v=" + ART_VERSION} x={x - 100} y="297" width="200" height="139"/>
                 <text x={x} y="376" textAnchor="middle" fontSize="77"
                   fontWeight="900" fill="#191d23" stroke="#fffaf0" strokeWidth="2" paintOrder="stroke">{control.hebrew}</text>
                 {active && <circle cx={x} cy="585" r="106" fill="none" stroke="#f7e76a"
