@@ -1581,3 +1581,7 @@ main.gates-screen { max-width: 1920px; width: 100%; }
   .gate-prototype-key { min-height: 44px; font-size: 19px; padding: 3px; }
   .gate-prototype::before { content: "סובבו את הטלפון לרוחב כדי לשחק בנוחות"; display: block; background: #fff6df; padding: 10px; border-radius: 10px; text-align: center; margin: 6px 0; color: #35452c; }
 }
+
+/* Visible artwork build identifier on both desktop and mobile landscape. */
+.gate-prototype-version { display: inline-flex; align-items: center; white-space: nowrap; background: #fff6c0; color: #38442e; border: 2px solid #a5853d; border-radius: 8px; padding: 2px 7px; font: 700 12px/1.2 Arial, sans-serif; }
+@media (max-width: 900px) and (orientation: landscape) { .gate-prototype-version { padding: 2px 4px; font-size: 11px; } }
