@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { keyboardRows } from "../../typing/KeyboardMap";
 
 type Gate = { open: boolean; closingAt: number };
-type Sheep = { id: number; lane: number; x: number; crossed: boolean };
+type Sheep = { id: number; lane: number; progress: number };
 type Phase = "ready" | "out" | "regroup" | "back" | "done";
 type Game = {
   phase: Phase;
@@ -14,26 +14,57 @@ type Game = {
   waiting: number;
   commands: number;
 };
-const GATE_X = 620;
-const SPEED = 105;
-const START_X = 250;
-const END_X = 1000;
-const CONTROLS = [{ code: "KeyG", hebrew: "ע", latin: "G" }, { code: "KeyH", hebrew: "י", latin: "H" }];
+const GATE_PROGRESS = 0.5;
+const STOP_OFFSET = 0.035;
+const SHEEP_SPACING = 0.082;
+const SPEED = 0.105;
+const CONTROLS = [
+  { code: "KeyG", hebrew: "ע", latin: "G" },
+  { code: "KeyH", hebrew: "י", latin: "H" },
+];
 // The virtual keys preserve the physical left-to-right home-row order.
 const HOME_ROW = keyboardRows[1];
+const ART = "/assets/gates/";
+
 function initial(): Game {
   return {
     phase: "ready",
-    sheep: [0, 1, 2, 3].map((id) => ({ id, lane: Math.floor(id / 2), x: START_X - (id % 2) * 45, crossed: false })),
+    sheep: [0, 1, 2, 3].map((id) => ({
+      id, lane: Math.floor(id / 2), progress: -(id % 2) * SHEEP_SPACING,
+    })),
     gates: [{ open: false, closingAt: 0 }, { open: false, closingAt: 0 }],
     lever: null, time: 0, score: 1000, waiting: 0, commands: 0,
   };
 }
+
+function cubic(a: number, b: number, c: number, d: number, t: number): number {
+  const q = 1 - t;
+  return q * q * q * a + 3 * q * q * t * b + 3 * q * t * t * c + t * t * t * d;
+}
+
+/** Identical world geometry for the pictured dirt tracks and the moving sheep. */
+function sheepPosition(lane: number, progress: number) {
+  if (progress < 0) {
+    return { x: lane === 0 ? 740 - progress * 170 : 860 + progress * 170, y: 467 + progress * 40 };
+  }
+  const t = Math.min(1, progress);
+  const firstHalf = t <= 0.5;
+  const u = firstHalf ? t * 2 : (t - 0.5) * 2;
+  const x = firstHalf
+    ? cubic(740, 590, 520, 365, u)
+    : cubic(365, 210, 100, -40, u);
+  const y = firstHalf
+    ? cubic(467, 461, 575, 581, u)
+    : cubic(581, 587, 533, 460, u);
+  return { x: lane === 0 ? x : 1600 - x, y };
+}
+
 function tick(game: Game, dt: number): Game {
   if (game.phase !== "out" && game.phase !== "back") return game;
   const next: Game = {
-    ...game, time: game.time + dt, sheep: game.sheep.map((s) => ({ ...s })),
-    gates: game.gates.map((g) => ({ ...g })),
+    ...game, time: game.time + dt,
+    sheep: game.sheep.map((sheep) => ({ ...sheep })),
+    gates: game.gates.map((gate) => ({ ...gate })),
     lever: game.lever ? { ...game.lever } : null,
   };
   if (next.lever) {
@@ -45,43 +76,60 @@ function tick(game: Game, dt: number): Game {
       next.lever = null;
     }
   }
+
+  const outward = next.phase === "out";
+  const direction = outward ? 1 : -1;
+  let waitingNow = 0;
+  for (const lane of [0, 1]) {
+    const group = next.sheep.filter((sheep) => sheep.lane === lane)
+      .sort((a, b) => direction * (b.progress - a.progress));
+    let leader: number | null = null;
+    let queueBlocked = false;
+    const gate = next.gates[lane];
+    const stop = GATE_PROGRESS - direction * STOP_OFFSET;
+    for (const sheep of group) {
+      const before = sheep.progress;
+      const destination = outward ? (sheep.id % 2 === 0 ? 1 : 1 - SHEEP_SPACING)
+        : (sheep.id % 2 === 0 ? SHEEP_SPACING : 0);
+      let target = before + direction * SPEED * dt;
+      target = outward ? Math.min(destination, target) : Math.max(destination, target);
+      const approachingGate = direction * (before - stop) <= 0;
+      if (!gate.open && approachingGate && direction * (target - stop) >= 0) {
+        target = stop;
+      }
+      if (leader !== null) {
+        target = outward
+          ? Math.min(target, leader - SHEEP_SPACING)
+          : Math.max(target, leader + SHEEP_SPACING);
+      }
+      const stopped = Math.abs(target - before) < 0.00001;
+      const waitingForGate = !gate.open && (
+        (approachingGate && Math.abs(target - stop) < 0.00001) ||
+        (queueBlocked && stopped)
+      );
+      if (waitingForGate) waitingNow += dt;
+      queueBlocked = waitingForGate;
+      sheep.progress = target;
+      // Passing a gate refreshes the timer, so a following sheep may pass.
+      if (gate.open && direction * (before - GATE_PROGRESS) < 0
+        && direction * (target - GATE_PROGRESS) >= 0) {
+        gate.closingAt = next.time + 5;
+      }
+      leader = target;
+    }
+  }
+  // Automatic local closures do not occupy the common lever.
   for (const gate of next.gates) {
     if (gate.open && next.time >= gate.closingAt) gate.open = false;
   }
-  const direction = next.phase === "out" ? 1 : -1;
-  let waitingNow = 0;
-  for (const lane of [0, 1]) {
-    const group = next.sheep.filter((s) => s.lane === lane)
-      .sort((a, b) => direction * (b.x - a.x));
-    let previous: number | null = null;
-    for (const sheep of group) {
-      const oldX = sheep.x;
-      let target = oldX + direction * SPEED * dt;
-      const gate = next.gates[lane];
-      // Only one sheep can approach the closed gate. Followers queue behind it.
-      if (!gate.open && (oldX - (GATE_X - direction * 19)) * direction <= 0 && (target - (GATE_X - direction * 19)) * direction >= 0) {
-        target = GATE_X - direction * 19;
-      }
-      if (previous !== null) {
-        target = direction === 1 ? Math.min(target, previous - 44) : Math.max(target, previous + 44);
-      }
-      const atGate = Math.abs(target - (GATE_X - direction * 19)) < 0.1 && !gate.open;
-      if (atGate || (previous !== null && Math.abs(target - oldX) < 0.001 && !gate.open)) waitingNow += dt;
-      sheep.x = direction === 1 ? Math.min(END_X, target) : Math.max(START_X - (sheep.id % 2) * 45, target);
-      if (gate.open && (oldX - GATE_X) * (sheep.x - GATE_X) <= 0 && oldX !== sheep.x) {
-        gate.closingAt = next.time + 5;
-      }
-      previous = sheep.x;
-    }
-  }
   next.waiting += waitingNow;
   next.score = Math.max(0, 1000 - Math.floor(next.waiting));
-  if (next.phase === "out" && next.sheep.every((s) => s.x >= END_X)) {
+  if (outward && next.sheep.every((s) => s.progress >= 1 - (s.id % 2) * SHEEP_SPACING - 0.00001)) {
     next.phase = "regroup";
     next.lever = null;
     next.gates = next.gates.map(() => ({ open: false, closingAt: 0 }));
   }
-  if (next.phase === "back" && next.sheep.every((s) => s.x <= START_X - (s.id % 2) * 45)) {
+  if (!outward && next.sheep.every((s) => s.progress <= (s.id % 2 === 0 ? SHEEP_SPACING : 0) + 0.00001)) {
     next.phase = "done";
     next.lever = null;
   }
@@ -147,33 +195,41 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
         aria-label="החווה. השתמשו במקשים ע ו־י לפתיחת השערים."
         onKeyDown={(e) => { if (e.repeat || e.ctrlKey || e.altKey || e.metaKey || e.nativeEvent.isComposing) return; if (CONTROLS.some((c) => c.code === e.code)) { e.preventDefault(); command(e.code); } }}
       >
-        <svg viewBox="0 0 1200 660" role="img" aria-label="מכלאה משמאל, שני שבילים למרעה מימין, שני שערים וארבע כבשים">
-          <rect x="0" y="0" width="1200" height="660" rx="28" fill="#b9da94" />
-          <path d="M80 180 Q360 140 620 200 T1120 180" stroke="#d8ba81" strokeWidth="88" fill="none" strokeLinecap="round"/>
-          <path d="M80 475 Q350 530 620 460 T1120 490" stroke="#d8ba81" strokeWidth="88" fill="none" strokeLinecap="round"/>
-          <rect x="65" y="85" width="185" height="495" rx="18" fill="#e9d9ad" stroke="#947a50" strokeWidth="12" strokeDasharray="24 12"/>
-          <text x="160" y="115" fontSize="30" textAnchor="middle" fill="#5b4e35">מכלאה</text>
-          <text x="1080" y="100" fontSize="30" textAnchor="middle" fill="#416d30">מרעה</text>
-          <text x="1080" y="580" fontSize="30" textAnchor="middle" fill="#416d30">מרעה</text>
-          {CONTROLS.map((control, i) => {
-            const y = i ? 465 : 195;
-            const gate = game.gates[i];
-            return <g key={control.code}>
-              <rect x="596" y={y - 63} width="48" height="126" rx="9" fill={gate.open ? "#a6d1a0" : "#855d44"} stroke="#60452d" strokeWidth="5"/>
-              {gate.open ? <path d={`M605 ${y-52} L637 ${y-52}`} stroke="#426943" strokeWidth="9" /> : <path d={`M604 ${y-45} L636 ${y+45} M636 ${y-45} L604 ${y+45}`} stroke="#e2c89a" strokeWidth="9" />}
-              <rect x="560" y={y - 115} width="120" height="46" rx="12" fill="#fff9e7" stroke="#71523b" strokeWidth="3"/>
-              <text x="620" y={y - 83} textAnchor="middle" fontSize="30" fontWeight="bold" fill="#442e27">{control.hebrew} / {control.latin}</text>
-            </g>;
+        <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" role="img"
+          aria-label="מכלאת כבשים במרכז; שביל אחד שמאלה ושביל אחד ימינה, ושני שערים עם אותיות גדולות">
+          <image href={ART + "farm-background.svg"} x="0" y="0" width="1600" height="900" />
+          {game.sheep.map((sheep) => {
+            const point = sheepPosition(sheep.lane, sheep.progress);
+            const facesRight = (sheep.lane === 1) === (game.phase !== "back");
+            return (
+              <image key={sheep.id} href={ART + "sheep.svg"}
+                x={facesRight ? point.x - 54 : point.x + 54} y={point.y - 46}
+                width="108" height="78"
+                transform={facesRight ? undefined : "translate(" + (2 * point.x) + " 0) scale(-1 1)"}
+              />
+            );
           })}
-          {game.sheep.map((s) => <g key={s.id} transform={`translate(${s.x} ${s.lane ? 465 : 195})`}>
-            <ellipse cx="0" cy="4" rx="24" ry="20" fill="#fffdf5" stroke="#857c6b" strokeWidth="2"/>
-            <circle cx={game.phase === "back" ? -18 : 18} cy="-4" r="11" fill="#5e5550"/>
-            <circle cx={game.phase === "back" ? -21 : 21} cy="-7" r="2.5" fill="white"/>
-            <path d="M-12 21 V27 M12 21 V27" stroke="#60584d" strokeWidth="5" strokeLinecap="round"/>
-          </g>)}
-          <g transform="translate(90 615)">
-            <rect width="280" height="30" rx="12" fill="#675044"/>
-            <text x="140" y="22" fill="#fff8e9" fontSize="19" textAnchor="middle">⚙️ מנוף מרכזי {game.lever ? "פועל" : "מוכן"}</text>
+          {CONTROLS.map((control, index) => {
+            const x = index === 0 ? 365 : 1235;
+            const gate = game.gates[index];
+            const active = game.lever?.gate === index;
+            return (
+              <g key={control.code}>
+                <image href={ART + (gate.open ? "wooden-gate-open.svg" : "wooden-gate.svg")}
+                  x={x - 88} y="500" width="176" height="142" />
+                <image href={ART + "blank-gate-sign.svg"} x={x - 100} y="297" width="200" height="139"/>
+                <text x={x} y="376" textAnchor="middle" fontSize="77"
+                  fontWeight="900" fill="#191d23" stroke="#fffaf0" strokeWidth="2" paintOrder="stroke">{control.hebrew}</text>
+                {active && <circle cx={x} cy="585" r="106" fill="none" stroke="#f7e76a"
+                  strokeWidth="12" strokeDasharray="15 11" opacity=".9" />}
+              </g>
+            );
+          })}
+          <g transform="translate(650 740)">
+            <rect width="300" height="56" rx="18" fill="#544032" stroke="#241f1b" strokeWidth="5" />
+            <text x="150" y="38" textAnchor="middle" fontSize="26" fontWeight="bold" fill="#fff7db">
+              {game.lever ? "⚙ המנוף עובד…" : "⚙ המנוף פנוי"}
+            </text>
           </g>
         </svg>
         {(game.phase === "ready" || game.phase === "regroup" || game.phase === "done" || paused) && (
