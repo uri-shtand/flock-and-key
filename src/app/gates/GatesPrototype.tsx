@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { keyboardRows } from "../../typing/KeyboardMap";
 
 type Gate = { open: boolean; closingAt: number };
 type Sheep = { id: number; lane: number; x: number; crossed: boolean };
@@ -18,6 +19,8 @@ const SPEED = 105;
 const START_X = 250;
 const END_X = 1000;
 const CONTROLS = [{ code: "KeyG", hebrew: "ע", latin: "G" }, { code: "KeyH", hebrew: "י", latin: "H" }];
+// The virtual keys preserve the physical left-to-right home-row order.
+const HOME_ROW = keyboardRows[1];
 function initial(): Game {
   return {
     phase: "ready",
@@ -184,7 +187,32 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
           </div>
         )}
       </div>
-      <p className="gate-prototype-help">הקלידו <kbd>ע</kbd> (G) או <kbd>י</kbd> (H). השערים מסומנים תמיד. כדי להמשיך להפעיל מקשים אחרי לחיצה על כפתור, המיקוד חוזר לחווה.</p>
+      <div className="gate-prototype-keyboard" aria-label="השורה האמצעית במקלדת עברית">
+        <span className="gate-prototype-keyboard-label">שורת הבית</span>
+        <div className="gate-prototype-key-row" dir="ltr">
+          {HOME_ROW.map(({ code, letter }) => {
+            const used = CONTROLS.some((control) => control.code === code);
+            const selected = game.lever && CONTROLS[game.lever.gate].code === code;
+            return (
+              <button
+                key={code}
+                type="button"
+                className={`gate-prototype-key${used ? " is-active" : ""}${selected ? " is-operating" : ""}`}
+                aria-label={`האות ${letter}${used ? " מפעילה שער" : " אינה מפעילה שער בשלב זה"}`}
+                aria-disabled={!used || !running || paused || Boolean(game.lever)}
+                onClick={() => {
+                  if (used && running && !paused) command(code);
+                  // Preserve desktop physical-key input after a touch/click.
+                  if (window.matchMedia("(pointer: fine)").matches) area.current?.focus();
+                }}
+              >
+                {letter}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <p className="gate-prototype-help">געו באות המתאימה בשורת המקלדת שמתחת לחווה. במחשב אפשר גם להקליד <kbd>ע</kbd> (G) או <kbd>י</kbd> (H). האותיות נשארות גלויות על השערים.</p>
     </section>
   );
 }
