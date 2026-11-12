@@ -1535,3 +1535,5 @@ button.danger-button:hover:not(:disabled) {
   .gate-prototype { padding-inline: 8px; }
   .gate-prototype-toolbar { flex-direction: column; align-items: stretch; }
 }
+
+main.gates-screen { max-width: 1920px; width: 100%; }
