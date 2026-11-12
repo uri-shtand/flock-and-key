@@ -56,7 +56,7 @@ function tick(game: Game, dt: number): Game {
       let target = oldX + direction * SPEED * dt;
       const gate = next.gates[lane];
       // Only one sheep can approach the closed gate. Followers queue behind it.
-      if (!gate.open && (oldX - GATE_X) * direction <= 0 && (target - GATE_X) * direction >= 0) {
+      if (!gate.open && (oldX - (GATE_X - direction * 19)) * direction <= 0 && (target - (GATE_X - direction * 19)) * direction >= 0) {
         target = GATE_X - direction * 19;
       }
       if (previous !== null) {
