@@ -182,6 +182,7 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
       <div className="gate-prototype-toolbar">
         <div><h1>שומרי השערים <small>אב־טיפוס · שני שערים · Farm v2</small></h1><p>לחצו על האות של השער. מנוף אחד מפעיל את כולם.</p></div>
         <div className="gate-prototype-stats">
+          <span className="gate-prototype-version" aria-label="גרסת תצוגת החווה">Farm v2</span>
           <strong>⭐ {game.score}</strong>
           <span>⚙️ {game.lever ? "המנוף עובד…" : "המנוף פנוי"}</span>
           <button onClick={() => { setPaused((v) => !v); area.current?.focus(); }} disabled={!running}>{paused ? "המשך" : "הפסקה"}</button>
