@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 170">
+<!-- Gate component: show the leaf in closed state; rotate around the left post to open. -->
+<defs><linearGradient id="w" x2="0" y2="1"><stop stop-color="#f4bc6c"/><stop offset=".55" stop-color="#cd7b37"/><stop offset="1" stop-color="#a75c2c"/></linearGradient></defs>
+<ellipse cx="104" cy="153" rx="92" ry="14" fill="#4f7a26" opacity=".23"/>
+<g id="gate-leaf" transform="translate(-18 15) rotate(-72 38 46)">
+<path d="M38 46L176 46 176 133 38 133Z" fill="#b36630" stroke="#493325" stroke-width="7" stroke-linejoin="round"/>
+<path d="M43 49H170V72H43Z M43 105H170V128H43Z" fill="url(#w)" stroke="#613a26" stroke-width="4"/>
+<path d="M46 125L170 54" stroke="#734020" stroke-width="24"/><path d="M46 121L170 50" stroke="#f2b466" stroke-width="14"/>
+<circle cx="66" cy="62" r="5" fill="#ffe6a4"/><circle cx="154" cy="116" r="5" fill="#ffe6a4"/>
+</g>
+<rect x="15" y="26" width="36" height="124" rx="9" fill="url(#w)" stroke="#493325" stroke-width="7"/>
+<ellipse cx="33" cy="26" rx="18" ry="9" fill="#ffd499" stroke="#493325" stroke-width="5"/>
+<rect x="168" y="26" width="35" height="124" rx="9" fill="url(#w)" stroke="#493325" stroke-width="7"/>
+<ellipse cx="185" cy="26" rx="17" ry="9" fill="#ffd499" stroke="#493325" stroke-width="5"/>
+<g fill="#7f8581" stroke="#424746" stroke-width="3"><rect x="42" y="61" width="26" height="15" rx="3"/><rect x="42" y="108" width="26" height="15" rx="3"/></g>
+</svg>
