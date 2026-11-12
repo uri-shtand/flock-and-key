@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 180">
+<!-- Blank, separate sign: render Hebrew gate labels dynamically on top. -->
+<ellipse cx="130" cy="169" rx="85" ry="9" fill="#395f1d" opacity=".25"/>
+<rect x="115" y="116" width="30" height="53" rx="4" fill="#a7652b" stroke="#5d371f" stroke-width="5"/>
+<rect x="19" y="14" width="222" height="118" rx="24" fill="#6f421c" stroke="#252923" stroke-width="9"/>
+<rect x="25" y="19" width="209" height="105" rx="20" fill="#ffcb16" stroke="#ffe56b" stroke-width="5"/>
+<path d="M40 42Q44 28 61 27H192" stroke="#fff8b3" stroke-width="8" fill="none" stroke-linecap="round"/>
+</svg>
