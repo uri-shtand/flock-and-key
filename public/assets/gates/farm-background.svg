@@ -1,64 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Cartoon farm backdrop: central sheep enclosure, winding routes left and right">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Cartoon farm backdrop: small central pen, four approaches, intersecting winding paths and two pastures; movable scenery rendered separately">
 <defs>
 <linearGradient id="grass" x2="0" y2="1"><stop stop-color="#b4dc41"/><stop offset="1" stop-color="#86bf26"/></linearGradient>
 <linearGradient id="sand" x2="0" y2="1"><stop stop-color="#ffe09b"/><stop offset="1" stop-color="#eeb86c"/></linearGradient>
 <linearGradient id="wood" x2="1" y2="1"><stop stop-color="#ffe0a0"/><stop offset=".48" stop-color="#db914a"/><stop offset="1" stop-color="#9b522a"/></linearGradient>
 <g id="post"><ellipse cx="5" cy="12" rx="13" ry="7" fill="#567d1e" opacity=".35"/><rect x="-10" y="-28" width="22" height="50" rx="5" fill="url(#wood)" stroke="#543b29" stroke-width="4"/><ellipse cx="1" cy="-27" rx="11" ry="6" fill="#ffd191" stroke="#543b29" stroke-width="3"/></g>
-<g id="grassTuft" fill="none" stroke="#438f24" stroke-width="5" stroke-linecap="round"><path d="M-12 8Q-18-7-24-11 M-10 8Q-4-21 1-22 M-7 8Q8-12 19-9"/></g>
-<g id="rock"><ellipse cy="11" rx="30" ry="9" fill="#558923" opacity=".25"/><path d="M-29 8L-19-14 5-20 23-8 30 10Z" fill="#948f84" stroke="#665f58" stroke-width="4"/><path d="M-19-14L5-20 12-4-8-3Z" fill="#c7c3b6"/></g>
-<g id="flower"><path d="M0 9V-12" stroke="#487e2c" stroke-width="4"/><g fill="#fff7e2" stroke="#eee4bc" stroke-width="1"><circle cx="0" cy="-22" r="8"/><circle cx="12" cy="-14" r="8"/><circle cx="7" cy="-2" r="8"/><circle cx="-8" cy="-4" r="8"/><circle cx="-12" cy="-16" r="8"/></g><circle cx="0" cy="-13" r="6" fill="#edc247"/></g>
-<g id="fenceRail"><path d="M0 0L100 0" stroke="#5a3420" stroke-width="22" stroke-linecap="round"/><path d="M0 -5L100 -5" stroke="#df9a4f" stroke-width="14" stroke-linecap="round"/><path d="M0 30L100 30" stroke="#5a3420" stroke-width="22" stroke-linecap="round"/><path d="M0 25L100 25" stroke="#df9a4f" stroke-width="14" stroke-linecap="round"/></g>
-<g id="bush"><ellipse cx="0" cy="0" rx="67" ry="28" fill="#438a23" stroke="#2d6a21" stroke-width="5"/><circle cx="-31" cy="-16" r="32" fill="#6bb52e"/><circle cx="9" cy="-28" r="37" fill="#80c92d"/><circle cx="44" cy="-10" r="29" fill="#67ae26"/></g>
+
+
+
+
+
 </defs>
 <rect width="1600" height="900" fill="url(#grass)"/>
 <g opacity=".24" fill="#d2ed61"><ellipse cx="220" cy="395" rx="270" ry="130"/><ellipse cx="1320" cy="320" rx="340" ry="150"/><ellipse cx="800" cy="800" rx="420" ry="110"/></g>
-<!-- Routes intentionally remain unobstructed for dynamic sheep and gate art. -->
-<path d="M740 472 C590 466 520 580 365 586 S100 538 -40 465" fill="none" stroke="#967d41" stroke-width="124" stroke-linecap="round" opacity=".38"/>
-<path d="M740 467 C590 461 520 575 365 581 S100 533 -40 460" fill="none" stroke="url(#sand)" stroke-width="114" stroke-linecap="round"/>
-<path d="M860 472 C1010 466 1080 580 1235 586 S1500 538 1640 465" fill="none" stroke="#967d41" stroke-width="124" stroke-linecap="round" opacity=".38"/>
-<path d="M860 467 C1010 461 1080 575 1235 581 S1500 533 1640 460" fill="none" stroke="url(#sand)" stroke-width="114" stroke-linecap="round"/>
-<g fill="none" stroke="#fff4d7" stroke-width="4" stroke-dasharray="13 28" opacity=".68">
-<path d="M740 467 C590 461 520 575 365 581 S100 533 -40 460"/>
-<path d="M860 467 C1010 461 1080 575 1235 581 S1500 533 1640 460"/>
+<!-- Two lush pastures at the edges; no sheep baked into the art. -->
+<g fill="#65b947" stroke="#428d38" stroke-width="6">
+<path d="M35 330 Q160 270 275 355 Q300 450 245 555 Q140 620 35 550Z"/>
+<path d="M1325 355 Q1440 270 1565 330 L1565 550 Q1460 620 1355 555 Q1300 450 1325 355Z"/>
 </g>
-<!-- Central pen, open at left and right; no sheep painted into the background. -->
-<path d="M650 292 L734 244 L868 244 L950 292 L1010 400 L1010 546 L932 652 L865 691 L735 691 L666 652 L590 546 L590 400Z" fill="#f3bd68" stroke="#b08346" stroke-width="9"/>
-<path d="M655 289 L732 242 L867 242 L950 289" fill="none" stroke="#543720" stroke-width="25" stroke-linejoin="round"/>
-<path d="M655 283 L732 236 L867 236 L950 283" fill="none" stroke="#d99853" stroke-width="16" stroke-linejoin="round"/>
-<path d="M656 343 L656 395 M944 343 L944 395 M656 552 L656 626 L735 671 L865 671 L944 626 L944 552" fill="none" stroke="#603b22" stroke-width="26" stroke-linejoin="round"/>
-<path d="M656 340 L656 390 M944 340 L944 390 M656 550 L656 620 L735 665 L865 665 L944 620 L944 550" fill="none" stroke="#e4a15d" stroke-width="17" stroke-linejoin="round"/>
-<path d="M656 359 L656 398 M944 359 L944 398 M656 568 L656 630 L735 678 L865 678 L944 630 L944 568" fill="none" stroke="#603b22" stroke-width="8"/>
-<g><use href="#post" x="655" y="299"/><use href="#post" x="731" y="245"/><use href="#post" x="868" y="245"/><use href="#post" x="949" y="299"/><use href="#post" x="656" y="392"/><use href="#post" x="944" y="392"/><use href="#post" x="656" y="551"/><use href="#post" x="944" y="551"/><use href="#post" x="657" y="631"/><use href="#post" x="735" y="677"/><use href="#post" x="865" y="677"/><use href="#post" x="944" y="631"/></g>
-<!-- Background barn and silo, beyond play paths. -->
-<ellipse cx="1309" cy="142" rx="210" ry="54" fill="#4c8c24" opacity=".3"/>
-<rect x="1208" y="-19" width="170" height="202" rx="8" fill="#da4c33" stroke="#633b32" stroke-width="7"/>
-<path d="M1194 11L1288-66 1392 11Z" fill="#444957" stroke="#262e3d" stroke-width="9"/>
-<path d="M1270 183V66H1356V183" fill="#f5d5a3" stroke="#5c3630" stroke-width="9"/>
-<path d="M1278 74L1348 174 M1348 74L1278 174" stroke="#fff6e6" stroke-width="11"/>
-<rect x="1393" y="-18" width="66" height="187" rx="31" fill="#9aaab0" stroke="#4e5c62" stroke-width="7"/>
-<ellipse cx="1426" cy="-19" rx="33" ry="14" fill="#e3e8e3" stroke="#4e5c62" stroke-width="5"/>
-<g transform="translate(1150 133)"><rect width="76" height="39" rx="8" fill="#ecac19" stroke="#956421" stroke-width="5"/><path d="M11 4L21 32 M42 4L52 32" stroke="#fbd969" stroke-width="4"/></g>
-<!-- Cartoon tree upper left -->
-<path d="M100 145L120 -12" stroke="#70432a" stroke-width="58" stroke-linecap="round"/>
-<g fill="#4d9a24" stroke="#2e701f" stroke-width="9"><circle cx="24" cy="20" r="95"/><circle cx="132" cy="-5" r="104"/><circle cx="219" cy="18" r="91"/></g>
-<g fill="#85c72f"><circle cx="42" cy="0" r="54"/><circle cx="150" cy="-40" r="62"/></g>
-<!-- Border fences and small environmental details -->
-<g transform="translate(0 235) rotate(25)"><use href="#fenceRail"/><use href="#post" x="0" y="15"/><use href="#post" x="100" y="15"/></g>
-<g transform="translate(1492 249) rotate(-25)"><use href="#fenceRail"/><use href="#post" x="0" y="15"/><use href="#post" x="100" y="15"/></g>
-<g transform="translate(0 653) rotate(-17)"><use href="#fenceRail"/><use href="#post" x="0" y="15"/><use href="#post" x="100" y="15"/></g>
-<g transform="translate(1500 644) rotate(17)"><use href="#fenceRail"/><use href="#post" x="0" y="15"/><use href="#post" x="100" y="15"/></g>
-<use href="#bush" x="76" y="868"/><use href="#bush" x="1550" y="859"/><use href="#bush" x="1062" y="58"/>
-<use href="#rock" x="388" y="752"/><use href="#rock" x="1110" y="767"/><use href="#rock" x="479" y="161" transform="rotate(8 479 161)"/>
-<use href="#flower" x="264" y="721"/><use href="#flower" x="1474" y="725"/><use href="#flower" x="1112" y="255"/><use href="#flower" x="443" y="278"/>
-<use href="#grassTuft" x="343" y="324"/><use href="#grassTuft" x="505" y="818"/><use href="#grassTuft" x="1022" y="823"/><use href="#grassTuft" x="1486" y="383"/>
-<!-- A small, humorous dog outside the route -->
-<g transform="translate(179 790)" stroke="#2c3332" stroke-width="5" stroke-linejoin="round">
-<ellipse cx="0" cy="37" rx="87" ry="16" fill="#5b8b24" stroke="none" opacity=".4"/>
-<ellipse cx="-24" cy="1" rx="67" ry="42" fill="#fcf5d9"/>
-<path d="M-56-17Q-91-74-56-73Q-37-56-29-23" fill="#303b42"/>
-<circle cx="49" cy="-13" r="34" fill="#fff6e2"/><path d="M26-33L11-71Q-11-81 4-43Z M61-35L85-60Q101-45 79-16Z" fill="#313c42"/>
-<ellipse cx="60" cy="0" rx="23" ry="16" fill="#fdf2d9"/><circle cx="71" cy="-5" r="7" fill="#263139" stroke="none"/>
-<circle cx="45" cy="-23" r="5" fill="#263139" stroke="none"/>
-<path d="M54 12Q68 32 84 12" fill="none"/><path d="M66 20Q87 48 82 18" fill="#f1888e"/>
+<g fill="#d8ed88" opacity=".65"><ellipse cx="150" cy="425" rx="85" ry="75"/><ellipse cx="1450" cy="425" rx="85" ry="75"/></g>
+<!-- Geometry shared with src/content/gates.ts; crossings stay at ground level. -->
+<g fill="none" stroke="#8e793f" stroke-width="70" stroke-linecap="round" opacity=".35">
+<path d="M 160 450 C 340 450 520 450 650 450"/>
+<path d="M 950 450 C 1100 450 1260 450 1440 450"/>
+<path d="M 800 340 C 800 270 940 280 1015 200"/>
+<path d="M 800 515 C 800 690 650 770 520 690 C 290 600 320 430 500 350 C 660 285 540 125 790 155 C 1030 170 1105 225 1140 350 C 1220 520 1160 700 1000 720"/>
+<path d="M 1000 720 C 760 850 210 825 160 510"/>
+<path d="M 1000 720 C 1280 820 1490 705 1440 510"/>
 </g>
+<g fill="none" stroke="url(#sand)" stroke-width="60" stroke-linecap="round">
+<path d="M 160 450 C 340 450 520 450 650 450"/>
+<path d="M 950 450 C 1100 450 1260 450 1440 450"/>
+<path d="M 800 340 C 800 270 940 280 1015 200"/>
+<path d="M 800 515 C 800 690 650 770 520 690 C 290 600 320 430 500 350 C 660 285 540 125 790 155 C 1030 170 1105 225 1140 350 C 1220 520 1160 700 1000 720"/>
+<path d="M 1000 720 C 760 850 210 825 160 510"/>
+<path d="M 1000 720 C 1280 820 1490 705 1440 510"/>
+</g>
+<g fill="none" stroke="#fff3ce" stroke-width="3" stroke-linecap="round" stroke-dasharray="8 23" opacity=".6">
+<path d="M 160 450 C 340 450 520 450 650 450"/>
+<path d="M 950 450 C 1100 450 1260 450 1440 450"/>
+<path d="M 800 340 C 800 270 940 280 1015 200"/>
+<path d="M 800 515 C 800 690 650 770 520 690 C 290 600 320 430 500 350 C 660 285 540 125 790 155 C 1030 170 1105 225 1140 350 C 1220 520 1160 700 1000 720"/>
+<path d="M 1000 720 C 760 850 210 825 160 510"/>
+<path d="M 1000 720 C 1280 820 1490 705 1440 510"/>
+</g>
+<!-- Smaller central enclosure with four path openings. -->
+<rect x="650" y="340" width="300" height="220" rx="45" fill="#ebc47a" stroke="#b78a4e" stroke-width="5"/>
+<path d="M650 418 V365 Q650 340 678 340 H765 M835 340 H922 Q950 340 950 365 V418 M950 485 V535 Q950 560 922 560 H840 M760 560 H678 Q650 560 650 535 V485" fill="none" stroke="#614127" stroke-width="17" stroke-linejoin="round"/>
+<path d="M650 414 V365 Q650 340 678 340 H765 M835 340 H922 Q950 340 950 365 V414 M950 485 V535 Q950 560 922 560 H840 M760 560 H678 Q650 560 650 535 V485" fill="none" stroke="#e4a65c" stroke-width="10" stroke-linejoin="round"/>
+<g><use href="#post" x="650" y="415"/><use href="#post" x="650" y="485"/><use href="#post" x="950" y="415"/><use href="#post" x="950" y="485"/><use href="#post" x="765" y="340"/><use href="#post" x="835" y="340"/><use href="#post" x="760" y="560"/><use href="#post" x="840" y="560"/></g>
 </svg>

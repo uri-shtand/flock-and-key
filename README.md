@@ -46,12 +46,14 @@ The dev/preview server listens on all interfaces. For loopback only, run `npm ru
 | `public/audio/` | Bundled speech and original music, with provenance notes |
 | `docs/design/` | Original supplied GDD, preserved intact |
 
-React owns all learning state and text input. Phaser draws the world; global keyboard capture is disabled. No account, backend, remote font, runtime AI or remote speech service is required. Static assets are served with the application; this version does not install an offline service worker.
+React owns all learning state and text input. Phaser draws the world in the first four mini-games; the standalone fifth prototype currently uses React/SVG layers. Global keyboard capture is disabled. No account, backend, remote font, runtime AI or remote speech service is required. Static assets are served with the application; this version does not install an offline service worker.
 
 The lockfile is preserved. See [architecture](docs/architecture.md), [product decisions](docs/prototype-decisions.he.md), [chapter script and four worked examples](docs/chapter-one.he.md), and [roadmap](docs/roadmap.md).
 
-The fifth mini-game has an approved design: [שומרי השערים — design](docs/minigame-five.he.md). It is not implemented yet.
-See its [planned architecture](docs/minigame-five-architecture.he.md) and [build plan](docs/minigame-five-build-plan.he.md).
+The fifth mini-game has a playable standalone prototype (home → **שומרי השערים**): a smaller central pen, four winding approaches, intersecting paths, two edge pastures, four controllable gates (ע, י, ח, ל) along one shared route, and locked unlabelled gates on shortcuts. Every sheep passes all four controls before branching to pasture. Once all reach pasture, a 2.4-second dusk tint signals the automatic return, with the gate order reversed and no confirmation dialog. Ten standalone scenery SVGs provide 21 individually placed props, ready for different arrangements or future animations; placements live in `src/content/gatesScenery.ts`. The common lever, five-second idle closure and gentle waiting score remain. This prototype does not yet persist runs or implement the full design. See [stage-one map decisions](docs/minigame-five-map.he.md).
+
+Full design: [שומרי השערים — design](docs/minigame-five.he.md). The full design is not implemented yet.
+See its [current architecture and planned extensions](docs/minigame-five-architecture.he.md) and [build plan](docs/minigame-five-build-plan.he.md).
 
 ## Audio preparation
 

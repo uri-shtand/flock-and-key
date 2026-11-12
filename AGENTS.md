@@ -25,4 +25,6 @@ Read README.md and docs/architecture.md before changing the application. The sup
 
 ## Verification
 
+Always run agent-managed browser tests and verification servers on a port other than 5173 (for example, 5174 or another free port). Port 5173 is reserved for the user's development server. Never reuse, restart or stop the server on 5173 for testing. Configure the test base URL and test server port together.
+
 Run npm run build and npm test for logic changes. For input, lifecycle, layout or Phaser integration changes run npm run test:e2e as well (install Chromium once). Test Hebrew input, correction, refresh persistence and console errors. Never claim a browser test passed without running it. Avoid testing trivial presentation details.

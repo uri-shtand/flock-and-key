@@ -1,6 +1,6 @@
 # Architecture decisions
 
-The fifth mini-game is not implemented yet. Its proposed integration and runtime are documented in [שומרי השערים — architecture](minigame-five-architecture.he.md), with a separate [build plan](minigame-five-build-plan.he.md).
+The first four mini-games use the React/Phaser architecture described below. The fifth mini-game, **שומרי השערים**, currently has a standalone React/SVG prototype with a pure simulation and independently placed scenery assets. See [its current architecture and planned extensions](minigame-five-architecture.he.md), [game description](minigame-five.he.md), [map decisions](minigame-five-map.he.md), and [remaining build work](minigame-five-build-plan.he.md).
 
 ## Browser-first 2D
 
@@ -71,3 +71,28 @@ A native radio group selects difficulty in each mini-game's warmup, including ea
 Each mode has an independent locally saved proposal, initially 1. `stageSuccess` evaluates first submissions: correct, unskipped, unpasted, independent or keyboard-supported words count as successful; hints, copying and short recall do not. Repeated spelling probes are excluded from the denominator. At a ratio of at least 0.8, completing a stage proposes the chosen level plus one, capped at 3. Lower ratios leave its previous proposal unchanged. A persisted `ratedStages` receipt makes this update idempotent across timers, manual continuation and refresh. The proposal updates when the final task is completed, without waiting for the continuation timer. Abandoned incomplete stages do not update it. This is a practice recommendation, not a mastery claim.
 
 The six local original music arrangements now have 32 bars, with changing accompaniment, a quiet bridge and a return. Light synthesized bass and percussion accompany the brighter tracks; the flute track stays percussion-free. The home theme is also regenerated. A manual next-tune button reuses the same audio element and preserves stage identity, mute and speech ducking.
+
+## Gatekeepers: current standalone prototype
+
+`GameShell.tsx` exposes a separate `gates` screen from home. It does not add a fifth chapter clue, a word `Mode`, an `Attempt`, rewards, spelling results or difficulty recommendations. The prototype keeps its run in local React state; refresh or leaving the screen loses that run. Existing word-game persistence is unchanged. Gate-run storage, parent reporting and version-3 migration remain plans.
+
+| File | Current responsibility |
+| --- | --- |
+| `src/app/gates/GatesPrototype.tsx` | React state, focused physical-key input, screen keys, RAF, pause/resume, SVG world and summary |
+| `src/typing/GatesSimulation.ts` | Pure `initial`, `operateGate`, `tick`; movement, queues, shared lever, automatic closures, waiting score and dusk transition |
+| `src/content/gates.ts` | Cubic route geometry, sampled lengths, gate distances, locked shortcuts and two pasture branches |
+| `src/content/gatesScenery.ts` | Standalone asset bounds and stage-one prop placements |
+| `src/app/gates/GatesScenery.tsx` | Independently addressable prop instances, clipped to the map bounds |
+| `public/assets/gates/` | Base terrain/paths/pen, sheep, gate states, blank signs and the `scenery/` asset collection |
+
+The logical world is 1600×900. A smaller central pen has four approaches, winding intersecting tracks and two edge pastures. All four sheep traverse a shared route through ע/`KeyG`, י/`KeyH`, ח/`KeyJ`, ל/`KeyK`, then split into two pasture branches. Five unlabelled locked gates block other approaches and shortcuts; they have no command mapping or sheep route. Crossings do not choose a new route at runtime. Movement follows sampled cubic arc lengths; unit tests check that the SVG path strings match authored geometry.
+
+The phases are `ready → out → regroup → back → done`. When all sheep reach pasture, the lever clears and all gates close. During `regroup`, `duskProgress` advances from 0 to 1 over 2.4 active seconds; sheep, movement time and waiting score remain stationary. A purple-to-warm overlay gradually tints all world layers. The transition automatically starts the return trip, with no modal or confirmation button. The tint stays through the return and summary; a new game resets daylight. HTML controls stay outside the tint.
+
+One shared lever applies an accepted gate command after 0.8 seconds; busy commands are discarded. Gates close locally after five seconds without a sheep crossing and refresh their timer on passage. Every sheep passes all four gates in reverse on return. Queues share the common route and separate at the pasture branches. Score is `max(0, 1000 - floor(waiting))`, retaining fractional sheep-seconds internally; zero never blocks completion. The current simulation detects point crossings and has no explicit occupied crossing zone or `closingPending` state yet.
+
+`requestAnimationFrame` supplies variable time steps capped at 0.05 seconds. It runs through outbound, dusk and inbound phases. Pause, hidden tabs and window blur stop progress, including the tint, lever and timers; resuming requires a click. Cleanup cancels RAF, resets its timestamp and removes listeners. Input uses `KeyboardEvent.code`, ignores repeats, composition and modifier shortcuts, and has no global capture. No gate-specific Phaser scene or visual bridge exists yet; those remain future integration work.
+
+The base SVG contains terrain, pastures, paths and the empty pen. Ten transparent scenery files provide rocks, bushes, flowers, grass tufts, dog, tree, barn, silo, hay bale and fence sections. `stageOneScenery` places 21 instances with stable IDs, asset selection, position and optional rotation/scale. Each file includes its own definitions. `GatesScenery` renders a separate group per instance under sheep and gates, with `data-scenery-id` and `data-scenery-asset` for independent targeting. A future animation can target the inner image while preserving the placement transform. No prop animations or random placement have been added. Other stages can supply different placement lists.
+
+Desktop viewport requirements remain 1024×600, 1280×720 and 1440×900 without scrolling, including instructions, pause/resume, dusk, return and summary. Tests cover standalone asset loading, independent instances, geometry, gate queues, automatic return, tint pause/reset, physical Hebrew keys and cleanup. All agent-managed verification servers must use a port other than 5173, which is reserved for the user; configure the Playwright base URL and server port together.

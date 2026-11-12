@@ -1,4 +1,4 @@
-# Gatekeepers artwork v1
+# Gatekeepers artwork v3
 
 Art direction: near-top-down modern TV-cartoon farm, clean bold outlines, bright grass, sandy paths, humor in the scenery, and very visible yellow signs.
 
@@ -6,7 +6,7 @@ Art direction: near-top-down modern TV-cartoon farm, clean bold outlines, bright
 
 | File | Use |
 | --- | --- |
-| `farm-background.svg` | Static 1600×900 farm with central **empty** sheep pen, two unobstructed routes to left/right, distant barn, dog, foliage |
+| `farm-background.svg` | Static 1600×900 farm with central **empty** sheep pen, four pen approaches, a shared winding four-gate route, crossing shortcuts and two edge pastures; no baked-in scenery |
 | `sheep.svg` | Transparent 160×115 sheep sprite facing right; flip horizontally for leftward movement |
 | `wooden-gate.svg` | Transparent closed wooden gate sprite |
 | `wooden-gate-open.svg` | Matching open gate sprite with leaf swung aside |
@@ -17,16 +17,24 @@ These are editable vector **production starter assets**, not a raster export of 
 ## Coordinate and integration notes
 
 - Background logical size: `1600×900`. Keep the full background image aspect ratio when rendered. Mobile landscape scales the farm into the available upper region with the physical keyboard row below.
-- Pen occupies approximately `x=590..1010, y=244..691`; the left and right route entries are roughly `(590,470)` and `(1010,470)`. Background paths are decorative; choose deterministic curves for actual sheep trajectories that follow their visible corridor.
-- Paths go toward the left edge and right edge; don't reuse the old prototype's two left-to-right parallel lanes.
+- Pen occupies `x=650..950, y=340..560`. The active stage-one exit is south at `(800,515)`; the north, west and east approaches are locked.
+- `src/content/gates.ts` supplies the exact cubic curves used by sheep and by the paths in the background. Unit tests check their agreement. All sheep share four gates before splitting to `(160,510)` and `(1440,510)`.
 - Draw sheep over the background. The visible pen must be empty in the underlying artwork.
 - Draw a gate sprite at the desired path interception point, draw a sign above it, and render letter labels in a separate text layer with strong contrast. The sprite artwork itself contains no lettering.
 - Open and closed gate states must agree with the simulation's authoritative state. Don't treat rotations of the whole gate frame as opening the gate.
 - Level-specific physical keyboard mappings and the single-row touch keyboard are defined in application code.
-- The playable `GatesPrototype` now mounts the separate SVG layers and uses one left route and one right route, while retaining keyboard and single-row touch controls. The prototype still has no level progression or persistent saves.
+- The playable `GatesPrototype` now mounts the separate SVG layers and uses the shared four-gate route and two pasture branches, while retaining keyboard and single-row touch controls. The prototype still has no level progression or persistent saves.
 
 ## Follow-up work
 
 1. Verify visual scale, sign clarity, and sheep alignment with the curved dirt paths on actual landscape phones and desktop screens.
 2. Refine gate opening transitions and sheep crossings after playtesting.
-3. Run the project build and browser suite in a checkout with dependencies installed; no such test run has been performed as part of this integration.
+3. Keep map geometry and routes aligned when authoring later stages.
+
+## Independent scenery
+
+`scenery/` contains transparent standalone SVGs: `rock.svg`, `bush.svg`, `flower.svg`, `grass-tuft.svg`, `dog.svg`, `tree.svg`, `barn.svg`, `silo.svg`, `hay-bale.svg`, and `fence.svg`. Each file includes its own gradients and symbols; no references to definitions in the background are required. The pen, terrain, paths and pastures remain in `farm-background.svg`.
+
+`src/content/gatesScenery.ts` defines the asset bounds/origin and the `stageOneScenery` placement list. Every instance has a stable `id`, asset name, `x`, `y`, optional `rotation` (degrees) and optional `scale`. Reuse a file for multiple props; add another asset entry for a visual variant. A later stage can supply its own placement list to `GatesScenery` without editing the base map or simulation. Array order determines draw order.
+
+`GatesScenery` gives each instance a separate SVG group identified by `data-scenery-id` and `data-scenery-asset`. The placement group owns world translation/rotation/scale; animations can target its inner image without replacing that transform. All props render below sheep/gates and below the dusk tint. No animation or random repositioning is enabled by this extraction.

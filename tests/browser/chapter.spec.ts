@@ -97,16 +97,16 @@ test("Hebrew correction, physical keys, exact position and prizes survive refres
 
 test("spelling hides the answer, plays local audio and retains exposure classification on reload", async ({
   page,
+  baseURL,
 }) => {
   const errors: string[] = [];
   const remote: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  const localOrigin = new URL(baseURL!).origin;
   page.on("request", (r) => {
-    if (
-      !r.url().startsWith("http://127.0.0.1:5173") &&
-      !r.url().startsWith("ws://127.0.0.1:5173")
-    )
-      remote.push(r.url());
+    // A fresh test server may use a different local port from the user's server.
+    const origin = new URL(r.url()).origin.replace(/^ws/, "http");
+    if (origin !== localOrigin) remote.push(r.url());
   });
   await quiet(page);
   const clipResponse = page.waitForResponse(

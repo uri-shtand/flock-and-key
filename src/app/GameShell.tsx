@@ -775,9 +775,10 @@ export function GameShell() {
               <p className="muted">
                 בלי לחץ. עזרה בחינם, אפשר לתקן ואפשר לעצור בכל רגע.
               </p>
-              <h2>משחקון חדש · אב־טיפוס</h2>
-              <div className="actions"><button onClick={() => setScreen("gates")}>🐑 שומרי השערים (משחקון 5)</button></div>
-              <h2>רק עוד משחקון אחד?</h2>
+              <div className="game-menu-heading">
+                <h2>רק עוד משחקון אחד?</h2>
+                <button onClick={() => setScreen("gates")}>🐑 שומרי השערים (משחקון 5)</button>
+              </div>
               <div className="game-menu">
                 {stages.map((s, i) => (
                   <button
