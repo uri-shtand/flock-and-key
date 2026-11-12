@@ -1537,3 +1537,47 @@ button.danger-button:hover:not(:disabled) {
 }
 
 main.gates-screen { max-width: 1920px; width: 100%; }
+
+
+/* Touch controls share the physical middle-row Hebrew keyboard geometry. */
+.gate-prototype-keyboard { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; }
+.gate-prototype-keyboard-label { color: #f5efd9; font-weight: 700; white-space: nowrap; }
+.gate-prototype-key-row { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 7px; width: min(100%, 980px); }
+.gate-prototype-key { min-width: 0; min-height: 54px; padding: 4px; border-radius: 12px; font-size: clamp(18px, 2.1vw, 30px); background: #e5e3d6; color: #5a5e5c; border: 2px solid #828b8b; box-shadow: 0 3px 0 #646d6b; touch-action: manipulation; }
+.gate-prototype-key.is-active { background: #ffd066; color: #24364c; border-color: #8f6539; box-shadow: 0 4px 0 #956c32; }
+.gate-prototype-key.is-operating { background: #bdedc4; border-color: #4a7b57; box-shadow: 0 2px 0 #386348; transform: translateY(2px); }
+.gate-prototype-key:not(.is-active):hover { background: #e5e3d6; transform: none; box-shadow: 0 3px 0 #646d6b; }
+.gate-prototype-keyboard [aria-disabled="true"] { cursor: default; }
+.gate-prototype-key-row button { user-select: none; -webkit-user-select: none; }
+@media (max-width: 900px) and (orientation: landscape) {
+  main.gates-screen { padding: 4px 8px; }
+  .gates-screen .topbar { padding: 0 0 3px; }
+  .gates-screen .topbar .brand small, .gates-screen .topbar .icon-button, .gates-screen footer { display: none; }
+  .gates-screen .topbar .brand-icon { width: 30px; height: 30px; font-size: 19px; }
+  .gates-screen .topbar .brand b { font-size: 17px; }
+  .gate-prototype { padding: 0; }
+  .gate-prototype-toolbar { flex-direction: row; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .gate-prototype-toolbar h1 { font-size: 16px; line-height: 1.2; }
+  .gate-prototype-toolbar h1 small { display: none; }
+  .gate-prototype-toolbar p { display: none; }
+  .gate-prototype-stats { gap: 5px; font-size: 13px; }
+  .gate-prototype-stats button { font-size: 12px; padding: 4px 6px; border-width: 1px; border-radius: 7px; box-shadow: none; }
+  .gate-prototype-world { width: 100%; height: min(56dvh, calc(100dvh - 156px)); min-height: 125px; aspect-ratio: auto; border-radius: 9px; }
+  .gate-prototype-world svg { object-fit: contain; }
+  .gate-prototype-keyboard { margin-top: 5px; gap: 0; }
+  .gate-prototype-keyboard-label { display: none; }
+  .gate-prototype-key-row { gap: 4px; width: 100%; }
+  .gate-prototype-key { min-height: 44px; height: min(13dvh, 58px); font-size: clamp(17px, 3.6vw, 25px); border-radius: 8px; border-width: 1px; box-shadow: 0 2px 0 #646d6b; }
+  .gate-prototype-help { display: none; }
+  .gate-prototype-dialog { padding: 12px 16px; font-size: 13px; width: min(440px, 94%); }
+  .gate-prototype-dialog h2 { font-size: 18px; margin-bottom: 4px; }
+  .gate-prototype-dialog p { margin: 4px 0; }
+  .gate-prototype-dialog button { padding: 5px 12px; margin-top: 6px; }
+}
+@media (max-width: 900px) and (orientation: portrait) {
+  .gates-screen .gate-prototype-world { aspect-ratio: 1200/660; }
+  .gate-prototype-keyboard { flex-direction: column; gap: 8px; }
+  .gate-prototype-key-row { gap: 3px; }
+  .gate-prototype-key { min-height: 44px; font-size: 19px; padding: 3px; }
+  .gate-prototype::before { content: "סובבו את הטלפון לרוחב כדי לשחק בנוחות"; display: block; background: #fff6df; padding: 10px; border-radius: 10px; text-align: center; margin: 6px 0; color: #35452c; }
+}
