@@ -1,4 +1,5 @@
 import { difficultyLevels } from "../content/difficulty";
+import { GatesPrototype } from "./gates/GatesPrototype";
 import { DadCratePrompt, CrateBackdrop } from "../components/CrateTask";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PhaserStage } from "../components/PhaserStage";
@@ -37,7 +38,7 @@ import {
   type Session,
 } from "../progress/GameStore";
 
-type Screen = "home" | "game" | "parent" | "shop";
+type Screen = "home" | "game" | "parent" | "shop" | "gates";
 export function GameShell() {
   const [loaded] = useState(loadGame);
   const [progress, setProgress] = useState<GameProgress>(loaded.progress);
@@ -590,7 +591,9 @@ export function GameShell() {
           {warning}
         </p>
       )}
-      {screen === "parent" ? (
+      {screen === "gates" ? (
+        <GatesPrototype onExit={leave} />
+      ) : screen === "parent" ? (
         <ParentDashboard
           progress={progress}
           onBack={() => setScreen("home")}
@@ -772,6 +775,8 @@ export function GameShell() {
               <p className="muted">
                 בלי לחץ. עזרה בחינם, אפשר לתקן ואפשר לעצור בכל רגע.
               </p>
+              <h2>משחקון חדש · אב־טיפוס</h2>
+              <div className="actions"><button onClick={() => setScreen("gates")}>🐑 שומרי השערים (משחקון 5)</button></div>
               <h2>רק עוד משחקון אחד?</h2>
               <div className="game-menu">
                 {stages.map((s, i) => (
