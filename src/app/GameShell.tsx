@@ -541,7 +541,7 @@ export function GameShell() {
           ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
           : screen === "home"
             ? "home-screen"
-            : screen === "shop" ? "shop-screen" : undefined
+            : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : undefined
       }
     >
       <header className="topbar">
