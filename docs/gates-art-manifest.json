@@ -1,0 +1,74 @@
+{
+  "version": 2,
+  "date": "2026-11-13",
+  "frame": "1600x900 SVG farm; HTML panels in letterbox margins",
+  "reference": "Existing public/assets/gates sheep, wooden gates and independent scenery SVGs",
+  "provenance": "Project-authored React/SVG accents. The dog prop is derived from the established PitsiIllustration charcoal/tan standing dog; the gearbox was replaced by a stylized vintage truck H-pattern shifter. No external art or raster generation.",
+  "assets": [
+    {
+      "id": "gearbox",
+      "source": "src/app/gates/GatesDecor.tsx#Gearbox",
+      "states": [
+        "idle",
+        "opening",
+        "closing",
+        "paused",
+        "reduced-motion"
+      ],
+      "purpose": "Vintage H-pattern shifter with a fixed position for each gate, retained selection and pause-aware neutral-channel movement",
+      "technical_checks_passed": true
+    },
+    {
+      "id": "ambient-vectors",
+      "source": "src/app/gates/GatesDecor.tsx#GatesDecor",
+      "states": [
+        "clouds",
+        "butterflies",
+        "bunting",
+        "wind"
+      ],
+      "purpose": "Round atmosphere below gameplay markers",
+      "technical_checks_passed": true
+    },
+    {
+      "id": "sheep-costumes",
+      "source": "src/app/gates/GatesPrototype.tsx",
+      "states": [
+        "bow-tie",
+        "flower",
+        "colored-party-hats"
+      ],
+      "purpose": "Personality without changing routes or collisions",
+      "technical_checks_passed": true
+    },
+    {
+      "id": "round-gardens",
+      "source": "src/content/gatesScenery.ts#sceneryForLevel",
+      "states": [
+        "five stable placement sets"
+      ],
+      "purpose": "Reuse standalone grass and flower art in different arrangements",
+      "technical_checks_passed": true
+    },
+    {
+      "id": "gate-feedback",
+      "source": "src/app/gates/GatesPrototype.tsx",
+      "states": [
+        "locked",
+        "countdown",
+        "next-gate",
+        "actuating"
+      ],
+      "purpose": "Readable gate status with symbols and motion alternatives",
+      "technical_checks_passed": true
+    },
+    {
+      "id": "pitsi-prop",
+      "source": "public/assets/gates/scenery/dog.svg",
+      "derived_from": "src/components/PitsiIllustration.tsx",
+      "purpose": "Use the established charcoal/tan standing dog instead of the mismatched cream cartoon",
+      "technical_checks_passed": true
+    }
+  ],
+  "verification": "55 unit tests and all 31 browser tests passed. Inspected Pitsi and the H-pattern shifter at 1024x600 and six-/nine-gate farms at 1440x900, plus the active nine-gate farm at 1024x600. Asset loading, route/gate coordinates, pause/reduced motion, selected-slot persistence, migration and unclipped layouts were verified. Vector art needs no raster alpha/palette normalization. Further physical-key fun testing remains appropriate."
+}

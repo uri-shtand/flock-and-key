@@ -23,8 +23,26 @@ Read README.md and docs/architecture.md before changing the application. The sup
 - Keep the original GDD intact; document decisions separately.
 - Do not implement the whole GDD unless requested. Current scope is a working scaffold.
 
+## Game design and iteration
+
+- Before a substantial gameplay change, document the intended experience, implementation plan and “why might this be fun?” hypothesis. Update the document with delivered behavior, deviations, verification and open questions.
+- Give each level a clear new challenge. Avoid increasing several difficulty variables at once; use authored defaults and small, bounded tuning controls.
+- Let adults and automated tests use the same configuration UI. Applying changes must clearly explain whether it restarts the round. Preserve effective settings with saved runs and provide a way to copy them.
+- Compare relevant games using primary sources. Document which ideas were adapted and why they suit this game's audience.
+- Treat humor and animation as feedback: clarify actions, reward progress and give characters personality. Never ridicule mistakes or obscure instructions.
+- Automated completion does not prove enjoyment. Finish gameplay work with specific human playtest questions and one-variable comparisons.
+- Inspect existing artwork before adding assets. Prefer coherent variations and independently animated parts; record provenance for new art.
+
+## Persistence
+
+- Validate saved snapshots against gameplay invariants, not only field types and ranges. Exercise save validation throughout real runs.
+- When adding a separate progress store, explicitly document its relationship to parent reporting, export and reset.
+
 ## Verification
 
 Always run agent-managed browser tests and verification servers on a port other than 5173 (for example, 5174 or another free port). Port 5173 is reserved for the user's development server. Never reuse, restart or stop the server on 5173 for testing. Configure the test base URL and test server port together.
 
 Run npm run build and npm test for logic changes. For input, lifecycle, layout or Phaser integration changes run npm run test:e2e as well (install Chromium once). Test Hebrew input, correction, refresh persistence and console errors. Never claim a browser test passed without running it. Avoid testing trivial presentation details.
+
+- Check dialogs and controls against every clipping ancestor, not just the browser viewport. Inspect screenshots as well as running layout assertions.
+- Pause must freeze simulation-driven visual feedback, mechanisms and scenery. Test mid-action pause/resume and respect OS reduced-motion preferences.

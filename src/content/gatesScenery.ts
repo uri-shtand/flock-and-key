@@ -44,3 +44,12 @@ export const stageOneScenery: readonly SceneryPlacement[] = [
   { id: "grass-northeast", asset: "grassTuft", x: 1486, y: 383 },
   { id: "dog", asset: "dog", x: 179, y: 790 },
 ];
+
+const levelScenery = Array.from({ length: 5 }, (_, level): readonly SceneryPlacement[] => [
+  ...stageOneScenery.map((item) => item.asset === "flower" ? { ...item, rotation: level * 31, scale: 1 + level * 0.12 } : item),
+  ...Array.from({ length: (level + 1) * 2 }, (_, i): SceneryPlacement => ({
+    id: `round-${level}-garden-${i}`, asset: level % 2 ? "flower" : "grassTuft",
+    x: 170 + i * 120, y: i % 2 ? 850 : 90, rotation: i * 27, scale: 0.9 + i % 3 * 0.15,
+  })),
+]);
+export function sceneryForLevel(level: number): readonly SceneryPlacement[] { return levelScenery[level - 1]; }

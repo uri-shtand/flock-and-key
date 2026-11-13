@@ -1615,3 +1615,93 @@ main.gates-screen { max-width: 1920px; width: 100%; }
   .home-screen .game-menu-heading { margin-block: 4px; }
   .home-screen .game-menu-heading button { padding: 4px 10px; }
 }
+
+/* Gates: five short rounds, readable traffic, a compact adult tuning lab. */
+.gate-levels { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-bottom: 6px; }
+.gate-levels button { min-width: 0; padding: 6px 8px; font-size: 15px; border: 1px solid #ada77e; box-shadow: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.gate-levels button[aria-current] { background: #ffe4a1; color: #374a36; outline: 2px solid #d2a74c; outline-offset: -3px; }
+.gate-levels button span { color: #775218; font-size: 14px; }
+.gate-storage-warning { margin: 0 0 4px; color: #ffecb6; }
+.gate-prototype-world > svg { pointer-events: none; }
+.gate-prototype-dialog { width: min(580px, 94%); box-sizing: border-box; font-size: 17px; }
+.gate-prototype-dialog h2 { font-size: 25px; }
+.gate-dialog-actions { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
+.gate-dialog-actions button { margin-top: 6px; }
+.gate-medals { color: #95601c; font-size: 38px; line-height: 1; margin: 8px; }
+.gate-prototype-keyboard-label { font-size: 15px; }
+.gate-prototype-key-row { max-width: 800px; }
+.gate-prototype-key.is-next { outline: 3px solid #fff9d0; outline-offset: 1px; }
+.gate-rescue { flex-shrink: 0; font-size: 16px; padding: 8px 10px; }
+.gate-leaf { transition: transform 180ms ease-out; }
+.gate-sheep-bob { animation: gate-trot 450ms ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center bottom; }
+@keyframes gate-trot { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-4px) rotate(2deg); } }
+.gate-prototype[data-stopped="true"] .gate-sheep-bob { animation-play-state: paused; }
+.gate-prototype[data-still="true"] .gate-sheep-bob { animation: none; }
+.gate-prototype[data-still="true"] .gate-leaf { transition: none; }
+.gate-lab { direction: rtl; border: 3px solid #b88b4e; margin: auto; width: min(640px, calc(100vw - 40px)); padding: 18px 24px; }
+.gate-lab::backdrop { background: #152c24bb; }
+.gate-lab-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gate-lab-heading h2 { margin: 0; }
+.gate-lab-heading button { margin: 0; padding: 4px 12px; }
+.gate-lab p { margin: 6px 0 10px; }
+.gate-lab-level { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.gate-lab select { font: inherit; color: inherit; background: #fffdf4; border: 1px solid #9c8f6d; border-radius: 6px; padding: 5px; }
+.gate-lab-sliders { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; margin: 14px 0; }
+.gate-lab-sliders label > span { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.gate-lab output { font-variant-numeric: tabular-nums; font-weight: 700; color: #78521f; }
+.gate-lab input[type="range"] { width: 100%; margin: 7px 0; min-height: 24px; accent-color: #527357; direction: ltr; }
+.gate-lab-options { display: flex; justify-content: center; gap: 24px; margin: 8px 0; }
+.gate-lab input[type="checkbox"] { width: 20px; height: 20px; vertical-align: middle; accent-color: #527357; }
+.gate-lab-presets { display: flex; justify-content: center; gap: 8px; }
+.gate-lab-presets button { font-size: 15px; padding: 6px 12px; margin: 2px 0; }
+.gate-lab small { display: block; margin-top: 8px; font-size: 14px; }
+.gate-lab-json { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 14px; }
+.gate-lab-json input { min-width: 0; flex: 1; direction: ltr; padding: 5px; }
+@media (min-width: 901px) and (max-height: 650px) {
+  .gate-prototype-toolbar h1 { font-size: 22px; }
+  .gate-prototype-toolbar h1 small { font-size: 15px; }
+  .gate-prototype-toolbar p { font-size: 14px; }
+  .gate-prototype-toolbar { gap: 6px; }
+  .gate-prototype-stats { gap: 5px; }
+  .gate-prototype-stats button { font-size: 14px; padding: 5px 8px; }
+  .gate-levels button { font-size: 14px; padding: 4px; }
+  .gate-prototype-dialog { padding: 12px 20px; font-size: 16px; }
+  .gate-prototype-dialog h2 { margin-bottom: 6px; font-size: 22px; }
+  .gate-prototype-dialog p { margin: 6px 0; }
+  .gate-medals { font-size: 30px; margin: 4px; }
+  .gate-lab { padding: 14px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gate-sheep-bob { animation: none; }
+  .gate-leaf { transition: none; }
+}
+
+/* Use the map's letterbox margins for the machine and sheep banter, not extra HUD rows. */
+.gate-machine-panel, .gate-farm-note { position: absolute; z-index: 1; top: 50%; transform: translateY(-50%); width: clamp(135px, 12vw, 175px); padding: 12px; text-align: center; border: 2px solid #9eae79; border-radius: 16px; background: #fbf2d9; color: #35452c; }
+.gate-machine-panel { left: 14px; }
+.gate-farm-note { right: 14px; }
+.gate-machine-panel h3, .gate-farm-note h3 { font-size: 17px; margin: 0; }
+.gate-prototype-world .gate-machine-panel svg { width: 100%; height: auto; margin-top: 4px; }
+.gate-machine-panel p, .gate-farm-note p { font-size: 16px; line-height: 1.5; margin: 6px 0; }
+.gate-machine-panel small { font-size: 14px; }
+.gate-machine-panel progress { display: block; width: 100%; accent-color: #8eac5d; height: 10px; margin: 8px 0; }
+.gate-note-sheep { font-size: 35px; }
+.gate-prototype-overlay { z-index: 2; }
+@media (max-width: 900px) {
+  .gate-machine-panel, .gate-farm-note { position: static; transform: none; width: auto; padding: 4px; border: 0; border-radius: 0; }
+  .gate-prototype-world { display: grid; grid-template-columns: 110px 1fr; }
+  .gate-prototype-world > svg { grid-column: 2; grid-row: 1 / 3; }
+  .gate-farm-note, .gate-machine-panel { grid-column: 1; }
+  .gate-machine-panel small, .gate-farm-note h3, .gate-note-sheep { display: none; }
+  .gate-machine-panel h3, .gate-machine-panel p, .gate-farm-note p { font-size: 12px; }
+}
+
+.gate-lab input:focus-visible, .gate-lab select:focus-visible { outline: 3px solid #8a632e; outline-offset: 3px; }
+.gate-prototype-stats strong { font-variant-numeric: tabular-nums; }
+
+.gate-note-sheep { display: block; max-width: 100%; object-fit: contain; margin: 6px auto 0; }
+.gate-summary, .gate-help-dialog { width: min(760px, 94%); }
+.gate-summary-body { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 20px; }
+.gate-summary-body > div + div { border-inline-start: 1px solid #d5c8a5; padding-inline-start: 18px; }
+.gate-summary .gate-dialog-actions, .gate-help-dialog > button { margin-top: 4px; }
+.gate-summary button, .gate-help-dialog > button { padding: 7px 14px; }

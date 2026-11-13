@@ -1,4 +1,4 @@
-# Gatekeepers artwork v3
+# Gatekeepers artwork v4
 
 Art direction: near-top-down modern TV-cartoon farm, clean bold outlines, bright grass, sandy paths, humor in the scenery, and very visible yellow signs.
 
@@ -18,12 +18,12 @@ These are editable vector **production starter assets**, not a raster export of 
 
 - Background logical size: `1600×900`. Keep the full background image aspect ratio when rendered. Mobile landscape scales the farm into the available upper region with the physical keyboard row below.
 - Pen occupies `x=650..950, y=340..560`. The active stage-one exit is south at `(800,515)`; the north, west and east approaches are locked.
-- `src/content/gates.ts` supplies the exact cubic curves used by sheep and by the paths in the background. Unit tests check their agreement. All sheep share four gates before splitting to `(160,510)` and `(1440,510)`.
+- `src/content/gates.ts` supplies the exact cubic curves used by sheep and by the paths in the background. Unit tests check their agreement. In level 1 all sheep share four gates before splitting to `(160,510)` and `(1440,510)`.
 - Draw sheep over the background. The visible pen must be empty in the underlying artwork.
 - Draw a gate sprite at the desired path interception point, draw a sign above it, and render letter labels in a separate text layer with strong contrast. The sprite artwork itself contains no lettering.
 - Open and closed gate states must agree with the simulation's authoritative state. Don't treat rotations of the whole gate frame as opening the gate.
 - Level-specific physical keyboard mappings and the single-row touch keyboard are defined in application code.
-- The playable `GatesPrototype` now mounts the separate SVG layers and uses the shared four-gate route and two pasture branches, while retaining keyboard and single-row touch controls. The prototype still has no level progression or persistent saves.
+- The playable `GatesPrototype` now mounts the separate SVG layers and uses the shared four-gate route and two pasture branches, while retaining keyboard and single-row touch controls. Later levels overlay additional approaches from the same geometry used by movement, unlocking the existing pen and shortcut gates. Five rounds and versioned local saves are implemented; see `docs/gates-playtest-revision.md`.
 
 ## Follow-up work
 
@@ -38,3 +38,9 @@ These are editable vector **production starter assets**, not a raster export of 
 `src/content/gatesScenery.ts` defines the asset bounds/origin and the `stageOneScenery` placement list. Every instance has a stable `id`, asset name, `x`, `y`, optional `rotation` (degrees) and optional `scale`. Reuse a file for multiple props; add another asset entry for a visual variant. A later stage can supply its own placement list to `GatesScenery` without editing the base map or simulation. Array order determines draw order.
 
 `GatesScenery` gives each instance a separate SVG group identified by `data-scenery-id` and `data-scenery-asset`. The placement group owns world translation/rotation/scale; animations can target its inner image without replacing that transform. All props render below sheep/gates and below the dusk tint. No animation or random repositioning is enabled by this extraction.
+
+## Playtest revision: character and shifter
+
+`scenery/dog.svg` is now derived directly from the project-authored `src/components/PitsiIllustration.tsx`: standing charcoal-and-tan Pitsi, four legs, cream face stripe and red neckerchief. The prop retains viewBox `-100 -90 210 150`, placement bounds and independent loading. No third-party image or generation tool was used.
+
+`GatesDecor.tsx#Gearbox` draws a stylized vintage truck gear stick: aged metal H-pattern plate, fixed labeled slots, leather gaiter, chrome stem and dark knob. `gatesShifter.ts` supplies slot positions and motion via the neutral channel. Gates added in later levels never move an earlier slot. The dog and selector share the existing bold outlines and warm palette. Full in-context verification is recorded in the playtest revision.

@@ -1,14 +1,77 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 -90 210 150">
-  <g stroke="#2c3332" stroke-width="5" stroke-linejoin="round">
-    <ellipse cx="0" cy="37" rx="87" ry="16" fill="#5b8b24" stroke="none" opacity=".4" />
-    <ellipse cx="-24" cy="1" rx="67" ry="42" fill="#fcf5d9" />
-    <path d="M-56-17Q-91-74-56-73Q-37-56-29-23" fill="#303b42" />
-    <circle cx="49" cy="-13" r="34" fill="#fff6e2" />
-    <path d="M26-33L11-71Q-11-81 4-43Z M61-35L85-60Q101-45 79-16Z" fill="#313c42" />
-    <ellipse cx="60" cy="0" rx="23" ry="16" fill="#fdf2d9" />
-    <circle cx="71" cy="-5" r="7" fill="#263139" stroke="none" />
-    <circle cx="45" cy="-23" r="5" fill="#263139" stroke="none" />
-    <path d="M54 12Q68 32 84 12" fill="none" />
-    <path d="M66 20Q87 48 82 18" fill="#f1888e" />
-  </g>
+<!-- Derived from the project-authored PitsiIllustration: charcoal/tan standing sheepdog. -->
+<g transform="translate(-95 -90) scale(0.8333333333)">
+      <ellipse cx="120" cy="161" rx="86" ry="9" fill="#24364c" opacity=".1" />
+      <g
+        stroke="#293b46"
+        stroke-width="3.5"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+      >
+        <path d="M59 105Q29 99 23 67Q21 59 29 60Q39 82 69 82" fill="#4a5150" />
+        <path d="M78 122L64 152Q58 153 58 159H86L99 129" fill="#b78f65" />
+        <path d="M120 126L129 153Q121 154 124 160H148L143 123" fill="#b78f65" />
+        <path
+          d="M53 105Q52 78 87 75L141 76Q166 76 165 105Q161 137 130 139L85 137Q59 134 53 105Z"
+          fill="#4a5150"
+        />
+        <path
+          d="M143 105Q140 127 151 150Q143 153 145 160H172L168 110"
+          fill="#d7b18a"
+        />
+        <path d="M91 121L87 150Q77 151 78 159H105L112 125" fill="#d7b18a" />
+        <path
+          d="M140 84Q127 105 136 123L150 133L163 107Z"
+          fill="#fff2d6"
+          stroke="none"
+        />
+        <path d="M139 64L125 24Q122 14 133 20L157 39" fill="#4a5150" />
+        <path d="M173 43L189 17Q196 8 197 21L194 65" fill="#4a5150" />
+        <path d="M135 34L141 50L150 43Z" fill="#c49880" stroke="none" />
+        <path d="M188 34L180 46L190 50Z" fill="#c49880" stroke="none" />
+        <path
+          d="M132 62Q130 35 162 33Q188 31 196 57L199 81Q192 106 166 112Q136 103 132 81Z"
+          fill="#4a5150"
+        />
+        <path
+          d="M164 36Q152 52 156 68L145 83Q152 100 168 106Q187 101 193 86L178 72Q178 54 164 36Z"
+          fill="#fff2d6"
+          stroke="none"
+        />
+        <path
+          d="M161 76Q170 66 185 76Q208 76 209 87Q209 99 187 102L167 98Q153 92 161 76Z"
+          fill="#dfbb92"
+        />
+        <path
+          d="M173 97Q175 114 185 114Q195 112 191 100"
+          fill="#e59391"
+          stroke-width="2.5"
+        />
+        <path d="M161 93Q175 103 195 95" fill="none" stroke-width="2.5" />
+        <path
+          d="M198 77Q211 75 214 82Q213 91 202 90Q195 84 198 77Z"
+          fill="#293b46"
+        />
+        <path d="M142 72Q149 59 156 69" fill="none" />
+        <ellipse
+          cx="180"
+          cy="64"
+          rx="5"
+          ry="7"
+          fill="#fffdf2"
+          stroke-width="2"
+        />
+        <circle cx="182" cy="65" r="2.5" fill="#293b46" stroke="none" />
+        <path d="M177 51L185 53" fill="none" stroke="#d7b18a" />
+        <path
+          d="M139 106L155 113L175 108L168 119L153 121L139 114Z"
+          fill="#da7154"
+        />
+        <path d="M155 120L147 136L163 129Z" fill="#f09168" />
+      </g>
+      <g fill="none" stroke="#c59641" stroke-width="3" stroke-linecap="round">
+        <path d="M215 62L224 55M220 72L232 70M220 101L229 106" />
+      </g>
+
+</g>
 </svg>
