@@ -5,8 +5,8 @@ import { GatesLab } from "./GatesLab";
 import { stageOneScenery, sceneryForLevel } from "../../content/gatesScenery";
 import { gatesLevels, levelConfig, type GatesConfig } from "../../content/gatesLevels";
 import { keyboardRows } from "../../typing/KeyboardMap";
-import { gateControls as CONTROLS, lockedGates, sheepPosition, routeForLevel } from "../../content/gates";
-import { initial, operateGate, tick, helpGate, nextGate, activeGateCount, medal, type Game } from "../../typing/GatesSimulation";
+import { gateControls as CONTROLS, lockedGates, sheepGroups, sheepPosition, routeForLevel } from "../../content/gates";
+import { initial, operateGate, tick, helpGate, nextGate, groupNextGate, activeGateCount, medal, type Game } from "../../typing/GatesSimulation";
 import { readGatesSave, writeGatesSave, type GatesSave } from "../../progress/GatesStore";
 
 const HOME_ROW = keyboardRows[1];
@@ -26,8 +26,8 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
   const modal = useRef<HTMLDivElement>(null);
   const panelTrigger = useRef<HTMLButtonElement | null>(null);
   const last = useRef<number | null>(null);
-  const live = useRef<GatesSave>({ version: 2, game, best });
-  live.current = { version: 2, game, best };
+  const live = useRef<GatesSave>({ version: 3, game, best });
+  live.current = { version: 3, game, best };
   const controllable = game.phase === "out" || game.phase === "back";
   const running = controllable || game.phase === "regroup";
   const stopped = paused || panel !== null;
@@ -99,12 +99,16 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
   }
   function closePanel() { setPanel(null); panelTrigger.current?.focus(); }
   return (
-    <section className={`gate-prototype gate-theme-${content.theme}`} dir="rtl" data-phase={game.phase} data-level={game.config.level} data-still={still} data-stopped={stopped || !running}>
+    <section className={`gate-prototype gate-theme-${content.theme}`} dir="rtl" data-phase={game.phase} data-level={game.config.level} data-still={still} data-stopped={stopped || !running}
+      onKeyDown={(e) => {
+        if (e.key !== "Escape" || e.repeat || e.ctrlKey || e.altKey || e.metaKey || e.nativeEvent.isComposing || !running || stopped) return;
+        e.preventDefault(); e.stopPropagation(); setPaused(true);
+      }}>
       <div className="gate-prototype-toolbar">
         <div><h1>שומרי השערים <small>{game.config.level}/5 · {content.title}</small></h1><p>{game.duskProgress > 0 ? "חוזרים הביתה · השערים בסדר ההפוך" : "יוצאים למרעה · פותחים רגע לפני שהעדר מגיע"} · {arrived}/{game.sheep.length} 🐑</p></div>
         <div className="gate-prototype-stats">
           <strong aria-label={`ניקוד ${game.score}`}>⭐ {game.score}</strong>
-          <button onClick={() => { setPaused((v) => !v); area.current?.focus(); }} disabled={!running || panel !== null}>{paused ? "המשך" : "הפסקה"}</button>
+          <button aria-keyshortcuts={running && !stopped ? "Escape" : undefined} title={paused ? "המשך" : "הפסקה (Esc)"} onClick={() => { setPaused((v) => !v); area.current?.focus(); }} disabled={!running || panel !== null}>{paused ? "המשך" : "הפסקה"}</button>
           <button className="secondary" onClick={(e) => openPanel("help", e.currentTarget)}>איך משחקים?</button>
           <button className="secondary" onClick={(e) => openPanel("lab", e.currentTarget)}>מעבדת הכיף</button>
           <button className="secondary" onClick={() => { save(); onExit(); }}>חזרה לבית</button>
@@ -124,15 +128,29 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
           <progress aria-label="התקדמות פעולת תיבת ההילוכים" max="1" value={game.lever ? 1 - game.lever.remaining / game.config.gearboxSeconds : 0} />
           <small>{game.selectedGate === null ? "ידית בסרק" : `ידית בשער ${CONTROLS[game.selectedGate].hebrew}`}</small>
         </aside>
-        <aside className="gate-farm-note" aria-label="פטפוטי העדר"><h3>{game.phase === "regroup" ? "שעת ערב" : game.phase === "back" ? "בדרך הביתה" : "חדשות מהעדר"}</h3><p role="status">{banter}</p><img src={ART + "sheep.svg"} alt="" width="76" height="55" className="gate-note-sheep" /></aside>
+        <aside className="gate-farm-note" aria-label="קבוצות העדר">
+          <h3>שתי קבוצות, שני מסלולים</h3>
+          {sheepGroups.map((group, lane) => {
+            const next = groupNextGate(game, lane);
+            const members = game.sheep.filter((s) => s.lane === lane);
+            const parked = members.every((s) => game.phase === "back" ? s.progress <= 0 : s.progress >= route.routeLengths[lane] - Math.floor(s.id / 2) * 64 - 0.01);
+            const status = controllable ? next === null ? parked ? game.phase === "back" ? "בבית!" : "במרעה!" : "בדרך ליעד" : `השער הבא: ${CONTROLS[next].hebrew}` :
+              game.phase === "regroup" ? "נחים במרעה" : game.phase === "done" ? "בבית!" : route.routes[lane].crossings.map((c) => CONTROLS[c.gate].hebrew).join(" ← ");
+            return <div className="gate-group-card" key={group.name} data-testid={`group-${lane}`}>
+              <strong><span style={{ color: group.color }}>{group.symbol}</span> {group.name}</strong>
+              <small>{status}</small>
+            </div>;
+          })}
+          <p className="gate-group-banter">{banter}</p>
+        </aside>
         <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" role="img" aria-label="חווה עם עדר כבשים, תיבת הילוכים ושערי אותיות לאורך המסלול">
           <image href={ART + "farm-background.svg?v=" + ART_VERSION} x="0" y="0" width="1600" height="900" />
           {game.config.level > 1 && <rect width="1600" height="900" fill={content.accent} opacity=".10" pointerEvents="none" />}
-          {game.config.level > 1 && <g data-testid="active-route" fill="none" strokeLinecap="round" pointerEvents="none">
-            <path d={route.path} stroke="#8e793f" strokeWidth="70" opacity=".35" />
-            <path d={route.path} stroke="#f7cf88" strokeWidth="60" />
-            <path d={route.path} stroke="#fff3ce" strokeWidth="3" strokeDasharray="8 23" />
-          </g>}
+          {route.routes.map((groupRoute, lane) => <g key={lane} data-testid="active-route" data-group={lane} fill="none" strokeLinecap="round" pointerEvents="none">
+            <path d={groupRoute.path} stroke="#8e793f" strokeWidth="44" opacity=".35" />
+            <path d={groupRoute.path} stroke="#f7cf88" strokeWidth="36" />
+            <path d={groupRoute.path} stroke={sheepGroups[lane].color} strokeWidth="5" strokeDasharray={sheepGroups[lane].dash} opacity=".8" />
+          </g>)}
           <GatesScenery items={game.config.level === 1 ? stageOneScenery : sceneryForLevel(game.config.level)} />
           <GatesDecor game={game} still={still} />
           {game.sheep.map((sheep) => {
@@ -143,11 +161,13 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
             return <g key={sheep.id} transform={`translate(${point.x} ${point.y})`}>
               <ellipse cy="9" rx="28" ry="7" fill="#293c3533" />
               <g className={moving ? "gate-sheep-bob" : ""} style={{ animationDelay: `${-sheep.id * 0.13}s` }}>
-                <image data-testid={`sheep-${sheep.id}`} data-progress={sheep.progress.toFixed(1)} href={ART + "sheep.svg?v=" + ART_VERSION}
+                <image data-testid={`sheep-${sheep.id}`} data-group={sheep.lane} data-progress={sheep.progress.toFixed(1)} href={ART + "sheep.svg?v=" + ART_VERSION}
                   x="-38" y="-43" width="76" height="55" transform={facesRight ? undefined : "scale(-1 1)"} />
                 {game.config.level === 1 ? <path d="M -18 -24 l 12 7 l -12 7 Z M 6 -24 l -12 7 l 12 7 Z" fill={sheep.id % 2 ? "#d9766b" : "#6598b0"} stroke="#694d39" strokeWidth="2" /> :
                   game.config.level === 2 ? <g transform="translate(-6 -42)" fill={sheep.id % 2 ? "#e5a0bc" : "#efce66"}><circle cx="-5" r="6" /><circle cx="5" r="6" /><circle cy="-6" r="6" /><circle r="4" fill="#795c39" /></g> :
                   <g transform={`translate(${facesRight ? 21 : -21} -44)`}><path d="M -15 0 L 0 -30 L 15 0 Z" fill={sheep.id % 2 ? content.accent : "#df7c60"} stroke="#694d39" strokeWidth="2" /><circle cy="-30" r="5" fill="#fff3c3" /></g>}
+                <circle cx="0" cy="-17" r="12" fill={sheepGroups[sheep.lane].color} stroke="#fff9dc" strokeWidth="2" />
+                <text y="-12" textAnchor="middle" fontSize="17" fontWeight="900" fill="#fff9dc">{sheepGroups[sheep.lane].symbol}</text>
               </g>
             </g>;
           })}
@@ -184,8 +204,8 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
             if (!e.shiftKey && document.activeElement === buttons[buttons.length - 1]) { e.preventDefault(); buttons[0].focus(); }
           }}>
             <div ref={modal} className={`gate-prototype-dialog${panel === "help" ? " gate-help-dialog" : game.phase === "done" ? " gate-summary" : ""}`} role="dialog" aria-modal="true" aria-labelledby="gate-dialog-title">
-              {panel === "help" ? <><h2 id="gate-dialog-title">דשא, שערים וקצת תזמון</h2><p>העדר הולך לבד. מקשי {keyGuide} פותחים וסוגרים את השערים המתאימים. שערי מנעול מצטרפים בשלבים הבאים. לידית יש מיקום משלה לכל שער.</p><p>הפס שמתחת לשער מראה מתי ייסגר. מעבר כבשה ממלא אותו מחדש. במרעה יורד ערב, ואז חוזרים בכיוון ההפוך.</p><p>נתקעתם? ״עזרה בשער״ פותחת את השער הבא בחינם. אין פסילה, וכל שלב זמין לבחירה.</p><button onClick={closePanel}>הבנתי</button></> :
-                game.phase === "ready" ? <><h2 id="gate-dialog-title">{content.title}</h2><p>{content.subtitle}</p><p>{game.sheep.length} כבשים · {gateCount} שערים · פתיחה ל־{game.config.openSeconds} שניות</p><p>העדר יוצא וחוזר לבד. המטרה: להחזיר את כולו הביתה.</p><button onClick={() => { setGame((g) => ({ ...g, phase: "out" })); resume(); }}>מתחילים</button></> :
+              {panel === "help" ? <><h2 id="gate-dialog-title">דשא, שערים וקצת תזמון</h2><p>שתי קבוצות הולכות לבד במסלולים שונים: ○ פרחים ו־★ כוכבים. לכל קבוצה סדר שערים משלה, ובשער משותף מחכים לתור. מקשי {keyGuide} פותחים וסוגרים את השערים המתאימים. שערי מנעול מצטרפים בשלבים הבאים. לידית יש מיקום משלה לכל שער.</p><p>הפס שמתחת לשער מראה מתי ייסגר. מעבר כבשה ממלא אותו מחדש. במרעה יורד ערב, ואז חוזרים בכיוון ההפוך.</p><p>Esc להפסקה. ״עזרה בשער״ פותחת בחינם. אין פסילה, וכל שלב זמין לבחירה.</p><button onClick={closePanel}>הבנתי</button></> :
+                game.phase === "ready" ? <><h2 id="gate-dialog-title">{content.title}</h2><p>{content.subtitle}</p><p>{game.sheep.length} כבשים · {gateCount} שערים · פתיחה ל־{game.config.openSeconds} שניות</p><p>○ פרחים ו־★ כוכבים יוצאים במסלולים שונים, וחוזרים בסדר ההפוך. עקבו אחרי הסימנים שעל הכבשים והשבילים!</p><button onClick={() => { setGame((g) => ({ ...g, phase: "out" })); resume(); }}>מתחילים</button></> :
                 game.phase === "done" ? <><h2 id="gate-dialog-title">כל הכבשים בבית! 🐑</h2><div className="gate-summary-body"><div><div className="gate-medals" aria-label={`${medal(game)} מדליות`}>{"★".repeat(medal(game))}{"☆".repeat(3 - medal(game))}</div><p>{content.finish}</p></div><div><p>ניקוד: {game.score} · עזרה: {game.assists} · המתנה ממוצעת לכבשה: {(game.waiting / game.sheep.length).toFixed(1)} שנ׳</p><p>המדליות הן בונוס: עד 8 שניות המתנה לכבשה = שלוש, עד 22 = שתיים.</p></div></div><div className="gate-dialog-actions">
                   {game.config.level < 5 ? <button onClick={() => newRound({ ...levelConfig(game.config.level + 1), hints: game.config.hints, reducedMotion: game.config.reducedMotion })}>לשלב הבא</button> : <strong>{best.every((n) => n > 0) ? "סיימתם את כל חמשת השלבים! 🏅" : "מסיבת הפיג׳מות הושלמה! 🏅"}</strong>}
                   <button className="secondary" onClick={() => newRound(game.config)}>שוב באותו שלב</button>

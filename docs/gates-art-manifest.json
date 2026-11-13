@@ -1,9 +1,9 @@
 {
-  "version": 2,
+  "version": 3,
   "date": "2026-11-13",
   "frame": "1600x900 SVG farm; HTML panels in letterbox margins",
   "reference": "Existing public/assets/gates sheep, wooden gates and independent scenery SVGs",
-  "provenance": "Project-authored React/SVG accents. The dog prop is derived from the established PitsiIllustration charcoal/tan standing dog; the gearbox was replaced by a stylized vintage truck H-pattern shifter. No external art or raster generation.",
+  "provenance": "Project-authored React/SVG accents. The dog prop is derived from the established PitsiIllustration charcoal/tan standing dog; the gearbox was replaced by a stylized vintage truck H-pattern shifter. No external art or raster generation. Two project-authored patterned group trails and symbol badges share geometry with the simulation; no external art was added.",
   "assets": [
     {
       "id": "gearbox",
@@ -68,7 +68,20 @@
       "derived_from": "src/components/PitsiIllustration.tsx",
       "purpose": "Use the established charcoal/tan standing dog instead of the mismatched cream cartoon",
       "technical_checks_passed": true
+    },
+    {
+      "id": "group-trails-and-badges",
+      "source": "src/content/gates.ts and src/app/gates/GatesPrototype.tsx",
+      "states": [
+        "ready gate orders",
+        "outbound next gate",
+        "return next gate",
+        "arrived",
+        "paused"
+      ],
+      "purpose": "Distinguish flower/circle and star groups with trail patterns, colors, sheep symbols and named status cards",
+      "technical_checks_passed": true
     }
   ],
-  "verification": "55 unit tests and all 31 browser tests passed. Inspected Pitsi and the H-pattern shifter at 1024x600 and six-/nine-gate farms at 1440x900, plus the active nine-gate farm at 1024x600. Asset loading, route/gate coordinates, pause/reduced motion, selected-slot persistence, migration and unclipped layouts were verified. Vector art needs no raster alpha/palette normalization. Further physical-key fun testing remains appropriate."
+  "verification": "Production build, 66 unit tests and all 32 browser tests passed. Gate signs, physical keys and shifter labels follow the same left-to-right keyboard mapping at all five levels. Reviewed the active nine-gate farm at 1024x600 with the updated labels. Group trail paths match sampled simulation geometry; routes avoid unrelated/locked gate centers. Three desktop viewport sizes, help, pause, resume and completion layouts fit without clipping. Save migration and occupied-crossing resume are verified. Human fun testing of spatial key selection remains appropriate."
 }

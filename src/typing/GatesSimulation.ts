@@ -1,6 +1,7 @@
 import { gateControls, routeForLevel } from "../content/gates";
 import { gatesLevels, levelConfig, type GatesConfig } from "../content/gatesLevels";
-export type Gate = { open: boolean; closingAt: number };
+export type Gate = { open: boolean; closingAt: number; trafficGroup: number | null };
+/** lane is the stable group ID; progress is local to that group’s route. */
 export type Sheep = { id: number; lane: number; progress: number };
 export type Game = {
   config: GatesConfig;
@@ -14,28 +15,46 @@ export type Game = {
   time: number; score: number; waiting: number; commands: number; assists: number;
 };
 export const SHEEP_SPACING = 64;
-const STOP_OFFSET = 40;
+export const GATE_CLEARANCE = 40;
 export function initial(config: GatesConfig = levelConfig()): Game {
-  return { config: { ...config }, selectedGate: null, shiftFrom: null, phase: "ready", sheep: Array.from({ length: config.sheepCount }, (_, id) => ({ id, lane: id % 2, progress: -id * SHEEP_SPACING })),
-    gates: gateControls.slice(0, gatesLevels[config.level - 1].gates).map(() => ({ open: false, closingAt: 0 })),
+  return { config: { ...config }, selectedGate: null, shiftFrom: null, phase: "ready", sheep: Array.from({ length: config.sheepCount }, (_, id) => ({ id, lane: id % 2, progress: -Math.floor(id / 2) * SHEEP_SPACING })),
+    gates: gateControls.slice(0, gatesLevels[config.level - 1].gates).map(() => ({ open: false, closingAt: 0, trafficGroup: null })),
     lever: null, duskProgress: 0, time: 0, score: 1000, waiting: 0, commands: 0, assists: 0 };
 }
 export function activeGateCount(game: Game): number { return gatesLevels[game.config.level - 1].gates; }
-/** Nearest closed gate ahead of any sheep, in travel order. Hints never invent routes. */
-export function nextGate(game: Game): number | null {
-  if (game.phase !== "out" && game.phase !== "back") return null;
+/** Route-local distances cannot be compared as if both groups share a track. */
+function requests(game: Game, lane: number, closedOnly: boolean) {
+  if (game.phase !== "out" && game.phase !== "back") return [];
   const direction = game.phase === "out" ? 1 : -1;
-  const { gateDistances } = routeForLevel(game.config.level);
-  const indices = Array.from({ length: activeGateCount(game) }, (_, i) => i)
-    .sort((a, b) => direction * (gateDistances[a] - gateDistances[b]));
-  return indices.find((i) => !game.gates[i].open && game.sheep.some((s) => direction * (gateDistances[i] - s.progress) >= -0.001)) ?? null;
+  return routeForLevel(game.config.level).routes[lane].crossings.flatMap(({ gate, distance }) => {
+    if (closedOnly && game.gates[gate].open) return [];
+    const approaching = game.sheep.filter((s) => s.lane === lane && direction * (distance - s.progress) >= -0.001);
+    if (!approaching.length) return [];
+    return [{ gate, distance: Math.min(...approaching.map((s) => direction * (distance - s.progress))) }];
+  }).sort((a, b) => a.distance - b.distance);
+}
+export function groupNextGate(game: Game, lane: number): number | null {
+  return requests(game, lane, false)[0]?.gate ?? null;
+}
+/** Help prioritizes the closest sheep needing a closed gate, across both groups. */
+export function nextGate(game: Game): number | null {
+  return [0, 1].flatMap((lane) => requests(game, lane, true)).sort((a, b) => a.distance - b.distance)[0]?.gate ?? null;
+}
+function crossingDistance(game: Game, lane: number, gate: number): number | undefined {
+  return routeForLevel(game.config.level).routes[lane].crossings.find((c) => c.gate === gate)?.distance;
+}
+function occupied(game: Game, gate: number): boolean {
+  return game.sheep.some((s) => {
+    const distance = crossingDistance(game, s.lane, gate);
+    return distance !== undefined && Math.abs(s.progress - distance) < GATE_CLEARANCE - 0.000001;
+  });
 }
 /** Free rescue opens the next needed gate immediately, including during a busy lever. */
 export function helpGate(game: Game): Game {
   const index = nextGate(game);
   if (index === null) return game;
   return { ...game, assists: game.assists + 1, lever: null, selectedGate: index, shiftFrom: index,
-    gates: game.gates.map((g, i) => i === index ? { open: true, closingAt: game.time + game.config.openSeconds } : g) };
+    gates: game.gates.map((g, i) => i === index ? { ...g, open: true, closingAt: game.time + game.config.openSeconds } : g) };
 }
 export function medal(game: Game): number {
   const averageWait = game.waiting / game.sheep.length;
@@ -58,7 +77,7 @@ export function tick(game: Game, dt: number): Game {
     return { ...game, duskProgress, phase: duskProgress >= 1 ? "back" : "regroup" };
   }
   if (game.phase !== "out" && game.phase !== "back") return game;
-  const { gateDistances, sharedDistance, routeLengths } = routeForLevel(game.config.level);
+  const { routes, routeLengths } = routeForLevel(game.config.level);
   const next: Game = { ...game, time: game.time + dt, sheep: game.sheep.map((s) => ({ ...s })),
     gates: game.gates.map((g) => ({ ...g })), lever: game.lever ? { ...game.lever } : null };
   if (next.lever) {
@@ -68,7 +87,7 @@ export function tick(game: Game, dt: number): Game {
       next.gates[gate].open = action === "open";
       if (action === "open") next.gates[gate].closingAt = next.time + next.config.openSeconds;
       // Even manual closure waits until an occupied crossing is clear.
-      if (action === "close" && next.sheep.some((s) => Math.abs(s.progress - gateDistances[gate]) < STOP_OFFSET)) {
+      if (action === "close" && occupied(next, gate)) {
         next.gates[gate].open = true;
         next.gates[gate].closingAt = next.time;
       }
@@ -86,25 +105,29 @@ export function tick(game: Game, dt: number): Game {
     let target = before + direction * next.config.speed * dt;
     target = outward ? Math.min(destination, target) : Math.max(destination, target);
     let waiting = false;
-    for (const [index, distance] of gateDistances.entries()) {
-      const stop = distance - direction * STOP_OFFSET;
-      if (!next.gates[index].open && direction * (before - stop) <= 0.00001 && direction * (target - stop) >= 0) {
-        target = stop;
-        waiting = true;
-      }
-    }
-    // All sheep queue together before the fork, and separately in each pasture branch.
+    // Only sheep on the same route share a queue. A different group's progress
+    // is measured from a different starting point and must never constrain it.
     for (const leader of moved) {
-      if (leader.sheep.lane !== sheep.lane && Math.min(target, leader.sheep.progress) > sharedDistance + SHEEP_SPACING) continue;
+      if (leader.sheep.lane !== sheep.lane) continue;
       const limit = leader.sheep.progress - direction * SHEEP_SPACING;
       if (direction * (target - limit) > 0) {
         target = limit;
         waiting ||= leader.waiting;
       }
     }
+    const crossings = [...routes[sheep.lane].crossings].sort((a, b) => direction * (a.distance - b.distance));
+    for (const { gate: index, distance } of crossings) {
+      const gate = next.gates[index];
+      const stop = distance - direction * GATE_CLEARANCE;
+      const entering = direction * (before - stop) <= 0.00001 && direction * (target - stop) > 0;
+      if (entering && (!gate.open || (gate.trafficGroup !== null && gate.trafficGroup !== sheep.lane))) {
+        target = stop;
+        waiting = true;
+      } else if (entering) gate.trafficGroup = sheep.lane;
+    }
     if (waiting) waitingNow += dt;
     sheep.progress = target;
-    for (const [index, distance] of gateDistances.entries()) {
+    for (const { gate: index, distance } of routes[sheep.lane].crossings) {
       if (next.gates[index].open && direction * (before - distance) < 0 && direction * (target - distance) >= 0) {
         next.gates[index].closingAt = next.time + next.config.openSeconds;
       }
@@ -113,13 +136,16 @@ export function tick(game: Game, dt: number): Game {
   }
   for (let i = 0; i < activeGateCount(next); i++) {
     const gate = next.gates[i];
-    if (gate.open && next.time >= gate.closingAt && !next.sheep.some((s) => Math.abs(s.progress - gateDistances[i]) < STOP_OFFSET)) gate.open = false;
+    if (!occupied(next, i)) {
+      gate.trafficGroup = null;
+      if (gate.open && next.time >= gate.closingAt) gate.open = false;
+    }
   }
   next.waiting += waitingNow;
   next.score = Math.max(0, 1000 - Math.floor(next.waiting));
   if (outward && next.sheep.every((s) => s.progress >= routeLengths[s.lane] - Math.floor(s.id / 2) * SHEEP_SPACING - 0.00001)) {
     next.phase = "regroup"; next.lever = null; next.selectedGate = null; next.shiftFrom = null;
-    next.gates = next.gates.map(() => ({ open: false, closingAt: 0 }));
+    next.gates = next.gates.map(() => ({ open: false, closingAt: 0, trafficGroup: null }));
   }
   if (!outward && next.sheep.every((s) => s.progress <= 0.00001)) {
     next.phase = "done"; next.lever = null;

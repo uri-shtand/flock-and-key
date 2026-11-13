@@ -1,3 +1,4 @@
+import { keyboardRows } from "../typing/KeyboardMap";
 import { gatesLevels } from "./gatesLevels";
 /** Stage-one routes, in the background's 1600×900 world coordinates. */
 export type Point = { x: number; y: number };
@@ -14,17 +15,16 @@ export const pastureRoutes: readonly (readonly Curve[])[] = [
   [[p(1000, 720), p(760, 850), p(210, 825), p(160, 510)]],
   [[p(1000, 720), p(1280, 820), p(1490, 705), p(1440, 510)]],
 ];
-export const gateControls = [
-  { code: "KeyG", hebrew: "ע", latin: "G", point: p(520, 690) },
-  { code: "KeyH", hebrew: "י", latin: "H", point: p(500, 350) },
-  { code: "KeyJ", hebrew: "ח", latin: "J", point: p(790, 155) },
-  { code: "KeyK", hebrew: "ל", latin: "K", point: p(1140, 350) },
-  { code: "KeyF", hebrew: "כ", latin: "F", point: p(650, 450) },
-  { code: "KeyD", hebrew: "ג", latin: "D", point: p(950, 450) },
-  { code: "KeyS", hebrew: "ד", latin: "S", point: p(800, 340) },
-  { code: "KeyA", hebrew: "ש", latin: "A", point: p(300, 450) },
-  { code: "KeyL", hebrew: "ך", latin: "L", point: p(1300, 450) },
-] as const;
+// Gate IDs describe topology/unlocks, not keyboard order. Keep them stable for saves.
+const gatePositions = [p(520, 690), p(500, 350), p(790, 155), p(1140, 350),
+  p(650, 450), p(950, 450), p(800, 340), p(300, 450), p(1300, 450)] as const;
+export const gateKeyboardOrder = gatePositions.map((_, id) => id).sort((a, b) => gatePositions[a].x - gatePositions[b].x);
+const homeKeys = keyboardRows[1].slice(0, gatePositions.length);
+/** Assign once across all nine gates: unlocking never changes an earlier letter. */
+export const gateControls = gatePositions.map((point, id) => {
+  const key = homeKeys[gateKeyboardOrder.indexOf(id)];
+  return { code: key.code, hebrew: key.letter, latin: key.code.slice(3), point };
+});
 /** Three pen approaches and two bypasses are closed in stage one. No key labels. */
 export const lockedGates = [p(650, 450), p(950, 450), p(800, 340), p(300, 450), p(1300, 450)] as const;
 export const shortcutPaths = [
@@ -55,44 +55,57 @@ function measure(curves: readonly Curve[]) {
   }
   return { points, ends, length: points[points.length - 1].distance };
 }
-/** New approaches reuse the existing pen/shortcut gate positions. Each gate is crossed once. */
-const westToFirst: Curve = [p(650, 450), p(530, 450), p(450, 570), p(520, 690)];
-const eastToWest: Curve = [p(950, 450), p(850, 450), p(750, 450), p(650, 450)];
-const northExit: Curve = [p(800, 515), p(800, 450), p(800, 390), p(800, 340)];
-const northToEast: Curve = [p(800, 340), p(900, 250), p(1040, 350), p(950, 450)];
-const approaches: readonly (readonly Curve[])[] = [
-  [sharedRoute[0]],
-  [[p(800, 515), p(750, 510), p(700, 475), p(650, 450)], westToFirst],
-  [[p(800, 515), p(875, 515), p(920, 490), p(950, 450)], eastToWest, westToFirst],
-  [northExit, northToEast, eastToWest, westToFirst],
-  [northExit,
-    [p(800, 340), p(800, 270), p(940, 280), p(1015, 200)],
-    [p(1015, 200), p(1180, 220), p(1300, 350), p(1300, 450)],
-    [p(1300, 450), p(1200, 450), p(1030, 450), p(950, 450)],
-    eastToWest,
-    [p(650, 450), p(530, 450), p(420, 450), p(300, 450)],
-    [p(300, 450), p(260, 580), p(400, 640), p(520, 690)]],
+/** Names and symbols remain useful without color perception. */
+export const sheepGroups = [
+  { name: "פרחים", symbol: "○", color: "#256a7c", dash: "4 14" },
+  { name: "כוכבים", symbol: "★", color: "#954c35", dash: "24 14" },
+] as const;
+const sequences = [
+  [[0, 1], [3, 2]],
+  [[4, 0, 1], [3, 2]],
+  [[4, 0, 1], [5, 3, 2]],
+  [[4, 0, 1, 6, 2], [5, 3, 2]],
+  [[4, 7, 0, 1, 6, 2], [5, 8, 3, 2, 1]],
 ];
-const levelRoutes = approaches.map((approach, level) => {
-  const curves = [...approach, ...sharedRoute.slice(1)];
-  const shared = measure(curves);
-  const routes = pastureRoutes.map((branch) => measure([...curves, ...branch]));
-  const distances = gateControls.slice(0, gatesLevels[level].gates).map(({ point }) => {
-    const index = curves.findIndex((curve) => curve[3].x === point.x && curve[3].y === point.y);
-    if (index < 0) throw new Error(`Missing gate on level ${level + 1}`);
-    return shared.ends[index];
-  });
-  return { curves, routes, gateDistances: distances, sharedDistance: shared.length,
-    routeLengths: routes.map((route) => route.length), path: curvePath(curves) };
+/** Curves use shared gate coordinates, but distances belong to one group only. */
+function makeGroup(indices: number[], lane: number) {
+  const start = p(lane ? 850 : 750, 540);
+  const finish = p(lane ? 1440 : 160, 510);
+  const waypoints: Point[] = [start];
+  // Before the east pen exit unlocks, use its open southern doorway.
+  if (lane === 1 && indices[0] === 3) waypoints.push(p(1030, 680), p(1180, 560));
+  const gateEnds: { gate: number; end: number }[] = [];
+  for (const gate of indices) {
+    waypoints.push(gateControls[gate].point);
+    gateEnds.push({ gate, end: waypoints.length - 2 });
+  }
+  // Scenic exits skirt the barn and avoid recrossing another controlled gate.
+  if (lane) {
+    if (indices[indices.length - 1] === 1) waypoints.push(p(460, 230), p(700, 80));
+    waypoints.push(p(960, 90), p(1090, 150), p(1370, 330));
+  } else waypoints.push(p(350, 160), p(170, 290));
+  waypoints.push(finish);
+  const curves: Curve[] = [];
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const a = waypoints[i], b = waypoints[i + 1];
+    const previous = waypoints[Math.max(0, i - 1)], after = waypoints[Math.min(waypoints.length - 1, i + 2)];
+    curves.push([a, p(a.x + (b.x - previous.x) / 6, a.y + (b.y - previous.y) / 6),
+      p(b.x - (after.x - a.x) / 6, b.y - (after.y - a.y) / 6), b]);
+  }
+  const measured = measure(curves);
+  return { ...measured, curves, path: curvePath(curves),
+    crossings: gateEnds.map(({ gate, end }) => ({ gate, distance: measured.ends[end] })) };
+}
+const levelRoutes = sequences.map((groups, i) => {
+  const routes = groups.map(makeGroup);
+  const used = new Set(groups.flat());
+  if (used.size !== gatesLevels[i].gates) throw new Error("Every unlocked gate needs a route");
+  return { routes, routeLengths: routes.map((route) => route.length) };
 });
 export function routeForLevel(level = 1) { return levelRoutes[level - 1]; }
-// Base-map exports remain available to geometry checks and earlier design references.
-export const gateDistances = levelRoutes[0].gateDistances;
-export const sharedDistance = levelRoutes[0].sharedDistance;
-export const routeLengths = levelRoutes[0].routeLengths;
 export function sheepPosition(lane: number, distance: number, level = 1): Point {
-  if (distance < 0) return { x: 800 + Math.sin(-distance / 64 * Math.PI / 2) * 70, y: 515 + Math.max(distance * 0.3, -150) };
   const route = routeForLevel(level).routes[lane];
+  if (distance < 0) return { x: route.points[0].x, y: route.points[0].y + Math.max(distance * 0.3, -150) };
   const after = route.points.findIndex((point) => point.distance >= distance);
   if (after <= 0) return after === 0 ? route.points[0] : route.points[route.points.length - 1];
   const a = route.points[after - 1];

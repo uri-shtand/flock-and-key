@@ -1,8 +1,9 @@
-import type { Point } from "./gates";
+import { gateKeyboardOrder, type Point } from "./gates";
 
 /** Fixed nine-slot truck-style H pattern. Unlocking a slot never moves an earlier gate. */
 export function gearSlot(index: number | null): Point {
-  return index === null ? { x: 0, y: 0 } : { x: -80 + Math.floor(index / 2) * 40, y: index % 2 === 0 ? -44 : 44 };
+  const rank = index === null ? null : gateKeyboardOrder.indexOf(index);
+  return rank === null ? { x: 0, y: 0 } : { x: -80 + Math.floor(rank / 2) * 40, y: rank % 2 === 0 ? -44 : 44 };
 }
 /** Shift vertically to neutral, across its channel, then into the target gear. */
 export function shifterPosition(from: number | null, to: number | null, progress: number): Point {

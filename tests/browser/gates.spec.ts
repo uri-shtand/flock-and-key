@@ -1,7 +1,7 @@
 import { gearSlot } from "../../src/content/gatesShifter";
 import { test, expect, type Page } from "@playwright/test";
 import { sceneryAssets, stageOneScenery } from "../../src/content/gatesScenery";
-import { gateDistances, gateControls, routeForLevel } from "../../src/content/gates";
+import { gateControls, routeForLevel } from "../../src/content/gates";
 async function open(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "🐑 שומרי השערים (משחקון 5)" }).click();
@@ -33,7 +33,7 @@ for (const [width, height] of [[1024, 600], [1280, 720], [1440, 900]]) {
     await open(page);
     await fits(page);
     await expect(page.getByTestId("locked-gate")).toHaveCount(5);
-    await expect(page.getByRole("group", { name: /^שער [עיחל]: סגור$/ })).toHaveCount(4);
+    await expect(page.getByRole("group", { name: /^שער [גדעל]: סגור$/ })).toHaveCount(4);
     // Every prop is an independent instance, and every standalone SVG must load.
     const props = page.locator("[data-scenery-id]");
     await expect(props).toHaveCount(stageOneScenery.length);
@@ -66,14 +66,18 @@ test("physical Hebrew keys, closed-gate queues, return trip and cleanup", async 
     // Advance frames rather than jumping: the simulation deliberately caps large deltas.
     await page.clock.runFor(count * 1000);
   }
-  for (const [index, code] of ["KeyG", "KeyH", "KeyJ", "KeyK"].entries()) {
-    await seconds(16);
-    expect(await progress()).toBeCloseTo(gateDistances[index] - 40, 0);
-    await page.getByRole("application").dispatchEvent("keydown", { code, key: ["ע", "י", "ח", "ל"][index] });
+  // The two front sheep stop at different gates. Open west, then east.
+  await seconds(10);
+  for (const [lane, gate] of [[0, 0], [1, 3]]) {
+    const crossing = routeForLevel().routes[lane].crossings.find((c) => c.gate === gate)!;
+    expect(Number(await page.getByTestId(`sheep-${lane}`).getAttribute("data-progress"))).toBeCloseTo(crossing.distance - 40, 0);
+  }
+  for (const index of [0, 3, 1, 2]) {
+    const control = gateControls[index];
+    await page.getByRole("application").dispatchEvent("keydown", { code: control.code, key: control.hebrew });
     await seconds(1);
     await expect(page.getByTestId(`gate-${index}`)).toHaveAttribute("data-open", "true");
-    await seconds(3);
-    expect(await progress()).toBeGreaterThan(gateDistances[index]);
+    await seconds(index < 1 ? 1 : 3);
   }
   const farm = page.locator(".gate-prototype");
   for (let step = 0; step < 60 && await farm.getAttribute("data-phase") === "out"; step++) await seconds(0.5);
@@ -85,7 +89,7 @@ test("physical Hebrew keys, closed-gate queues, return trip and cleanup", async 
   expect(tint).toBeGreaterThan(0);
   expect(tint).toBeLessThan(0.32);
   const parked = await progress();
-  await page.getByRole("button", { name: "הפסקה", exact: true }).click();
+  await page.getByRole("application").press("Escape");
   const pausedTint = await page.getByTestId("dusk-tint").getAttribute("opacity");
   await seconds(4);
   await expect(farm).toHaveAttribute("data-phase", "regroup");
@@ -101,12 +105,11 @@ test("physical Hebrew keys, closed-gate queues, return trip and cleanup", async 
     await fits(page);
   }
   await page.screenshot({ path: test.info().outputPath("dusk.png") });
-  for (const code of ["KeyK", "KeyJ", "KeyH", "KeyG"]) {
-    await seconds(30);
-    await page.getByRole("application").press(code);
-    await seconds(4);
+  for (let i = 0; i < 100 && await farm.getAttribute("data-phase") !== "done"; i++) {
+    const key = page.locator(".gate-prototype-key.is-next");
+    if (await key.count() && await key.getAttribute("aria-disabled") === "false") await key.click();
+    await seconds(1);
   }
-  await seconds(20);
   await expect(page.getByRole("heading", { name: "כל הכבשים בבית! 🐑" })).toBeVisible();
   for (const [width, height] of [[1024, 600], [1280, 720], [1440, 900]]) {
     await page.setViewportSize({ width, height });
@@ -127,6 +130,7 @@ for (const [width, height] of [[1024, 600], [1280, 720], [1440, 900]]) {
     await open(page);
     await page.getByRole("button", { name: "איך משחקים?" }).click();
     await fits(page);
+    await page.screenshot({ path: test.info().outputPath("help.png") });
     await page.getByRole("button", { name: "הבנתי", exact: true }).click();
     await page.getByRole("button", { name: "מעבדת הכיף", exact: true }).click();
     await fits(page);
@@ -177,8 +181,8 @@ test("five rounds are playable through the UI, with safe help and persistent med
       const key = page.locator(".gate-prototype-key.is-next");
       const letter = await key.count() ? (await key.innerText()).trim() : "";
       const index = gateControls.findIndex((control) => control.hebrew === letter);
-      const positions = await page.locator('[data-testid^="sheep-"]').evaluateAll((nodes) => nodes.map((node) => Number(node.getAttribute("data-progress"))));
-      const near = index >= 0 && positions.some((p) => Math.abs(p - routeForLevel(level).gateDistances[index]) < 200);
+      const positions = await page.locator('[data-testid^="sheep-"]').evaluateAll((nodes) => nodes.map((node) => ({ progress: Number(node.getAttribute("data-progress")), lane: Number(node.getAttribute("data-group")) })));
+      const near = index >= 0 && positions.some((p) => routeForLevel(level).routes[p.lane].crossings.some((c) => c.gate === index && Math.abs(p.progress - c.distance) < 200));
       if (near && await key.getAttribute("aria-disabled") === "false") {
         if (!usedHelp) {
           await page.getByRole("button", { name: "עזרה בשער", exact: true }).click(); usedHelp = true;
@@ -223,10 +227,10 @@ test("gearbox feedback pauses, ignores composition and modifiers, and help freez
   await page.getByRole("button", { name: "מתחילים", exact: true }).click();
   const world = page.getByRole("application");
   for (const flags of [{ isComposing: true }, { repeat: true }, { ctrlKey: true }, { altKey: true }, { metaKey: true }]) {
-    await world.dispatchEvent("keydown", { code: "KeyG", key: "ע", ...flags });
+    await world.dispatchEvent("keydown", { code: "KeyD", key: "ג", ...flags });
     await expect(page.getByTestId("gearbox")).toHaveAttribute("data-working", "false");
   }
-  await world.dispatchEvent("keydown", { code: "KeyG", key: "ע" });
+  await world.dispatchEvent("keydown", { code: "KeyD", key: "ג" });
   await page.clock.runFor(150);
   await expect(page.getByTestId("gearbox")).toHaveAttribute("data-working", "true");
   await page.getByRole("button", { name: "איך משחקים?", exact: true }).click();
@@ -256,11 +260,18 @@ test("levels unlock actual route gates and every physical key has a distinct per
     await page.getByRole("navigation", { name: "בחירת שלב" }).getByRole("button").nth(levelIndex).click();
     await expect(page.getByTestId("locked-gate")).toHaveCount(9 - count);
     await expect(page.locator('[data-testid^="gate-"]')).toHaveCount(count);
-    if (level > 1) await expect(page.getByTestId("active-route").locator("path").first()).toHaveAttribute("d", routeForLevel(level).path);
+    await expect(page.getByTestId("active-route")).toHaveCount(2);
+    for (const lane of [0, 1]) await expect(page.getByTestId("active-route").nth(lane).locator("path").first()).toHaveAttribute("d", routeForLevel(level).routes[lane].path);
+    // Read the rendered signs by screen X and compare with the physical HTML keyboard.
+    const signs = await page.locator('[data-testid^="gate-"] text').evaluateAll((nodes) => nodes.map((node) => ({ letter: node.textContent!.trim(), x: node.getBoundingClientRect().x })).sort((a, b) => a.x - b.x));
+    const keys = await page.locator(".gate-prototype-key").allTextContents();
+    const ranks = signs.map((sign) => keys.findIndex((key) => key.trim() === sign.letter));
+    expect(ranks.every((rank, i) => rank >= 0 && (i === 0 || rank > ranks[i - 1]))).toBe(true);
     await page.getByRole("button", { name: "מתחילים", exact: true }).click();
     for (const [index, control] of gateControls.slice(0, count).entries()) {
       await page.getByRole("application").dispatchEvent("keydown", { code: control.code, key: control.hebrew });
       await page.clock.runFor(500);
+      await expect(page.getByTestId(`gate-${index}`)).toHaveAttribute("data-open", "true");
       await expect(page.getByTestId("gearbox")).toHaveAttribute("data-selected-gate", String(index));
       const point = gearSlot(index);
       await expect(page.getByTestId("gear-knob")).toHaveAttribute("transform", `translate(${point.x} ${point.y})`);
@@ -299,5 +310,44 @@ test("upgrading the older route keeps medals and starts the revised level safely
   await expect(page.locator('[data-testid^="gate-"]')).toHaveCount(5);
   await fits(page);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("flock-key-gates-v1")!));
-  expect(saved).toMatchObject({ version: 2, best: [3, 2, 0, 0, 0], game: { config: { hints: false, reducedMotion: true, openSeconds: 2 } } });
+  expect(saved).toMatchObject({ version: 3, best: [3, 2, 0, 0, 0], game: { config: { hints: false, reducedMotion: true, openSeconds: 2 } } });
+});
+
+test("Escape pauses from the farm and toolbar without resuming or interfering with dialogs", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await open(page);
+  await page.clock.install();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "מתחילים", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "מתחילים", exact: true }).click();
+  await page.getByRole("application").dispatchEvent("keydown", { code: "KeyD", key: "ג" });
+  await page.clock.runFor(150);
+  await expect(page.getByTestId("gearbox")).toHaveAttribute("data-working", "true");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("heading", { name: "המשחק בהפסקה" })).toBeVisible();
+  const machine = await page.getByTestId("gearbox").innerHTML();
+  const sheep = await page.getByTestId("sheep-0").getAttribute("data-progress");
+  await page.keyboard.press("Escape");
+  await page.clock.runFor(2000);
+  expect(await page.getByTestId("gearbox").innerHTML()).toBe(machine);
+  await expect(page.getByTestId("sheep-0")).toHaveAttribute("data-progress", sheep!);
+  await page.getByRole("button", { name: "ממשיכים", exact: true }).click();
+  await page.clock.runFor(400);
+  await expect(page.getByTestId("gearbox")).toHaveAttribute("data-working", "false");
+  await page.getByRole("button", { name: "איך משחקים?", exact: true }).focus();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("heading", { name: "המשחק בהפסקה" })).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "🐑 שומרי השערים (משחקון 5)" }).click();
+  await expect(page.getByRole("heading", { name: "המשחק בהפסקה" })).toBeVisible();
+  await page.getByRole("button", { name: "איך משחקים?", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("heading", { name: "דשא, שערים וקצת תזמון" })).toBeVisible();
+  await page.getByRole("button", { name: "הבנתי", exact: true }).click();
+  await page.getByRole("button", { name: "מעבדת הכיף", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".gate-lab")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "המשחק בהפסקה" })).toBeVisible();
+  expect(errors).toEqual([]);
 });

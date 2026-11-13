@@ -1705,3 +1705,16 @@ main.gates-screen { max-width: 1920px; width: 100%; }
 .gate-summary-body > div + div { border-inline-start: 1px solid #d5c8a5; padding-inline-start: 18px; }
 .gate-summary .gate-dialog-actions, .gate-help-dialog > button { margin-top: 4px; }
 .gate-summary button, .gate-help-dialog > button { padding: 7px 14px; }
+
+/* Group identity stays readable beside the map, without adding viewport rows. */
+.gate-farm-note h3 { font-size: 15px; }
+.gate-group-card { margin-block: 7px; padding: 5px; border-radius: 8px; background: #fff4dc; color: #343d32; text-align: center; }
+.gate-group-card strong, .gate-group-card small { display: block; }
+.gate-group-card strong { font-size: 16px; }
+.gate-group-card small { font-size: 14px; }
+.gate-farm-note .gate-group-banter { font-size: 14px; line-height: 1.35; margin-bottom: 0; }
+@media (max-height: 650px) {
+  .gate-farm-note { padding: 8px; }
+  .gate-group-card { margin-block: 4px; padding: 3px; }
+  .gate-farm-note .gate-group-banter { font-size: 13px; }
+}

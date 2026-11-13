@@ -3,8 +3,13 @@ import { validGatesSave, migrateGatesSave } from "../../src/progress/GatesStore"
 import { describe, expect, it } from "vitest";
 import { sceneryAssets, stageOneScenery } from "../../src/content/gatesScenery";
 import { readFileSync } from "node:fs";
-import { curvePath, gateDistances, pastureRoutes, routeLengths, sharedRoute, sheepPosition, shortcutPaths, routeForLevel, gateControls } from "../../src/content/gates";
+import { curvePath, pastureRoutes, sharedRoute, sheepPosition, shortcutPaths, routeForLevel, gateControls } from "../../src/content/gates";
 import { initial, operateGate, tick, helpGate, nextGate, activeGateCount, medal, type Game } from "../../src/typing/GatesSimulation";
+const { routeLengths } = routeForLevel();
+const gateDistances = gateControls.slice(0, 4).map((_, gate) => routeForLevel().routes.flatMap((r) => r.crossings).find((c) => c.gate === gate)!.distance);
+function near(game: Game, gate: number, threshold = 200) {
+  return game.sheep.some((s) => routeForLevel(game.config.level).routes[s.lane].crossings.some((c) => c.gate === gate && Math.abs(s.progress - c.distance) < threshold));
+}
 function advance(game: Game, seconds: number): Game {
   for (let i = 0; i < seconds * 20; i++) game = tick(game, 0.05);
   return game;
@@ -16,27 +21,15 @@ describe("stage-one gate route", () => {
     expect(sheepPosition(0, routeLengths[0])).toMatchObject({ x: 160, y: 510 });
     expect(sheepPosition(1, routeLengths[1])).toMatchObject({ x: 1440, y: 510 });
   });
-  it("stops every sheep at each closed gate in order and completes both directions", () => {
-    let game: Game = { ...initial(levelConfig(1)), phase: "out" };
-    for (const [index, distance] of gateDistances.entries()) {
-      game = advance(game, 25);
-      expect(game.sheep.every((s) => s.progress < distance)).toBe(true);
-      expect(game.sheep[0].progress).toBeCloseTo(distance - 40);
-      // Opening only the gate needed now lets the entire flock through.
-      game = advance(operateGate(game, index), 4);
-      expect(game.sheep.every((s) => s.progress > distance)).toBe(true);
-    }
-    game = advance(game, 30);
-    expect(game.phase).toBe("back");
-    expect(game.sheep.every((s) => s.progress > gateDistances[3])).toBe(true);
-    for (const index of [3, 2, 1, 0]) {
-      game = advance(game, 30);
-      expect(game.sheep.every((s) => s.progress > gateDistances[index])).toBe(true);
-      game = advance(operateGate(game, index), 4);
-      expect(game.sheep.every((s) => s.progress < gateDistances[index])).toBe(true);
-    }
-    game = advance(game, 20);
-    expect(game.phase).toBe("done");
+  it("queues each group at its own gate and lets one progress while the other waits", () => {
+    let game: Game = advance({ ...initial(), phase: "out" }, 10);
+    expect(game.sheep[0].progress).toBeCloseTo(gateDistances[0] - 40);
+    expect(game.sheep[1].progress).toBeCloseTo(gateDistances[3] - 40);
+    const east = game.sheep[1].progress;
+    game = advance(operateGate(game, 0), 4);
+    expect(game.sheep.filter((s) => s.lane === 0).every((s) => s.progress > gateDistances[0])).toBe(true);
+    expect(game.sheep[1].progress).toBe(east);
+    expect(game.gates[3].open).toBe(false);
   });
   it("fades into dusk before returning automatically, without movement or waiting penalties during the fade", () => {
     let game: Game = { ...initial(levelConfig(1)), phase: "out" };
@@ -67,7 +60,7 @@ describe("stage-one gate route", () => {
     expect(game.score).toBeLessThan(1000);
   });
   it("shares the lever, supports manual closing, and keeps pauses immutable", () => {
-    let game: Game = { ...initial(levelConfig(1)), phase: "out" };
+    let game: Game = { ...initial({ ...levelConfig(1), speed: 90 }), phase: "out" };
     game = operateGate(game, 0);
     expect(operateGate(game, 1)).toBe(game);
     game = advance(game, 1);
@@ -95,18 +88,17 @@ describe("independent scenery assets", () => {
 describe("five-level gates game", () => {
   for (const level of [1, 2, 3, 4, 5]) {
     it(`level ${level} can finish in both directions with its authored rules`, () => {
-      const { gateDistances } = routeForLevel(level);
       let game: Game = { ...initial(levelConfig(level)), phase: "out" };
       let openings = 0;
       for (let i = 0; i < 4000 && game.phase !== "done"; i++) {
         const index = nextGate(game);
         // A real player can see and anticipate the next required gate.
-        if (index !== null && !game.lever && game.sheep.some((s) => Math.abs(s.progress - gateDistances[index]) < 200)) {
+        if (index !== null && !game.lever && near(game, index)) {
           game = operateGate(game, index); openings++;
         }
         game = tick(game, 0.05);
         if (i % 100 === 0) {
-          const snapshot: unknown = JSON.parse(JSON.stringify({ version: 2, game, best: [0, 0, 0, 0, 0] }));
+          const snapshot: unknown = JSON.parse(JSON.stringify({ version: 3, game, best: [0, 0, 0, 0, 0] }));
           expect(validGatesSave(snapshot)).toBe(true);
         }
       }
@@ -126,15 +118,20 @@ describe("five-level gates game", () => {
       expect(game.gates).toHaveLength(count);
       expect(game.gates.every((g) => !g.open)).toBe(true);
       expect(operateGate({ ...game, phase: "out" }, count)).toMatchObject({ lever: null });
-      for (const [i, distance] of route.gateDistances.entries()) {
-        const position = sheepPosition(0, distance, level);
-        expect(position.x).toBeCloseTo(gateControls[i].point.x);
-        expect(position.y).toBeCloseTo(gateControls[i].point.y);
+      const used = new Set<number>();
+      for (const [lane, group] of route.routes.entries()) {
+        for (const { gate, distance } of group.crossings) {
+          used.add(gate);
+          const position = sheepPosition(lane, distance, level);
+          expect(position.x).toBeCloseTo(gateControls[gate].point.x);
+          expect(position.y).toBeCloseTo(gateControls[gate].point.y);
+        }
       }
+      expect([...used].sort((a, b) => a - b)).toEqual(Array.from({ length: count }, (_, i) => i));
     }
   });
   it("uses configurable gearbox and shorter opening time, refreshed by passage", () => {
-    const config = { ...levelConfig(), gearboxSeconds: 0.3, openSeconds: 1.2 };
+    const config = { ...levelConfig(), speed: 90, gearboxSeconds: 0.3, openSeconds: 1.2 };
     let game: Game = { ...initial(config), phase: "out" };
     game = tick(operateGate(game, 0), 0.25);
     expect(game.gates[0].open).toBe(false);
@@ -142,7 +139,7 @@ describe("five-level gates game", () => {
     expect(game.gates[0].open).toBe(true);
     game = advance(game, 1.3);
     expect(game.gates[0].open).toBe(false);
-    game.sheep[0].progress = gateDistances[0] - 5;
+    game.sheep[0].progress = gateDistances[0] - 2;
     game = helpGate(game);
     const deadline = game.gates[0].closingAt;
     game = tick(game, 0.05);
@@ -151,7 +148,7 @@ describe("five-level gates game", () => {
   it("does not close on an occupied gate, but closes after the crossing clears", () => {
     let game: Game = { ...initial(), phase: "out" };
     game.sheep[0].progress = gateDistances[0] + 10;
-    game.gates[0] = { open: true, closingAt: 0 };
+    game.gates[0] = { open: true, closingAt: 0, trafficGroup: 0 };
     game = tick(game, 0.05);
     expect(game.gates[0].open).toBe(true);
     game = advance(game, 0.3);
@@ -165,7 +162,7 @@ describe("five-level gates game", () => {
     expect(game.assists).toBe(1);
     for (let i = 0; i < 3000 && game.phase !== "done"; i++) {
       const needed = nextGate(game);
-      if (needed !== null && game.sheep.some((s) => Math.abs(s.progress - gateDistances[needed]) < 100)) game = helpGate(game);
+      if (needed !== null && near(game, needed, 100)) game = helpGate(game);
       game = tick(game, 0.05);
     }
     expect(game.phase).toBe("done");
@@ -183,7 +180,7 @@ describe("five-level gates game", () => {
     expect(game).toEqual(before);
   });
   it("validates complete snapshots and rejects corrupted nested rules or movement", () => {
-    const save = { version: 2, game: initial(), best: [0, 1, 2, 3, 0] };
+    const save = { version: 3, game: initial(), best: [0, 1, 2, 3, 0] };
     expect(validGatesSave(JSON.parse(JSON.stringify(save)))).toBe(true);
     expect(validGatesConfig({ ...levelConfig(), sheepCount: 900 })).toBe(false);
     expect(validGatesConfig({ ...levelConfig(), speed: Infinity })).toBe(false);
@@ -205,13 +202,13 @@ describe("vintage shifter and route upgrade", () => {
       game = advance(game, 0.5);
       expect(game.lever).toBeNull();
       expect(game.selectedGate).toBe(gate);
-      expect(validGatesSave({ version: 2, game, best: [0, 0, 0, 0, 0] })).toBe(true);
+      expect(validGatesSave({ version: 3, game, best: [0, 0, 0, 0, 0] })).toBe(true);
     }
   });
   it("migrates old route progress to a new ready round, keeping medals and help preferences", () => {
     const old = { version: 1, game: { config: { ...levelConfig(3), openSeconds: 3, hints: false, reducedMotion: true } }, best: [3, 2, 1, 0, 0] };
     const migrated = migrateGatesSave(old)!;
-    expect(migrated.version).toBe(2);
+    expect(migrated.version).toBe(3);
     expect(migrated.game.phase).toBe("ready");
     expect(migrated.game.gates).toHaveLength(6);
     expect(migrated.game.config).toMatchObject({ openSeconds: 2, hints: false, reducedMotion: true });
@@ -220,4 +217,65 @@ describe("vintage shifter and route upgrade", () => {
     expect(migrateGatesSave({ ...old, best: [999] })).toBeNull();
     expect(validGatesSave({ ...migrated, game: { ...migrated.game, selectedGate: 8 } })).toBe(false);
   });
+});
+
+describe("independent group traffic", () => {
+  it("authors distinct gate orders, with reversed shared order in the last level", () => {
+    expect(routeForLevel(1).routes.map((r) => r.crossings.map((c) => c.gate))).toEqual([[0, 1], [3, 2]]);
+    const groups = routeForLevel(5).routes.map((r) => r.crossings.map((c) => c.gate));
+    expect(groups[0].indexOf(1)).toBeLessThan(groups[0].indexOf(2));
+    expect(groups[1].indexOf(2)).toBeLessThan(groups[1].indexOf(1));
+  });
+  for (const sheepCount of [2, 3, 10]) for (const speed of [90, 260]) {
+    it(`finishes shared crossings without collisions or deadlock: ${sheepCount} sheep at ${speed}`, () => {
+      let game: Game = { ...initial({ ...levelConfig(5), sheepCount, speed }), phase: "out" };
+      for (let i = 0; i < 10000 && game.phase !== "done"; i++) {
+        // Isolate traffic arbitration from the player's gate timing.
+        game = { ...game, gates: game.gates.map((g) => ({ ...g, open: true, closingAt: 1e6 })) };
+        game = tick(game, 0.05);
+        for (let gate = 0; gate < 9; gate++) {
+          const occupants = game.sheep.filter((s) => routeForLevel(5).routes[s.lane].crossings.some((c) => c.gate === gate && Math.abs(c.distance - s.progress) < 39.999));
+          expect(new Set(occupants.map((s) => s.lane)).size).toBeLessThanOrEqual(1);
+        }
+        for (const lane of [0, 1]) {
+          const positions = game.sheep.filter((s) => s.lane === lane).map((s) => s.progress).sort((a, b) => a - b);
+          for (let j = 1; j < positions.length; j++) expect(positions[j] - positions[j - 1]).toBeGreaterThanOrEqual(63.999);
+        }
+      }
+      expect(game.phase).toBe("done");
+    });
+  }
+  it("migrates schema 2 too, and rejects invalid crossing owners", () => {
+    const game = initial(levelConfig(5));
+    expect(migrateGatesSave({ version: 2, game, best: [3, 2, 1, 0, 0] })).toMatchObject({ version: 3, game: { phase: "ready" }, best: [3, 2, 1, 0, 0] });
+    game.gates[0].trafficGroup = 7;
+    expect(validGatesSave({ version: 3, game, best: [0, 0, 0, 0, 0] })).toBe(false);
+  });
+});
+
+it("resumes a shared crossing without losing its owner or changing the outcome", () => {
+  let game: Game = { ...initial(levelConfig(5)), phase: "out" };
+  const gate = 2;
+  game.sheep = game.sheep.map((s) => ({ ...s, progress: routeForLevel(5).routes[s.lane].crossings.find((c) => c.gate === gate)!.distance - 40 - Math.floor(s.id / 2) * 64 }));
+  game.gates[gate] = { open: true, closingAt: 100, trafficGroup: null };
+  game = tick(game, 0.05);
+  expect(game.gates[gate].trafficGroup).not.toBeNull();
+  const saved = JSON.parse(JSON.stringify({ version: 3, game, best: [0, 0, 0, 0, 0] }));
+  expect(validGatesSave(saved)).toBe(true);
+  expect(advance(saved.game, 1)).toEqual(advance(game, 1));
+  const wrong = structuredClone(saved);
+  wrong.game.gates[gate].trafficGroup = 1 - game.gates[gate].trafficGroup!;
+  expect(validGatesSave(wrong)).toBe(false);
+});
+
+it("does not send a group through an unrelated or locked gate", () => {
+  for (let level = 1; level <= 5; level++) {
+    for (const route of routeForLevel(level).routes) {
+      for (const [gate, { point }] of gateControls.entries()) {
+        if (route.crossings.some((c) => c.gate === gate)) continue;
+        const clearance = Math.min(...route.points.map((p) => Math.hypot(p.x - point.x, p.y - point.y)));
+        expect(clearance, `level ${level}, gate ${gate}`).toBeGreaterThan(40);
+      }
+    }
+  }
 });
