@@ -1,3 +1,4 @@
+import { DetectiveCase } from "./detective/DetectiveCase";
 import { difficultyLevels } from "../content/difficulty";
 import { GatesPrototype } from "./gates/GatesPrototype";
 import { DadCratePrompt, CrateBackdrop } from "../components/CrateTask";
@@ -38,7 +39,7 @@ import {
   type Session,
 } from "../progress/GameStore";
 
-type Screen = "home" | "game" | "parent" | "shop" | "gates";
+type Screen = "home" | "game" | "parent" | "shop" | "gates" | "detective";
 export function GameShell() {
   const [loaded] = useState(loadGame);
   const [progress, setProgress] = useState<GameProgress>(loaded.progress);
@@ -544,7 +545,7 @@ export function GameShell() {
           ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
           : screen === "home"
             ? "home-screen"
-            : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : undefined
+            : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" ? "detective-screen" : undefined
       }
     >
       <header className="topbar">
@@ -597,7 +598,9 @@ export function GameShell() {
           {warning}
         </p>
       )}
-      {screen === "gates" ? (
+      {screen === "detective" ? (
+        <DetectiveCase runs={progress.detective ?? []} onChange={(run) => setProgress(p => ({ ...p, detective: [...(p.detective ?? []).filter(r => r.id !== run.id), run] }))} onExit={leave} />
+      ) : screen === "gates" ? (
         <GatesPrototype onExit={leave} />
       ) : screen === "parent" ? (
         <ParentDashboard
@@ -782,8 +785,9 @@ export function GameShell() {
                 בלי לחץ. עזרה בחינם, אפשר לתקן ואפשר לעצור בכל רגע.
               </p>
               <div className="game-menu-heading">
-                <h2>רק עוד משחקון אחד?</h2>
-                <button onClick={() => setScreen("gates")}>🐑 שומרי השערים (משחקון 5)</button>
+                <h2>משחקונים</h2>
+                <button onClick={() => setScreen("detective")}>🔎 תיק בלשי קטן</button>
+                <button aria-label="🐑 שומרי השערים (משחקון 5)" onClick={() => setScreen("gates")}>🐑 שומרי השערים</button>
               </div>
               <div className="game-menu">
                 {stages.map((s, i) => (

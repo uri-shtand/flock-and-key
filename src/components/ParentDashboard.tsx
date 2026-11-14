@@ -1,3 +1,5 @@
+import { caseState } from "../typing/DetectiveCase";
+import { decisions } from "../content/detective";
 import { useState } from "react";
 import { ResetProgressDialog } from "./ResetProgressDialog";
 import { stages } from "../content/chapter";
@@ -159,6 +161,13 @@ export function ParentDashboard({
         נכללת במדדי קצב ודיוק. הזמן הפעיל אינו כולל הקראה, הפסקה או לשונית
         מוסתרת.
       </p>
+      <h2>תיקים בלשיים · הבנת הנקרא</h2>
+      <p>פעולות בתיק מסוים בלבד, בנפרד מאיות והקלדה. קריאה בטקסט; עזרת מבוגר אינה ניתנת לזיהוי. משחק חוזר אינו מדד לשיפור.</p>
+      {(progress.detective ?? []).map(run => { const state = caseState(run); return <div key={run.id}>
+        <b>הטרמפ של נוגה · {state.place === 'ending' ? 'התיק נפתר' : 'בחקירה'}</b>
+        {state.attempts.map((a, i) => <p key={i}>{decisions[a.decision].title} — {decisions[a.decision].choices[a.choice]} · {({ supported: 'קישור מבוסס טקסט', guided: 'פתרון יחד', explored: 'גילוי בחקירה חופשית', revisit: 'ניסיון שנבדק מחדש' })[a.result]} · רמז {a.hints} · משפטים: {a.support.join(', ') || 'ללא'}</p>)}
+      </div>; })}
+      {!(progress.detective ?? []).length && <p>עוד לא נפתח תיק בלשי.</p>}
       <h2>סשנים קודמים</h2>
       {!progress.sessions.length ? (
         <p>עוד אין סשנים. הנתונים יופיעו אחרי תחילת משחק.</p>

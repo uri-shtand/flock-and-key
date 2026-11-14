@@ -1,6 +1,6 @@
 # Flock & Key
 
-A Hebrew typing and spelling mystery for a child aged 12. The playable prototype contains one story chapter, four mini-games, 120 useful words, prerecorded Hebrew speech, six original background music arrangements, local progress, cosmetic rewards and a parent dashboard with JSON/CSV export.
+A Hebrew typing and spelling mystery for a child aged 12. The playable prototype contains one story chapter, four word mini-games, a standalone Gates game, a small detective case, 120 useful words, prerecorded Hebrew speech, six original background music arrangements, local progress, cosmetic rewards and a parent dashboard with JSON/CSV export.
 
 ## Run on Windows
 
@@ -17,7 +17,7 @@ Choose difficulty 1–3 during the preparation step at the start of each mini-ga
 
 Home and child-facing gameplay fit desktop viewports without scrolling, including 1024×600, 1280×720 and 1440×900. Keyboard help is beside the task, and pace selection accompanies difficulty in preparation.
 
-All five mini-games also support phone and tablet layouts in portrait and landscape. On mobile, **כלים וצלילים** opens audio and parent controls; optional keyboard help sits below the task. Tap the text field and use your phone's Hebrew keyboard, then the submit button or keyboard action. Gates uses large gate buttons, with level selection, help, tuning and home under **אפשרויות**; opening that menu freezes the simulation. Mobile pages and long dialogs can scroll. See [mobile behavior and playtest notes](docs/mobile-support.md).
+The four word mini-games and Gates also support phone and tablet layouts in portrait and landscape. On mobile, **כלים וצלילים** opens audio and parent controls; optional keyboard help sits below the task. Tap the text field and use your phone's Hebrew keyboard, then the submit button or keyboard action. Gates uses large gate buttons, with level selection, help, tuning and home under **אפשרויות**; opening that menu freezes the simulation. Mobile pages and long dialogs can scroll. See [mobile behavior and playtest notes](docs/mobile-support.md).
 
 Use a physical Hebrew keyboard. Music and speech have separate controls. Each stage picks a random background track, avoiding an immediate repeat; task changes and pause/resume keep the chosen music. The first interaction enables browser audio. **מנגינה אחרת** changes the current tune. The arrangements include a light rhythm, a quieter bridge and a return, instead of repeating a short motif. Progress and purchased decorations survive refresh in the same browser profile and origin. **להורים** opens the local results dashboard and export controls. Export does not yet provide in-game restore/import.
 
@@ -65,3 +65,11 @@ See the [group routes, implementation and playtest questions](docs/gates-groups.
 ## Audio preparation
 
 The speech clips are already included. `python3 scripts/prepare-speech.py` prepares missing clips using a build-time network request with authored vocabulary only. `python3 scripts/prepare-music.py` regenerates all six original background tracks. See [audio provenance](public/audio/README.md). Human review of Hebrew pronunciation is still needed.
+
+## Small detective case: הטרמפ של נוגה
+
+Home → **🔎 תיק בלשי קטן** opens a standalone Hebrew point-and-click investigation. Inspect the cart, ask Dad and the postman about a star ribbon, connect today's delivery to its destination, then follow the bridge keeper's note to a sheep's secret fashion show. Reading helps decide what to do; there is no typing task, timer, score or end quiz. Wrong leads are recoverable, and three free hints always offer **נבדוק יחד**. The bridge also permits discovery by exploration.
+
+The two illustrated Phaser scenes use accessible HTML hotspots. **מחברת החקירה** keeps source passages available and saves selected sentences and tentative choices. Escape, loss of focus and refresh pause the case; **ממשיכים בחקירה** resumes it. OS reduced motion is respected. **מעבדת החקירה** provides optional guided conversation suggestions, labels, reduced motion, defaults and JSON settings copy; applying starts a new case. **מה אפשר לבדוק?** toggles labels during play. Replay keeps effective settings and honestly repeats the same solution.
+
+Case runs are a versioned optional extension of the shared local game save, isolated from typing/spelling results and currency. The parent screen, JSON/CSV exports and existing confirmed reset include case-specific decisions, evidence and assistance. Invalid case histories are removed with a notice while preserving word progress and other valid cases. No new audio clips or read-aloud service were added. See [implementation, deviations and human playtest questions](docs/detective-implementation.md).

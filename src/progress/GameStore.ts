@@ -1,3 +1,4 @@
+import { validCase, caseState, type CaseRun } from "../typing/DetectiveCase";
 import type { Difficulty } from "../content/difficulty";
 import {
   stages,
@@ -43,6 +44,7 @@ export type Session = {
 };
 export type GameProgress = {
   version: 2;
+  detective?: CaseRun[];
   sessions: Session[];
   currentId: string | null;
   balance: number;
@@ -316,7 +318,10 @@ export function loadGame(): { progress: GameProgress; warning: string } {
       session.stageDifficulties ??= stages.map(() => session.difficulty);
       session.ratedStages ??= [];
     }
-    return { progress, warning: "" };
+    const cases: unknown = x.detective;
+    const invalidCases = cases !== undefined && (!Array.isArray(cases) || !cases.every(validCase));
+    if (invalidCases) progress.detective = Array.isArray(cases) ? cases.filter(validCase) : [];
+    return { progress, warning: invalidCases ? "תיק בלשי שלא ניתן לשחזר הוסר. אפשר להתחיל תיק חדש; שאר ההתקדמות נשמרה." : "" };
   } catch {
     return {
       progress: initialProgress(),
@@ -396,6 +401,7 @@ export function exportCsv(p: GameProgress): string {
       "points",
       "timed",
       "at",
+      "caseDecision", "caseEvidence", "caseSourcesOpened", "caseResult", "caseHintTier", "caseModality",
     ],
   ];
   for (const s of p.sessions)
@@ -423,5 +429,14 @@ export function exportCsv(p: GameProgress): string {
         a.timed,
         a.at,
       ]);
+  for (const run of p.detective ?? []) {
+    const state = caseState(run);
+    for (const a of state.attempts) rows.push([
+      run.id, state.place === "ending" ? "completed" : "active", run.startedAt,
+      "", "reading-comprehension-case", "", a.choice, a.result === "supported", false,
+      a.result, a.hints, "", "", "", "", "", "", "", "", "", "",
+      a.decision, a.support.join(" "), a.inspected.join(" "), a.result, a.hints, "text; adult help unobserved",
+    ]);
+  }
   return "\uFEFF" + rows.map((row) => row.map(cell).join(",")).join("\r\n");
 }
