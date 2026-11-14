@@ -3,6 +3,7 @@ dist/
 .vite/
 playwright-report/
 test-results/
+output/playwright/
 .env*
 !.env.example
 *.local

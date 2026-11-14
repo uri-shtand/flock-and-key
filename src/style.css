@@ -1718,3 +1718,155 @@ main.gates-screen { max-width: 1920px; width: 100%; }
   .gate-group-card { margin-block: 4px; padding: 3px; }
   .gate-farm-note .gate-group-banter { font-size: 13px; }
 }
+
+/* Mobile play keeps the task first and moves secondary tools out of its way. */
+.mobile-tools-toggle { display: none; }
+@media (max-width: 959px) {
+  main { padding: 10px max(10px, env(safe-area-inset-right)) 16px max(10px, env(safe-area-inset-left)); }
+  button { touch-action: manipulation; }
+  .topbar { position: relative; align-items: center; padding: 0 0 10px; min-height: 54px; }
+  .topbar .brand b { font-size: 1.15rem; }
+  .topbar .brand small, .topbar .brand-icon { display: none; }
+  .mobile-tools-toggle { display: block; min-height: 44px; padding: 8px 12px; font-size: 0.85rem; }
+  .topbar nav { display: none; }
+  .topbar nav.tools-open { display: flex; position: absolute; inset-inline: 0; top: 100%; z-index: 10; padding: 14px; border: 2px solid #6e95ac; border-radius: 14px; background: #15334a; box-shadow: 0 8px 20px #071e3666; }
+  .topbar nav .icon-button { display: block; min-height: 44px; font-size: 0.85rem; padding: 8px 12px; }
+  .panel { padding: 16px; margin-top: 12px; border-radius: 18px; }
+  .home-screen .stage { max-height: 150px; }
+  .home-screen .game-menu { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .game-tile { min-width: 0; padding: 12px; }
+  .game-tile small { font-size: 0.85rem; }
+  .home-screen > footer, .playing > footer, .gates-screen > footer { display: none; }
+  main.playing { display: flex; flex-direction: column; }
+  .playing > .topbar, .playing > .warning { order: 0; width: 100%; }
+  .playing .world-column { display: contents; }
+  .playing .world-card { order: 1; width: 100%; }
+  .playing .play-panel { order: 3; width: 100%; }
+  .playing .mission-brief, .playing .preparation-help { order: 2; margin-block: 10px 0; }
+  .playing .keyboard, .playing .clue-notebook { order: 4; width: 100%; color: var(--ink); }
+  .playing .clue-notebook { background: var(--paper); padding: 12px; border-radius: 12px; }
+  .playing .hand-guide { display: none; }
+  .playing .stage { max-height: 110px; }
+  .playing.phase-play .stage, .playing.phase-play .scene-heading { display: none; }
+  .playing .world-caption { padding: 4px 12px; min-height: 44px; font-size: 0.8rem; }
+  .playing .world-caption button { min-height: 44px; }
+  .playing .section-title { gap: 8px; margin-bottom: 8px; }
+  .playing .section-title h1 { font-size: 1.4rem; margin: 2px 0; }
+  .playing .section-title > button { min-height: 44px; font-size: 0.85rem; }
+  .playing .session-level { font-size: 0.85rem; }
+  .playing .task-progress { margin: 8px 0 12px; }
+  .playing .task-card { min-height: 0; padding: 10px; margin-bottom: 14px; }
+  .playing .task-card h2 { font-size: 1.15rem; margin-bottom: 8px; }
+  .playing .target-word { font-size: 2.2rem; }
+  .playing .input-row { flex-wrap: nowrap; gap: 8px; }
+  .playing .input-row input { flex-basis: auto; font-size: 1.4rem; padding: 10px; }
+  .playing .input-row > button { padding-inline: 12px; }
+  .playing .feedback { margin: 12px 0; }
+  .playing .help-actions { gap: 8px; margin-bottom: 0; }
+  .playing .help-actions button { min-height: 44px; font-size: 0.85rem; }
+  .playing .crate-prompt { padding: 10px; }
+  .playing .crate-prompt .character-portrait { flex-basis: 48px; width: 48px; height: 58px; }
+  .playing .crate-prompt .speech-bubble { padding: 6px 12px; }
+  .playing .crate-prompt .speech-bubble p { font-size: 0.95rem; }
+  .playing .crate-prompt-word { font-size: 2rem; padding: 0; }
+  .playing .crate-workspace { max-width: 420px; margin: 4px auto 8px; }
+  .playing .crate-submit-actions { flex-wrap: wrap; gap: 8px; }
+  .playing .crate-submit-hint { display: none; }
+  .playing .pause { padding: 20px 12px; }
+  .playing .pace { flex-wrap: wrap; gap: 6px; }
+  .playing .keyboard { margin: 12px 0; }
+  .playing .key-row { padding-left: 0; }
+  .playing .keyboard p { margin-top: 6px; }
+}
+
+/* Gates has its own thumb-friendly control desk in both phone orientations. */
+@media (max-width: 959px) {
+  main.gates-screen { padding: 8px max(8px, env(safe-area-inset-right)) 12px max(8px, env(safe-area-inset-left)); height: auto; }
+  .gates-screen .topbar { padding-bottom: 6px; }
+  .gate-prototype { padding: 0; color: var(--paper); display: flex; flex-direction: column; }
+  .gate-prototype::before { display: none; }
+  .gate-prototype-toolbar { flex-direction: column; align-items: stretch; gap: 6px; margin-bottom: 8px; }
+  .gate-prototype-toolbar h1 { font-size: 1.35rem; }
+  .gate-prototype-toolbar h1 small { display: inline; font-size: 0.65em; }
+  .gate-prototype-toolbar p { display: block; font-size: 0.85rem; margin: 2px 0; }
+  .gate-prototype-stats { gap: 6px; font-size: 0.9rem; }
+  .gate-prototype-stats button { min-height: 44px; padding: 6px 10px; font-size: 0.85rem; }
+  .gate-levels { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+  .gate-levels button { min-height: 44px; flex: 1 1 auto; padding: 6px 10px; font-size: 0.85rem; }
+  .gates-screen .gate-prototype-world { display: flex; flex-direction: column; height: auto; min-height: 0; aspect-ratio: auto; overflow: hidden; background: #294b35; }
+  .gate-prototype-world > svg { order: 0; width: 100%; height: auto; aspect-ratio: 16 / 9; flex: none; }
+  .gate-prototype-world .gate-machine-panel { display: none; }
+  .gate-prototype-world .gate-farm-note { position: static; transform: none; order: 1; width: 100%; border: 0; border-radius: 0; padding: 6px; display: flex; gap: 6px; background: #fff6df; }
+  .gate-farm-note h3, .gate-farm-note .gate-group-banter { display: none; }
+  .gate-group-card { flex: 1; min-width: 0; margin: 0; padding: 4px; border: 1px solid #d5c8a5; }
+  .gate-group-card strong { font-size: 0.9rem; }
+  .gate-group-card small { font-size: 0.85rem; }
+  .gate-prototype-keyboard { flex-wrap: wrap; flex-direction: row; gap: 10px; margin-top: 10px; }
+  .gate-prototype-keyboard-label { display: none; }
+  .gate-prototype-key-row { width: 100%; max-width: none; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  .gate-prototype-key:not(.is-active) { display: none; }
+  .gate-prototype-key { min-height: 48px; height: auto; font-size: 1.5rem; }
+  .gate-rescue { min-height: 44px; font-size: 0.9rem; padding: 8px 20px; }
+  .gate-prototype-help { display: block; font-size: 0.85rem; line-height: 1.5; margin-top: 10px; }
+  /* Fixed overlays escape the map's clipping box. Long help and lab content scrolls. */
+  .gate-prototype-overlay { position: fixed; inset: 0; z-index: 20; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+  .gate-prototype-dialog { width: min(580px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; padding: 20px; font-size: 1rem; }
+  .gate-prototype-dialog h2 { font-size: 1.3rem; }
+  .gate-prototype-dialog p { margin: 10px 0; }
+  .gate-prototype-dialog button { min-height: 44px; padding: 8px 12px; }
+  .gate-summary-body { grid-template-columns: 1fr; gap: 8px; }
+  .gate-summary-body > div + div { border: 0; padding: 0; }
+  .gate-lab { width: min(580px, calc(100vw - 24px)); }
+  .gate-lab-sliders { grid-template-columns: 1fr; gap: 8px; }
+  .gate-lab-options, .gate-lab-presets, .gate-dialog-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .gate-lab-level { flex-wrap: wrap; gap: 6px; }
+}
+@media (max-width: 959px) and (orientation: landscape) {
+  .gates-screen .topbar { min-height: 44px; }
+  .gate-prototype-toolbar { flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .gate-prototype-toolbar h1 { font-size: 1.05rem; }
+  .gate-prototype-toolbar p { display: none; }
+  .gate-prototype-stats { flex: 1; justify-content: flex-end; }
+  .gate-levels { gap: 4px; margin-bottom: 6px; }
+  .gate-levels button { padding: 4px 8px; }
+  .gates-screen .gate-prototype-world { position: relative; }
+  .gate-prototype-world > svg { height: max(180px, 48dvh); aspect-ratio: auto; }
+  .gate-prototype-world .gate-farm-note { padding: 4px; }
+  .gate-prototype-keyboard { flex-wrap: nowrap; }
+  .gate-prototype-key-row { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+  .gate-rescue { flex: none; padding-inline: 10px; }
+  .gate-prototype-help { display: none; }
+  .gate-lab-sliders { grid-template-columns: 1fr 1fr; }
+}
+.gate-menu-toggle { display: none; }
+@media (max-width: 959px) {
+  .gates-screen > .topbar { display: none; }
+  .gate-prototype-stats .gate-menu-toggle { display: block; }
+  .gate-prototype-stats > .secondary:not(.gate-menu-toggle), .gate-prototype .gate-levels { display: none; }
+  .gate-menu-open .gate-prototype-stats > .secondary { display: block; }
+  .gate-menu-open .gate-levels { display: flex; }
+}
+.mobile-exit-label { display: none; }
+@media (max-width: 959px) {
+  .playing.phase-play .section-title .eyebrow, .playing .desktop-exit-label { display: none; }
+  .playing .mobile-exit-label { display: inline; }
+  .playing.phase-play .section-title { align-items: center; }
+  .playing.phase-play .section-title h1 { font-size: 1.2rem; }
+  .playing .crate-prompt .speech-bubble { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 10px; }
+  .playing .crate-prompt .speech-bubble p { display: none; }
+  .playing .crate-prompt-word { font-size: clamp(1.3rem, 6vw, 2rem); letter-spacing: 0.01em; }
+  .playing .crate-workspace { width: min(100%, 320px); }
+  .playing .crate-form > label { font-size: 0.85rem; }
+  .playing .crate-submit-actions { margin-top: 4px; }
+}
+@media (max-width: 380px) {
+  .playing .crate-workspace { width: 240px; }
+  .playing .play-panel { padding: 10px 12px; }
+  .playing .crate-submit-actions button { min-height: 44px; padding: 6px 12px; }
+}
+@media (max-width: 959px) and (orientation: landscape) {
+  .gates-screen .gate-prototype-world { display: grid; grid-template-columns: minmax(0, 1fr) 140px; }
+  .gate-prototype-world > svg { grid-column: 1; grid-row: 1; height: max(180px, calc(100dvh - 140px)); }
+  .gate-prototype-world .gate-farm-note { grid-column: 2; grid-row: 1; flex-direction: column; justify-content: center; }
+  .gate-farm-note .gate-group-card { flex: 0 1 auto; }
+}

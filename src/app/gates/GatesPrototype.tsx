@@ -21,6 +21,7 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
   const [warning, setWarning] = useState(loaded.warning);
   const [paused, setPaused] = useState(!["ready", "done"].includes(game.phase));
   const [panel, setPanel] = useState<"help" | "lab" | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [systemReduced, setSystemReduced] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const area = useRef<HTMLDivElement>(null);
   const modal = useRef<HTMLDivElement>(null);
@@ -30,7 +31,7 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
   live.current = { version: 3, game, best };
   const controllable = game.phase === "out" || game.phase === "back";
   const running = controllable || game.phase === "regroup";
-  const stopped = paused || panel !== null;
+  const stopped = paused || panel !== null || menuOpen;
   const still = systemReduced || game.config.reducedMotion;
   const content = gatesLevels[game.config.level - 1];
   const hint = nextGate(game);
@@ -62,6 +63,12 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
     return () => media.removeEventListener("change", update);
   }, []);
   useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 960px)");
+    const closeMobileMenu = () => { if (desktop.matches) setMenuOpen(false); };
+    desktop.addEventListener("change", closeMobileMenu);
+    return () => desktop.removeEventListener("change", closeMobileMenu);
+  }, []);
+  useEffect(() => {
     if (!running || stopped) { last.current = null; return; }
     let frame = 0;
     const animate = (now: number) => {
@@ -91,7 +98,7 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
     if (index !== -1) setGame((g) => operateGate(g, index));
   }
   function newRound(config: GatesConfig) {
-    setGame(initial(config)); setPaused(false); setPanel(null);
+    setGame(initial(config)); setPaused(false); setPanel(null); setMenuOpen(false);
   }
   function resume() { setPaused(false); area.current?.focus(); }
   function openPanel(value: "help" | "lab", trigger: HTMLButtonElement) {
@@ -99,7 +106,7 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
   }
   function closePanel() { setPanel(null); panelTrigger.current?.focus(); }
   return (
-    <section className={`gate-prototype gate-theme-${content.theme}`} dir="rtl" data-phase={game.phase} data-level={game.config.level} data-still={still} data-stopped={stopped || !running}
+    <section className={`gate-prototype gate-theme-${content.theme}${menuOpen ? " gate-menu-open" : ""}`} dir="rtl" data-phase={game.phase} data-level={game.config.level} data-still={still} data-stopped={stopped || !running}
       onKeyDown={(e) => {
         if (e.key !== "Escape" || e.repeat || e.ctrlKey || e.altKey || e.metaKey || e.nativeEvent.isComposing || !running || stopped) return;
         e.preventDefault(); e.stopPropagation(); setPaused(true);
@@ -109,6 +116,7 @@ export function GatesPrototype({ onExit }: { onExit: () => void }) {
         <div className="gate-prototype-stats">
           <strong aria-label={`ניקוד ${game.score}`}>⭐ {game.score}</strong>
           <button aria-keyshortcuts={running && !stopped ? "Escape" : undefined} title={paused ? "המשך" : "הפסקה (Esc)"} onClick={() => { setPaused((v) => !v); area.current?.focus(); }} disabled={!running || panel !== null}>{paused ? "המשך" : "הפסקה"}</button>
+          <button className="gate-menu-toggle secondary" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>{menuOpen ? "סגירת אפשרויות" : "אפשרויות ☰"}</button>
           <button className="secondary" onClick={(e) => openPanel("help", e.currentTarget)}>איך משחקים?</button>
           <button className="secondary" onClick={(e) => openPanel("lab", e.currentTarget)}>מעבדת הכיף</button>
           <button className="secondary" onClick={() => { save(); onExit(); }}>חזרה לבית</button>

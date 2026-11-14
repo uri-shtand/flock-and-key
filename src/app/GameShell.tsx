@@ -43,6 +43,7 @@ export function GameShell() {
   const [loaded] = useState(loadGame);
   const [progress, setProgress] = useState<GameProgress>(loaded.progress);
   const [screen, setScreen] = useState<Screen>("home");
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [warning, setWarning] = useState(loaded.warning);
   const [ready, setReady] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -62,6 +63,7 @@ export function GameShell() {
   const word = task?.mode === "spelling" ? wordById(task.wordId) : undefined;
   const isPlaying =
     screen === "game" && session?.phase === "play" && !draft?.done && !paused;
+  useEffect(() => setToolsOpen(false), [screen]);
   const connect = useCallback((value: GameBridge | null) => {
     bridge.current = value;
     setReady(Boolean(value));
@@ -163,7 +165,8 @@ export function GameShell() {
     composing.current = false;
     setPhysical("");
     setAudioError("");
-    input.current?.focus();
+    // Touch players open their own software keyboard when they are ready.
+    if (window.matchMedia("(pointer: fine)").matches) input.current?.focus();
   }, [
     session?.id,
     session?.stage,
@@ -554,7 +557,10 @@ export function GameShell() {
             <small>תעלומת הכבשים הנעלמות</small>
           </span>
         </button>
-        <nav aria-label="כלים">
+        <button className="icon-button mobile-tools-toggle" aria-expanded={toolsOpen} aria-controls="game-tools" onClick={() => setToolsOpen((open) => !open)}>
+          {toolsOpen ? "סגירת כלים ✕" : "כלים וצלילים ☰"}
+        </button>
+        <nav id="game-tools" className={toolsOpen ? "tools-open" : undefined} aria-label="כלים">
           <span className="balance" data-testid="balance">
             🔔 {progress.balance}
           </span>
@@ -819,8 +825,8 @@ export function GameShell() {
                   <h1>{stage.title}</h1>
                   {session.phase !== "intro" && session.phase !== "warmup" && <span className="session-level">רמה {session.difficulty}</span>}
                 </div>
-                <button className="text-button" onClick={leave}>
-                  שמירה ויציאה
+                <button className="text-button" aria-label="שמירה ויציאה" onClick={leave}>
+                  <span className="desktop-exit-label">שמירה ויציאה</span><span className="mobile-exit-label">יציאה</span>
                 </button>
               </div>
               {paused ? (
@@ -1041,6 +1047,8 @@ export function GameShell() {
                               dir="rtl"
                               autoComplete="off"
                               autoCorrect="off"
+                              autoCapitalize="off"
+                              enterKeyHint="done"
                               spellCheck={false}
                               maxLength={100}
                               placeholder={

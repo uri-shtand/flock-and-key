@@ -17,6 +17,8 @@ Choose difficulty 1–3 during the preparation step at the start of each mini-ga
 
 Home and child-facing gameplay fit desktop viewports without scrolling, including 1024×600, 1280×720 and 1440×900. Keyboard help is beside the task, and pace selection accompanies difficulty in preparation.
 
+All five mini-games also support phone and tablet layouts in portrait and landscape. On mobile, **כלים וצלילים** opens audio and parent controls; optional keyboard help sits below the task. Tap the text field and use your phone's Hebrew keyboard, then the submit button or keyboard action. Gates uses large gate buttons, with level selection, help, tuning and home under **אפשרויות**; opening that menu freezes the simulation. Mobile pages and long dialogs can scroll. See [mobile behavior and playtest notes](docs/mobile-support.md).
+
 Use a physical Hebrew keyboard. Music and speech have separate controls. Each stage picks a random background track, avoiding an immediate repeat; task changes and pause/resume keep the chosen music. The first interaction enables browser audio. **מנגינה אחרת** changes the current tune. The arrangements include a light rhythm, a quieter bridge and a return, instead of repeating a short motif. Progress and purchased decorations survive refresh in the same browser profile and origin. **להורים** opens the local results dashboard and export controls. Export does not yet provide in-game restore/import.
 
 The chapter targets 12–15 minutes, but its actual duration, enjoyment and learning effect still need testing with the child. Replay rotates spelling vocabulary and revisits difficult words. Short recall after seeing a word is tracked separately from independent spelling.
