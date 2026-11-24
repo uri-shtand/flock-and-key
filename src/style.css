@@ -1013,65 +1013,63 @@ button.text-button:hover:not(:disabled) {
   }
 }
 
-/* The hand guide lives in the right-hand world column on desktop. Its SVG
-   fingers are independent shapes; no current task is highlighted yet. */
 .world-column {
   min-width: 0;
 }
-.hand-guide {
-  margin-top: 20px;
-  padding: 17px 20px 14px;
-  background: var(--paper);
-  color: var(--ink);
-  border: 3px solid var(--outline);
-  border-radius: 24px;
-  box-shadow: 0 7px 0 #0b2235;
-  text-align: center;
-}
-.hand-guide h2 {
-  margin: 3px 0 0;
-  font-size: 1.2rem;
-}
-.hands-illustration {
-  display: block;
+
+.playing .keyboard.with-hands {
   width: 100%;
-  height: 200px;
-  margin: 0 auto;
-  overflow: visible;
+  color: var(--ink);
+  margin: 10px auto 0;
 }
-.finger-highlight {
-  fill: transparent;
+
+.typing-hands {
+  display: block;
+  margin-inline: auto;
+  width: 100%;
+  max-height: min(25svh, 210px);
 }
-.hand-finger.is-highlighted .finger-highlight {
-  fill: var(--gold);
-  opacity: 0.85;
-}
-.hand-tendons {
-  fill: none;
-  stroke: #bf8f73;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  opacity: 0.4;
-}
-.hand-labels {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  max-width: 330px;
-  margin: -1px auto 0;
-  gap: 34px;
-  font-size: 0.85rem;
+
+.typing-hands text {
+  fill: #203743;
+  font-size: 21px;
   font-weight: 700;
+  text-anchor: middle;
+  paint-order: stroke fill;
+  stroke: #fffdf8;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
 }
-.hand-guide p {
-  font-size: 0.75rem;
-  margin: 8px 0 0;
-  color: #566d78;
+
+.typing-hands .typing-target {
+  font-size: 25px;
+  stroke: #ffd065;
 }
-@media (max-width: 600px) {
-  .hands-illustration {
-    height: 170px;
-  }
+
+.playing .keyboard.with-hands p {
+  margin: 6px 0 0;
+  font-size: clamp(1.1rem, 1.9vw, 1.4rem);
+  font-weight: 700;
+  line-height: 1.2;
 }
+
+.crate-prompt.celebrating .character-portrait {
+  animation: dad-cheer 480ms ease-in-out both;
+}
+
+.crate-prompt.motion-paused .character-portrait {
+  animation-play-state: paused;
+}
+
+@keyframes dad-cheer {
+  35% { transform: rotate(-9deg); }
+  68% { transform: rotate(5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crate-prompt.celebrating .character-portrait { animation: none; }
+}
+
 /* Guided typing: Dad supplies the word on the right; HTML letters are painted
    directly onto the wooden crate on the left. */
 .crate-game .world-card .stage {
@@ -1099,6 +1097,7 @@ button.text-button:hover:not(:disabled) {
   letter-spacing: 0.08em;
 }
 .crate-workspace {
+  container-type: inline-size;
   position: relative;
   width: 100%;
   margin: 8px 0 12px;
@@ -1135,7 +1134,7 @@ button.text-button:hover:not(:disabled) {
   caret-color: #294b61;
 }
 .crate-lettering.long-word input:not([type]) {
-  font-size: clamp(1.3rem, 2.7vw, 2.6rem);
+  font-size: clamp(1.15rem, 7.2cqi, 2.4rem);
 }
 .crate-lettering input:not([type]):focus {
   border-color: #365a72;
@@ -1185,7 +1184,7 @@ button.text-button:hover:not(:disabled) {
     padding: 17px 14px;
   }
 }
-/* Give the desktop menu room to read; shorter windows may scroll. */
+/* Difficulty selection in each mini-game’s preparation. */
 .difficulty-picker {
   margin: 22px 0;
   padding: 14px;
@@ -1380,6 +1379,10 @@ button.danger-button:hover:not(:disabled) {
   .playing .difficulty-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .playing .difficulty-options label { margin: 0; padding: 8px; gap: 5px; }
   .playing .difficulty-picker p { font-size: 0.85rem; margin-top: 8px; }
+  .playing .crate-difficulty .difficulty-options { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .playing .crate-difficulty label { grid-column: span 2; line-height: 1.3; }
+  .playing .crate-difficulty label:nth-child(n + 4) { grid-column: span 3; }
+  .playing .crate-difficulty small { line-height: 1.25; }
   .playing .task-progress { margin: 6px 0 10px; }
   .playing .crate-workspace { height: clamp(115px, 23svh, 210px); aspect-ratio: auto; margin: 4px 0 8px; }
   .playing .task-card { min-height: 0; padding: 10px; margin-bottom: 12px; }
@@ -1389,10 +1392,6 @@ button.danger-button:hover:not(:disabled) {
   .playing .keyboard p { margin-top: 5px; min-height: 0; }
   .playing .completion-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
   .playing .completion-actions p { margin: 0; }
-  .playing .hand-guide { margin-top: 12px; padding: 10px; }
-  .playing .hand-guide svg { max-height: 130px; }
-  .playing .hand-guide h2 { margin-bottom: 4px; }
-  .playing .hand-guide p { margin: 4px 0 0; }
   .playing .clue-notebook { margin-top: 12px; padding-top: 8px; gap: 4px; }
   .playing .clue-card { padding: 18px; margin: 12px 0; }
   .playing .stats-grid { margin: 12px 0; grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -1421,8 +1420,6 @@ button.danger-button:hover:not(:disabled) {
   .playing .dialogue .mission-brief p { font-size: 1rem; }
   .playing .dialogue .mission-brief h2 { font-size: 1.1rem; }
   .playing .stage { max-height: 26svh; }
-  .playing .hand-guide svg { max-height: 110px; }
-  .playing .hand-guide .eyebrow { display: none; }
   .playing .key { max-width: 30px; aspect-ratio: 1.35; }
   .playing .key-row { margin-bottom: 4px; }
   .playing .keyboard p { font-size: 0.75rem; }
@@ -1443,10 +1440,6 @@ button.danger-button:hover:not(:disabled) {
   .playing .crate-prompt { padding: 8px 12px; }
   .playing .crate-prompt-word { font-size: 2.3rem; letter-spacing: 0.02em; padding: 3px 0; }
   .playing .world-column .scene-heading, .playing .world-column .world-caption { padding: 7px 14px; }
-  .playing .hand-guide { margin-top: 8px; padding: 6px 10px; }
-  .playing .hand-guide svg { max-height: 72px; }
-  .playing .hand-guide h2 { font-size: 1rem; }
-  .playing .hand-guide p { margin: 0; }
   .playing .world-column > .keyboard { margin-top: 8px; }
   .playing .help-actions { margin-bottom: 6px; gap: 6px; }
 }
@@ -1476,9 +1469,6 @@ button.danger-button:hover:not(:disabled) {
   .playing .crate-prompt .character-name { margin: 0; }
   .playing .crate-prompt .speech-bubble p { font-size: 0.8rem; }
   .playing .crate-prompt-word { grid-column: 1 / -1; line-height: 1.15; }
-  .playing .hand-guide svg { max-height: 56px; }
-  .playing .hand-guide h2 { line-height: 1.2; }
-  .playing .hand-guide p { display: none; }
 }
 @media (min-width: 960px) {
   .playing .topbar .brand { padding: 0; }
@@ -1745,7 +1735,6 @@ main.gates-screen { max-width: 1920px; width: 100%; }
   .playing .mission-brief, .playing .preparation-help { order: 2; margin-block: 10px 0; }
   .playing .keyboard, .playing .clue-notebook { order: 4; width: 100%; color: var(--ink); }
   .playing .clue-notebook { background: var(--paper); padding: 12px; border-radius: 12px; }
-  .playing .hand-guide { display: none; }
   .playing .stage { max-height: 110px; }
   .playing.phase-play .stage, .playing.phase-play .scene-heading { display: none; }
   .playing .world-caption { padding: 4px 12px; min-height: 44px; font-size: 0.8rem; }
@@ -1853,7 +1842,7 @@ main.gates-screen { max-width: 1920px; width: 100%; }
   .playing.phase-play .section-title { align-items: center; }
   .playing.phase-play .section-title h1 { font-size: 1.2rem; }
   .playing .crate-prompt .speech-bubble { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 10px; }
-  .playing .crate-prompt .speech-bubble p { display: none; }
+  .playing .crate-prompt:not(.celebrating) .speech-bubble p { display: none; }
   .playing .crate-prompt-word { font-size: clamp(1.3rem, 6vw, 2rem); letter-spacing: 0.01em; }
   .playing .crate-workspace { width: min(100%, 320px); }
   .playing .crate-form > label { font-size: 0.85rem; }
@@ -1869,4 +1858,24 @@ main.gates-screen { max-width: 1920px; width: 100%; }
   .gate-prototype-world > svg { grid-column: 1; grid-row: 1; height: max(180px, calc(100dvh - 140px)); }
   .gate-prototype-world .gate-farm-note { grid-column: 2; grid-row: 1; flex-direction: column; justify-content: center; }
   .gate-farm-note .gate-group-card { flex: 0 1 auto; }
+}
+
+.shop-pages { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; }
+.shop-pages span { font-size: .9rem; }
+.shop-pages button { padding: 7px 12px; font-size: .9rem; }
+@media (min-width: 960px) and (max-height: 760px) {
+  .shop-screen .section-title { align-items: center; margin-bottom: 6px; }
+  .shop-screen .section-title h1 { margin: 0; line-height: 1.15; }
+  .shop-screen > .panel > p { margin: 6px 0 10px; line-height: 1.4; }
+  .shop-screen .shop-pages { margin-top: 8px; }
+  .shop-screen .shop-pages button { padding: 6px 10px; line-height: 1.2; }
+}
+@media (min-width: 960px) and (max-height: 650px) {
+  .shop-screen > .panel { padding: 10px 16px; }
+  .shop-screen .section-title h1 { font-size: 1.8rem; }
+  .shop-screen .shop-grid { gap: 8px; }
+  .shop-screen .prize { padding: 6px; }
+}
+@media (min-width: 960px) and (max-height: 650px) {
+  .shop-screen > footer { padding-top: 2px; }
 }

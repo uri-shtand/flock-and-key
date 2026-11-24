@@ -3,7 +3,7 @@ import words from "../../src/content/words.json" with { type: "json" };
 const storageKey = "flock-and-key:game:v2";
 async function quiet(page: Page) {
   await page.goto("/");
-  await expect(page.getByText("החווה מוכנה", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "יוצאים לחקירה ←", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "מוזיקה פועלת", exact: true }).click();
 }
 async function start(page: Page, mode?: string, difficulty?: number) {
@@ -46,7 +46,7 @@ test("Hebrew correction, physical keys, exact position and prizes survive refres
   expect(await page.locator("canvas").count()).toBe(1);
   await expect(
     page.getByRole("img", {
-      name: "איור יד שמאל ויד ימין, עם חמש אצבעות בכל יד, במבט מלמעלה",
+      name: "ידיים בתנוחת הקלדה על המקלדת העברית",
     }),
   ).toBeVisible();
   await page.screenshot({
@@ -182,7 +182,7 @@ test("composition is not validated until committed and paste never earns an inde
   ).toBe(true);
 });
 
-test("complete all four modes, skip difficulty, decorate the world and export real history", async ({
+test("complete the available chapter, skip difficulty, decorate the world and export real history", async ({
   page,
 }) => {
   test.setTimeout(90000);
@@ -194,7 +194,7 @@ test("complete all four modes, skip difficulty, decorate the world and export re
   await page.clock.pauseAt(new Date("2026-11-11T12:00:01Z"));
   await page.getByRole("button", { name: "הקראה פועלת", exact: true }).click();
   await start(page);
-  for (let stage = 0; stage < 4; stage++) {
+  for (const stage of [0, 2]) {
     if (stage > 0) {
       await fitsViewport(page);
       await page
@@ -227,7 +227,7 @@ test("complete all four modes, skip difficulty, decorate the world and export re
     await fitsViewport(page);
     await page
       .getByRole("button", {
-        name: stage === 3 ? "לסיום ←" : "ממשיכים בעקבות הרמז ←",
+        name: stage === 2 ? "לסיום ←" : "ממשיכים בעקבות הרמז ←",
         exact: true,
       })
       .click();
@@ -258,7 +258,7 @@ test("complete all four modes, skip difficulty, decorate the world and export re
   for await (const chunk of stream!) chunks.push(Buffer.from(chunk));
   const exported = JSON.parse(Buffer.concat(chunks).toString());
   expect(exported.sessions[0].status).toBe("completed");
-  expect(exported.sessions[0].attempts).toHaveLength(34);
+  expect(exported.sessions[0].attempts).toHaveLength(18);
   expect(exported.owned).toContain("hat");
   expect(
     exported.sessions[0].attempts.some((a: { skipped: boolean }) => a.skipped),
@@ -423,7 +423,9 @@ test("desktop home fits without scrolling, also when resuming", async ({
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("/");
-    await expect(page.getByText("החווה מוכנה", { exact: true })).toBeVisible();
+    const newChapter = page.getByRole("button", { name: "יוצאים לחקירה ←", exact: true })
+      .or(page.getByRole("button", { name: "פרק חדש", exact: true }));
+    await expect(newChapter).toBeEnabled();
     const fits = () =>
       page.evaluate(
         () =>
@@ -433,9 +435,7 @@ test("desktop home fits without scrolling, also when resuming", async ({
     await expect.poll(fits).toBe(true);
     for (const name of [
       "צובעים ארגזים",
-      "עקבות בחשיכה",
       "הדואר המבולבל",
-      "פיצי במרדף",
     ]) {
       const button = page
         .getByRole("button")
@@ -449,10 +449,7 @@ test("desktop home fits without scrolling, also when resuming", async ({
         .outputPath(`home-${viewport.width}x${viewport.height}.png`),
       fullPage: true,
     });
-    await page
-      .getByRole("button", { name: "יוצאים לחקירה ←", exact: true })
-      .or(page.getByRole("button", { name: "פרק חדש", exact: true }))
-      .click();
+    await newChapter.click();
     await page
       .getByRole("button", { name: "שמירה ויציאה", exact: true })
       .click();
@@ -708,75 +705,63 @@ test("music is picked at stage entry, stays through tasks and resumes, and respe
   expect((await music()).paused).toBe(true);
 });
 
-test("Pitsi barks in an illustrated dialogue turn before the chase starts", async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+test("retired games are hidden and their saved progress stays intact", async ({ page }) => {
   await quiet(page);
-  await page
-    .getByRole("button")
-    .filter({ has: page.getByText("פיצי במרדף", { exact: true }) })
-    .click();
-  const introduction = page.getByRole("list", { name: "שיחת הדמויות" });
-  await expect(
-    introduction.getByRole("img", {
-      name: "פיצי כלב הרועים, נובח ומוכן לצאת למרדף",
-    }),
-  ).toBeVisible();
-  await expect(
-    introduction.getByRole("listitem").filter({ hasText: "הב! הב!" }),
-  ).toContainText("פיצי");
-  await page.screenshot({
-    path: test.info().outputPath("pitsi-chase-intro.png"),
-    fullPage: true,
-  });
-  await page
-    .getByRole("button", { name: "מכירים את המשימה ←", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "מוכנים, מתחילים ←", exact: true })
-    .click();
-  await expect(page.getByRole("textbox")).toBeFocused();
-  await page.getByRole("textbox").fill(await expectedWord(page));
-  await expect(page.getByRole("status")).toContainText("כל הכבוד");
-  expect(errors).toEqual([]);
+  await expect(page.getByText("פיצי במרדף", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("עקבות בחשיכה", { exact: true })).toHaveCount(0);
+  await start(page);
+  await page.evaluate(key => {
+    const progress = JSON.parse(localStorage.getItem(key)!);
+    const run = progress.sessions.find((s: { id: string }) => s.id === progress.currentId);
+    run.stage = 1; run.phase = "play"; run.index = 2; run.standalone = true;
+    localStorage.setItem(key, JSON.stringify(progress));
+  }, storageKey);
+  await page.reload();
+  await expect(page.getByText(/המשחקון ששמרתם נח בינתיים/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "ממשיכים מאיפה שעצרנו" })).toHaveCount(0);
+  for (const viewport of [{ width: 1024, height: 600 }, { width: 1280, height: 720 }, { width: 1440, height: 900 }]) {
+    await page.setViewportSize(viewport); await fitsViewport(page);
+  }
+  expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).sessions[0].index, storageKey)).toBe(2);
+  await start(page, "הדואר המבולבל");
+  await expect(page.getByRole("textbox")).toBeVisible();
 });
 
-test("Pitsi follows the farm path from the foreground to the barn during the chase", async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") errors.push(message.text());
-  });
-  await quiet(page);
-  await start(page, "פיצי במרדף");
-  const scene = page.locator("canvas");
-  await scene.screenshot({
-    path: test.info().outputPath("pitsi-path-start.png"),
-  });
-  for (let index = 0; index < 8; index++) {
-    await page.getByRole("textbox").fill(await expectedWord(page));
-    await expect(page.getByRole("textbox")).toBeDisabled();
-    await page
-      .getByRole("button", { name: "המשך עכשיו ←", exact: true })
-      .click();
-    if (index === 3 || index === 7) {
-      await page.waitForTimeout(700);
-      await scene.screenshot({
-        path: test
-          .info()
-          .outputPath(
-            index === 3 ? "pitsi-path-middle.png" : "pitsi-path-end.png",
-          ),
-      });
-    }
+test("new farm decorations can be bought, toggled and restored on both shop pages", async ({ page }) => {
+  const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
+  page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
+  await quiet(page); await start(page);
+  await page.evaluate(key => {
+    const p = JSON.parse(localStorage.getItem(key)!); p.balance = 1000; p.earned = 1000;
+    localStorage.setItem(key, JSON.stringify(p));
+  }, storageKey);
+  await page.reload();
+  await page.getByRole("button", { name: "משנים את החווה", exact: true }).click();
+  await page.getByRole("button", { name: "לעוד שטויות ←", exact: true }).click();
+  for (const article of await page.locator(".prize").all()) await article.getByRole("button", { name: "לפתוח", exact: true }).click();
+  for (const viewport of [{ width: 1024, height: 600 }, { width: 1280, height: 720 }, { width: 1440, height: 900 }]) {
+    await page.setViewportSize(viewport); await fitsViewport(page);
+    const clipped = await page.locator('.shop-screen .panel button:visible, .prize h2').evaluateAll(elements => elements.flatMap(el => {
+      const rect = el.getBoundingClientRect(); let parent = el.parentElement;
+      if (rect.top < 0 || rect.bottom > innerHeight || rect.left < 0 || rect.right > innerWidth) return [el.textContent];
+      while (parent) {
+        const style = getComputedStyle(parent), box = parent.getBoundingClientRect();
+        if ((/(hidden|clip|auto|scroll)/.test(style.overflowY) && (rect.top < box.top - 2 || rect.bottom > box.bottom + 2)) || (/(hidden|clip|auto|scroll)/.test(style.overflowX) && (rect.left < box.left - 2 || rect.right > box.right + 2))) return [el.textContent];
+        parent = parent.parentElement;
+      }
+      return [];
+    }));
+    expect(clipped).toEqual([]);
+    await page.screenshot({ path: test.info().outputPath(`new-decorations-${viewport.width}.png`) });
+    await page.getByRole("button", { name: "לעמוד הקודם", exact: true }).click(); await fitsViewport(page);
+    await page.getByRole("button", { name: "לעוד שטויות ←", exact: true }).click();
   }
-  await expect(
-    page.getByRole("heading", { name: "פעמון קטן עטוף בחוט צמר" }),
-  ).toBeVisible();
+  await page.locator(".prize").first().getByRole("button", { name: "להוריד", exact: true }).click();
+  await page.reload();
+  await page.getByRole("button", { name: "משנים את החווה", exact: true }).click();
+  await page.getByRole("button", { name: "לעוד שטויות ←", exact: true }).click();
+  await expect(page.locator(".prize").first().getByRole("button")).toHaveText("להפעיל");
+  await expect(page.getByRole("button", { name: "להוריד", exact: true })).toHaveCount(4);
   expect(errors).toEqual([]);
 });
 
@@ -812,7 +797,7 @@ test("difficulty persists while saved games keep their original words and level"
   await page.getByRole("button", { name: "שמירה ויציאה", exact: true }).click();
   await page.getByRole("button", { name: "פרק חדש", exact: true }).click();
   await page.getByRole("button", { name: "מכירים את המשימה ←", exact: true }).click();
-  await expect(page.getByRole("radio", { name: /3 · מאתגרים/ })).toBeChecked();
+  await expect(page.getByRole("radio", { name: /4 · מתרגלים רצף/ })).toBeChecked();
   await page.getByRole("radio", { name: /1 · מתחילים/ }).check();
   await page.reload();
   await page.getByRole("button", { name: "ממשיכים מאיפה שעצרנו", exact: true }).click();
@@ -865,11 +850,11 @@ test("game introductions, level selection, input, help, feedback and endings fit
   await page.getByRole("button", { name: "הקראה פועלת", exact: true }).click();
   for (const viewport of [{ width: 1024, height: 600 }, { width: 1280, height: 720 }, { width: 1440, height: 900 }]) {
     await page.setViewportSize(viewport);
-    for (const name of ["צובעים ארגזים", "עקבות בחשיכה", "הדואר המבולבל", "פיצי במרדף"]) {
+    for (const name of ["צובעים ארגזים", "הדואר המבולבל"]) {
       await page.getByRole("button").filter({ has: page.getByText(name, { exact: true }) }).click();
       await fitsViewport(page);
       await page.getByRole("button", { name: "מכירים את המשימה ←", exact: true }).click();
-      await page.getByRole("radio", { name: /3 · מאתגרים/ }).check();
+      await page.getByRole("radio", { name: name === "צובעים ארגזים" ? /5 · מילים ארוכות/ : /3 · מאתגרים/ }).check();
       await fitsViewport(page);
       await page.getByRole("button", { name: "מוכנים, מתחילים ←", exact: true }).click();
       if (name !== "צובעים ארגזים") await page.getByRole("button", { name: "פתיחת מקלדת עזר", exact: true }).click();
@@ -879,16 +864,63 @@ test("game introductions, level selection, input, help, feedback and endings fit
         await page.getByRole("button", { name: "צריכים להעתיק?", exact: true }).click();
       }
       await fitsViewport(page);
+      if (name === "צובעים ארגזים") {
+        await page.screenshot({ path: test.info().outputPath(`crate-${viewport.width}.png`) });
+        const prompt = page.getByRole("region", { name: "אבא מציג את המילה" });
+        const keyboard = page.getByRole("region", { name: "מקלדת עברית לעזרה" });
+        for (const element of [prompt, keyboard, page.getByRole("textbox")]) {
+          expect(await element.evaluate((el) => {
+            const box = el.getBoundingClientRect();
+            for (let ancestor = el.parentElement; ancestor; ancestor = ancestor.parentElement) {
+              const style = getComputedStyle(ancestor);
+              const bounds = ancestor.getBoundingClientRect();
+              if (style.overflowY !== "visible" && (box.top < bounds.top - 1 || box.bottom > bounds.bottom + 1)) return false;
+              if (style.overflowX !== "visible" && (box.left < bounds.left - 1 || box.right > bounds.right + 1)) return false;
+            }
+            return true;
+          })).toBe(true);
+        }
+        await page.getByRole("button", { name: "שמירה ויציאה", exact: true }).click();
+        await page.reload();
+        await page.getByRole("button", { name: "ממשיכים מאיפה שעצרנו", exact: true }).click();
+        await expect(page.getByText("רמה 5", { exact: true })).toBeVisible();
+        await fitsViewport(page);
+      }
       if (name !== "פיצי במרדף") {
         await submit(page, "שגיאה");
         await fitsViewport(page);
       }
       const length = name === "הדואר המבולבל" ? 10 : 8;
+      const seen = new Set<string>();
       for (let index = 0; index < length; index++) {
-        await submit(page, await expectedWord(page));
+        const word = await expectedWord(page);
+        seen.add(word);
+        const verifyReducedMotion = name === "צובעים ארגזים" && viewport.width === 1440 && index === 1;
+        if (verifyReducedMotion) await page.emulateMedia({ reducedMotion: "reduce" });
+        await submit(page, word);
+        if (name === "צובעים ארגזים") {
+          await expect(page.getByRole("region", { name: "אבא מציג את המילה" })).toContainText("כל הכבוד!");
+          if (index === 0) {
+            const portrait = page.locator(".crate-prompt .character-portrait");
+            await expect(portrait).toHaveCSS("animation-name", "dad-cheer");
+            await page.getByRole("button", { name: "הפסקה", exact: true }).click();
+            await expect(portrait).toHaveCSS("animation-play-state", "paused");
+            await fitsViewport(page);
+            await page.getByRole("button", { name: "חזרה למשחק", exact: true }).click();
+            await expect(portrait).toHaveCSS("animation-play-state", "running");
+          }
+          if (verifyReducedMotion) {
+            await expect(page.locator(".crate-prompt .character-portrait")).toHaveCSS("animation-name", "none");
+            await page.emulateMedia({ reducedMotion: "no-preference" });
+          }
+          if (index === length - 1) {
+            await page.screenshot({ path: test.info().outputPath(`crate-correct-${viewport.width}.png`) });
+          }
+        }
         await fitsViewport(page);
         await page.getByRole("button", { name: "המשך עכשיו ←", exact: true }).click();
       }
+      if (name === "צובעים ארגזים") expect(seen.size).toBe(length);
       await fitsViewport(page);
       await page.getByRole("button", { name: "לסיום ←", exact: true }).click();
       await fitsViewport(page);

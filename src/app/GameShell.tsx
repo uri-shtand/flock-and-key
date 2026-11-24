@@ -1,14 +1,13 @@
 import { DetectiveCase } from "./detective/DetectiveCase";
-import { difficultyLevels } from "../content/difficulty";
+import { crateDifficultyLevels, difficultyLevels } from "../content/difficulty";
 import { GatesPrototype } from "./gates/GatesPrototype";
 import { DadCratePrompt, CrateBackdrop } from "../components/CrateTask";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PhaserStage } from "../components/PhaserStage";
 import { DialoguePanel } from "../components/DialoguePanel";
-import { HandGuide } from "../components/HandGuide";
 import { HebrewKeyboard } from "../components/HebrewKeyboard";
 import { ParentDashboard } from "../components/ParentDashboard";
-import { stages, prizes, wordById, type Mode } from "../content/chapter";
+import { stages, availableStages, nextAvailableStage, prizes, wordById, type Mode } from "../content/chapter";
 import { AudioPlayer } from "../audio/AudioPlayer";
 import type { GameBridge } from "../game/bridge";
 import { keyFor, keyboardKeys } from "../typing/KeyboardMap";
@@ -44,12 +43,14 @@ export function GameShell() {
   const [loaded] = useState(loadGame);
   const [progress, setProgress] = useState<GameProgress>(loaded.progress);
   const [screen, setScreen] = useState<Screen>("home");
+  const [shopPage, setShopPage] = useState(0);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [warning, setWarning] = useState(loaded.warning);
   const [ready, setReady] = useState(false);
   const [paused, setPaused] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [physical, setPhysical] = useState("");
+  const [dadReaction, setDadReaction] = useState("");
   const [audioError, setAudioError] = useState("");
   const bridge = useRef<GameBridge | null>(null);
   const audio = useRef<AudioPlayer | null>(null);
@@ -58,6 +59,7 @@ export function GameShell() {
   const compositionBase = useRef("");
   const submitted = useRef(false);
   const session = activeSession(progress);
+  const canResume = session?.status === "active" && !stages[session.stage].hiddenReason;
   const stage = session ? stages[session.stage] : stages[0];
   const task = session?.tasks[session.stage][session.index];
   const draft = session?.draft;
@@ -230,6 +232,7 @@ export function GameShell() {
   ]);
 
   function start(mode?: Mode) {
+    if (mode && stages.find((stage) => stage.mode === mode)?.hiddenReason) return;
     audio.current?.stopSpeech();
     setProgress((p) => newSession(p, mode));
     setScreen("game");
@@ -237,11 +240,13 @@ export function GameShell() {
     audio.current?.resume();
   }
   function resume() {
+    if (!canResume) return;
     setScreen("game");
     setPaused(false);
     audio.current?.resume();
   }
   function leave() {
+    setDadReaction("");
     audio.current?.stopSpeech();
     setScreen("home");
     setPaused(false);
@@ -322,6 +327,7 @@ export function GameShell() {
     )
       return;
     const answer = value ?? draft.input;
+    const correct = !skipped && isCorrectAnswer(answer, task.expected);
     if (!skipped && !answer.trim()) {
       patchDraft({ message: "כתבו את המילה, או בקשו עזרה. אין לחץ." });
       return;
@@ -333,7 +339,6 @@ export function GameShell() {
       if (!s || s.draft.done) return p;
       const t = s.tasks[s.stage][s.index],
         d = s.draft;
-      const correct = !skipped && isCorrectAnswer(answer, t.expected);
       const taskId = s.stage * 100 + s.index;
       const history = allAttempts(p);
       const aid =
@@ -426,9 +431,10 @@ export function GameShell() {
         }),
       ));
     });
-    if (skipped || isCorrectAnswer(answer, task.expected))
+    if (correct && task.mode === "guided") setDadReaction(`${session.id}:${session.index}`);
+    if (skipped || correct)
       bridge.current?.send({ type: "celebrate" });
-    if (!skipped && !isCorrectAnswer(answer, task.expected))
+    if (!skipped && !correct)
       submitted.current = false;
   }
   function advance(
@@ -470,7 +476,8 @@ export function GameShell() {
   function nextStage() {
     setProgress((p) =>
       updateSession(p, (s) => {
-        if (s.stage === 3 || s.standalone)
+        const nextStage = nextAvailableStage(s.stage);
+        if (nextStage === -1 || s.standalone)
           return {
             ...s,
             phase: "ending",
@@ -479,8 +486,8 @@ export function GameShell() {
           };
         return {
           ...s,
-          stage: s.stage + 1,
-          difficulty: s.stageDifficulties?.[s.stage + 1] ?? s.difficulty,
+          stage: nextStage,
+          difficulty: s.stageDifficulties?.[nextStage] ?? s.difficulty,
           index: 0,
           phase: "intro",
           draft: emptyDraft(),
@@ -535,7 +542,7 @@ export function GameShell() {
           ? 0
           : session.stage +
               (session.phase === "clue" || session.phase === "ending" ? 1 : 0),
-      )
+      ).filter((stage) => !stage.hiddenReason)
     : [];
 
   return (
@@ -618,14 +625,16 @@ export function GameShell() {
                     ? `${String((session?.stage ?? 0) + 1).padStart(2, "0")} / ${stage.place}`
                     : "ניו זילנד · בוקר קצת חשוד"}
                 </span>
-                <span className="status">
-                  {ready ? "החווה מוכנה" : "טוענים את החווה…"}
-                </span>
+                {!ready && <span className="status">טוענים את החווה…</span>}
               </div>
               {screen === "game" &&
                 session?.phase === "play" &&
                 task?.mode === "guided" && (
-                  <DadCratePrompt word={task.expected} />
+                  <DadCratePrompt
+                    word={task.expected}
+                    celebrating={dadReaction === `${session.id}:${session.index}`}
+                    paused={paused}
+                  />
                 )}
               <PhaserStage onReady={connect} />
               <div className="world-caption">
@@ -691,7 +700,9 @@ export function GameShell() {
                         ].join(" · ")}
                       </b>
                     </p>
-
+                    {stage.mode === "guided" && (
+                      <p>בחירת הרמה קובעת את המילים לסיבוב הזה. 80% הצלחה בניסיון הראשון בלי רמז או העתקה יעלו את ההצעה בפעם הבאה.</p>
+                    )}
                   </>
                 )}
                 {stage.mode === "speed" && (
@@ -738,11 +749,9 @@ export function GameShell() {
                 <HebrewKeyboard
                   next={task.mode === "spelling" ? undefined : next}
                   physical={physical}
+                  showHands={task.mode === "guided"}
                 />
               )}
-            {screen === "game" &&
-              stage.mode === "guided" &&
-              session?.phase === "play" && <HandGuide />}
             {screen === "game" && session && !session.standalone &&
               clues.length > 0 &&
               (session.phase === "play" || session.phase === "clue") && (
@@ -757,7 +766,7 @@ export function GameShell() {
           {screen === "home" && (
             <section className="panel home">
               <span className="eyebrow">
-                פרק ראשון · הרפתקה של כ־12–15 דקות
+                פרק ראשון · תעלומה בשני משחקונים
               </span>
               <h1>מי חגג בחווה בלילה?</h1>
               <p className="lead">
@@ -765,22 +774,23 @@ export function GameShell() {
                 לגלות מה קרה כאן.
               </p>
               <div className="actions">
-                {session?.status === "active" && (
+                {canResume && (
                   <button onClick={resume} disabled={!ready}>
                     ממשיכים מאיפה שעצרנו
                   </button>
                 )}
                 <button
-                  className={session?.status === "active" ? "secondary" : ""}
+                  className={canResume ? "secondary" : ""}
                   onClick={() => start()}
                   disabled={!ready}
                 >
-                  {session?.status === "active" ? "פרק חדש" : "יוצאים לחקירה ←"}
+                  {canResume ? "פרק חדש" : "יוצאים לחקירה ←"}
                 </button>
                 <button className="secondary" onClick={() => setScreen("shop")}>
                   משנים את החווה
                 </button>
               </div>
+              {session?.status === "active" && !canResume && <p className="muted">המשחקון ששמרתם נח בינתיים לקראת שיפור. ההתקדמות נשמרה; אפשר לפתוח פרק חדש או לבחור משחקון אחר.</p>}
               <p className="muted">
                 בלי לחץ. עזרה בחינם, אפשר לתקן ואפשר לעצור בכל רגע.
               </p>
@@ -790,7 +800,7 @@ export function GameShell() {
                 <button aria-label="🐑 שומרי השערים (משחקון 5)" onClick={() => setScreen("gates")}>🐑 שומרי השערים</button>
               </div>
               <div className="game-menu">
-                {stages.map((s, i) => (
+                {stages.map((s, i) => !s.hiddenReason && (
                   <button
                     className="game-tile"
                     key={s.mode}
@@ -824,7 +834,7 @@ export function GameShell() {
                   <span className="eyebrow">
                     {session.standalone
                       ? "תרגול חופשי"
-                      : `רמז ${session.stage + 1} מתוך 4`}
+                      : `רמז ${availableStages.indexOf(stage) + 1} מתוך ${availableStages.length}`}
                   </span>
                   <h1>{stage.title}</h1>
                   {session.phase !== "intro" && session.phase !== "warmup" && <span className="session-level">רמה {session.difficulty}</span>}
@@ -854,10 +864,10 @@ export function GameShell() {
                           ? "הקשיבו, דמיינו, כתבו"
                           : "חימום קצר לפני שיוצאים"}
                       </h2>
-                      <fieldset className="difficulty-picker">
+                      <fieldset className={stage.mode === "guided" ? "difficulty-picker crate-difficulty" : "difficulty-picker"}>
                         <legend>באיזו רמה משחקים?</legend>
                         <div className="difficulty-options">
-                          {difficultyLevels.map(({ level, title, description }) => (
+                          {(stage.mode === "guided" ? crateDifficultyLevels : difficultyLevels).map(({ level, title, description }) => (
                             <label key={level}>
                               <input
                                 type="radio"
@@ -874,7 +884,7 @@ export function GameShell() {
                           ))}
                         </div>
                         <p>הצעת המשחק: רמה {progress.recommendations?.[stage.mode] ?? 1}. אפשר לבחור כל רמה.</p>
-                        <p>80% מילים נכונות בניסיון הראשון בלי רמז או העתקה יעלו את ההצעה לפעם הבאה. מילות הזיכרון החוזרות לא נספרות.</p>
+                        {stage.mode !== "guided" && <p>הבחירה קובעת את המילים לסיבוב שעומד להתחיל. 80% הצלחה בניסיון הראשון בלי רמז או העתקה יעלו את ההצעה לפעם הבאה.{stage.mode === "spelling" && " מילות הזיכרון החוזרות לא נספרות."}</p>}
                       </fieldset>
                       <button onClick={begin}>מוכנים, מתחילים ←</button>
                     </div>
@@ -1154,7 +1164,7 @@ export function GameShell() {
                       <h2>{stage.clue}</h2>
                       <p>{stage.closing}</p>
                       <button onClick={nextStage}>
-                        {session.stage === 3 || session.standalone
+                        {nextAvailableStage(session.stage) === -1 || session.standalone
                           ? "לסיום ←"
                           : "ממשיכים בעקבות הרמז ←"}
                       </button>
@@ -1232,11 +1242,10 @@ export function GameShell() {
                 </button>
               </div>
               <p>
-                פותחים פעם אחת, מפעילים ומחליפים בחינם. עזרה ורמזים לסיפור תמיד
-                נשארים בחינם.
+                פותחים פעם אחת. מפעילים ומחליפים בחינם.
               </p>
               <div className="shop-grid">
-                {prizes.map((prize) => {
+                {prizes.slice(shopPage * 5, shopPage * 5 + 5).map((prize) => {
                   const owned = progress.owned.includes(prize.id),
                     on = progress.equipped.includes(prize.id);
                   return (
@@ -1259,6 +1268,11 @@ export function GameShell() {
                   );
                 })}
               </div>
+              <nav className="shop-pages" aria-label="עמודי קישוטים">
+                <button className="secondary" disabled={shopPage === 0} onClick={() => setShopPage(p => p - 1)}>לעמוד הקודם</button>
+                <span role="status">עמוד {shopPage + 1} מתוך {Math.ceil(prizes.length / 5)}</span>
+                <button className="secondary" disabled={(shopPage + 1) * 5 >= prizes.length} onClick={() => setShopPage(p => p + 1)}>לעוד שטויות ←</button>
+              </nav>
             </section>
           )}
         </>

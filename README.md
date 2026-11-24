@@ -1,6 +1,6 @@
 # Flock & Key
 
-A Hebrew typing and spelling mystery for a child aged 12. The playable prototype contains one story chapter, four word mini-games, a standalone Gates game, a small detective case, 120 useful words, prerecorded Hebrew speech, six original background music arrangements, local progress, cosmetic rewards and a parent dashboard with JSON/CSV export.
+A Hebrew typing and spelling mystery for a child aged 12. The playable prototype contains one story chapter, two available word mini-games (two more temporarily hidden), a standalone Gates game, a small detective case, 120 useful words, prerecorded Hebrew speech, six original background music arrangements, local progress, cosmetic rewards and a parent dashboard with JSON/CSV export.
 
 ## Run on Windows
 
@@ -11,17 +11,17 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:5173 and choose **יוצאים לחקירה**. The chapter connects sign painting, following tracks, reconstructing letters and an optional pace challenge. You can also enter each mini-game directly. Help and skipping remain free; speed never blocks story completion.
+Open http://localhost:5173 and choose **יוצאים לחקירה**. The chapter currently connects sign painting and reconstructing letters. Tracks and Pitsi’s chase are temporarily hidden after playtest feedback that they were too easy and not interesting enough; their code and history are retained. A saved run inside either hidden game stays stored, with an explanatory home notice instead of resume. You can also enter each mini-game directly. Help and skipping remain free; speed never blocks story completion.
 
-Choose difficulty 1–3 during the preparation step at the start of each mini-game, including each stage of the chapter. Each game remembers its own suggested level locally. Completing at least 80% of its words correctly on the first submission without spelling hints or copying suggests the chosen level plus one next time (maximum 3); lower scores keep the previous suggestion. Spelling recall probes are excluded. You can always override the suggestion. Saved runs retain their exact tasks and level.
+Choose a difficulty during preparation, including each stage of the chapter. Crate painting has five levels and a 239-word copying bank, with eight distinct words per round. The other word games offer levels 1–3. Each game remembers its own suggested level locally. Completing at least 80% of its words correctly on the first submission without spelling hints or copying suggests the chosen level plus one next time (up to that game’s highest level); lower scores keep the previous suggestion. Spelling recall probes are excluded. You can always override the suggestion. Saved runs retain their exact tasks and level.
 
-Home and child-facing gameplay fit desktop viewports without scrolling, including 1024×600, 1280×720 and 1440×900. Keyboard help is beside the task, and pace selection accompanies difficulty in preparation.
+Home and child-facing gameplay fit desktop viewports without scrolling, including 1024×600, 1280×720 and 1440×900. Keyboard help is beside the task. In crate painting, illustrated hands show the resting pose and reach for the highlighted Hebrew key. Dad gives a brief cheer for each correct word. See [the crate iteration and playtest questions](docs/crate-typing.he.md). Pace selection accompanies difficulty in preparation.
 
 The four word mini-games and Gates also support phone and tablet layouts in portrait and landscape. On mobile, **כלים וצלילים** opens audio and parent controls; optional keyboard help sits below the task. Tap the text field and use your phone's Hebrew keyboard, then the submit button or keyboard action. Gates uses large gate buttons, with level selection, help, tuning and home under **אפשרויות**; opening that menu freezes the simulation. Mobile pages and long dialogs can scroll. See [mobile behavior and playtest notes](docs/mobile-support.md).
 
 Use a physical Hebrew keyboard. Music and speech have separate controls. Each stage picks a random background track, avoiding an immediate repeat; task changes and pause/resume keep the chosen music. The first interaction enables browser audio. **מנגינה אחרת** changes the current tune. The arrangements include a light rhythm, a quieter bridge and a return, instead of repeating a short motif. Progress and purchased decorations survive refresh in the same browser profile and origin. **להורים** opens the local results dashboard and export controls. Export does not yet provide in-game restore/import.
 
-The chapter targets 12–15 minutes, but its actual duration, enjoyment and learning effect still need testing with the child. Replay rotates spelling vocabulary and revisits difficult words. Short recall after seeing a word is tracked separately from independent spelling.
+The shortened chapter’s duration, enjoyment and learning effect still need testing with the child. Replay rotates spelling vocabulary and revisits difficult words. Short recall after seeing a word is tracked separately from independent spelling.
 
 ## Commands
 
@@ -68,8 +68,12 @@ The speech clips are already included. `python3 scripts/prepare-speech.py` prepa
 
 ## Small detective case: הטרמפ של נוגה
 
-Home → **🔎 תיק בלשי קטן** opens a standalone Hebrew point-and-click investigation. Inspect the cart, ask Dad and the postman about a star ribbon, connect today's delivery to its destination, then follow the bridge keeper's note to a sheep's secret fashion show. Reading helps decide what to do; there is no typing task, timer, score or end quiz. Wrong leads are recoverable, and three free hints always offer **נבדוק יחד**. The bridge also permits discovery by exploration.
+Home → **🔎 תיק בלשי קטן** opens a Hebrew point-and-click adventure on a full farm map. Click characters to talk, inspect objects and try things, choose sentences to keep in the illustrated **מחברת הרמזים**, and explicitly take objects into **תיק החפצים**. Both relevant clues and funny distractions can be collected. The notebook keeps each sentence and its source; inventory contains only objects that were taken.
 
-The two illustrated Phaser scenes use accessible HTML hotspots. **מחברת החקירה** keeps source passages available and saves selected sentences and tentative choices. Escape, loss of focus and refresh pause the case; **ממשיכים בחקירה** resumes it. OS reduced motion is respected. **מעבדת החקירה** provides optional guided conversation suggestions, labels, reduced motion, defaults and JSON settings copy; applying starts a new case. **מה אפשר לבדוק?** toggles labels during play. Replay keeps effective settings and honestly repeats the same solution.
+**בוא ננסה לפתור** opens two boards: **מה קרה לנוגה?** and **איפה נוגה עכשיו?** Place three collected clues on each, mixing notes and objects. Drag them, or click a clue then an empty slot (also works by keyboard). Remove and replace clues freely. Checking a wrong connection keeps it available to revise; three free hints and **נחבר יחד** keep the story accessible. Visit the bridge and return to the farm in any order. There is no typing task, timer or score.
 
-Case runs are a versioned optional extension of the shared local game save, isolated from typing/spelling results and currency. The parent screen, JSON/CSV exports and existing confirmed reset include case-specific decisions, evidence and assistance. Invalid case histories are removed with a notice while preserving word progress and other valid cases. No new audio clips or read-aloud service were added. See [implementation, deviations and human playtest questions](docs/detective-implementation.md).
+Conversations, observations, the notebook and inventory open over the world. Dialogs stop animation and trap/restore keyboard focus. Hotspot names appear on hover/focus by default; **אפשרויות** can show them all, suggest a first investigation or reduce motion. Applying settings explicitly starts a new case while retaining previous history; settings can be copied as JSON. Escape pauses from the map and closes an open dialog. Blur and refresh pause the case; **ממשיכים בחקירה** resumes it. OS reduced motion is respected.
+
+Edition-2 cases use the existing shared local game save, isolated from typing/spelling and currency. Collected notes, objects and partial boards survive refresh through invariant-validated events. Older edition-1 cases remain in history and exports; opening from one explains that the revised adventure starts fresh. Parent reporting, JSON/CSV and the existing confirmed reset include both editions. No new audio service, account or runtime AI is used. See [the redesign, implementation and human playtest questions](docs/noga-adventure-redesign.he.md); the [earlier implementation](docs/detective-implementation.md) remains historical reference.
+
+Manage shared work in [the task list](docs/tasks.he.md). See [the farm and opening iteration](docs/iteration-farm-and-openings.he.md) for the five new cosmetic options, paginated shop, hidden games and revised Noga opening.

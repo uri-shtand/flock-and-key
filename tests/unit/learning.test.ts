@@ -6,6 +6,7 @@ import { keyboardKeys, keyFor } from "../../src/typing/KeyboardMap";
 import {
   accuracy,
   chooseSpelling,
+  crateTypingSet,
   differences,
   editMetrics,
   typingSet,
@@ -145,7 +146,30 @@ it("expands vocabulary with difficulty and orders each set from shorter to longe
   expect(averages[1]).toBeLessThan(averages[2]);
 });
 
-it("raises only the completed game's proposal at 80%, once, capped at three", () => {
+it("selects distinct crate words of the authored lengths across five levels", () => {
+  const lengths = [
+    [2, 2, 3, 3, 3, 4, 4, 4],
+    [3, 3, 4, 4, 5, 5, 6, 6],
+    [4, 5, 5, 6, 6, 7, 8, 10],
+    [6, 6, 7, 7, 8, 8, 9, 10],
+    [8, 8, 9, 9, 10, 10, 11, 12],
+  ];
+  for (const level of [1, 2, 3, 4, 5] as const) {
+    const vocabulary = new Set<string>();
+    for (let seed = 0; seed < 150; seed++) {
+      const words = crateTypingSet(seed, level);
+      expect(words.map((word) => word.length)).toEqual(lengths[level - 1]);
+      expect(new Set(words).size).toBe(8);
+      for (const word of words) {
+        vocabulary.add(word);
+        for (const letter of word) expect(keyFor(letter)).toBeDefined();
+      }
+    }
+    expect(vocabulary.size).toBeGreaterThan(25);
+  }
+});
+
+it("raises only the completed game's proposal at 80%, once, capped at its highest level", () => {
   const tasks = Array.from({ length: 5 }, (_, i) => ({ mode: "guided" as const, wordId: `word${i}`, expected: "בית" }));
   const p = newSession(initialProgress());
   const s = p.sessions[0];
@@ -157,8 +181,10 @@ it("raises only the completed game's proposal at 80%, once, capped at three", ()
   expect(next.recommendations).toEqual({ guided: 2 });
   expect(recordStageCompletion(next)).toBe(next);
   expect(p.recommendations).toBeUndefined();
-  s.difficulty = 3;
-  expect(recordStageCompletion(p).recommendations?.guided).toBe(3);
+  s.difficulty = 4;
+  expect(recordStageCompletion(p).recommendations?.guided).toBe(5);
+  s.difficulty = 5;
+  expect(recordStageCompletion(p).recommendations?.guided).toBe(5);
   s.attempts[3].correct = false;
   expect(recordStageCompletion(p).recommendations?.guided).toBe(1);
   p.recommendations = { guided: 2 };

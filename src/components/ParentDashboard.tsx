@@ -1,5 +1,5 @@
 import { caseState } from "../typing/DetectiveCase";
-import { decisions } from "../content/detective";
+import { decisions, deductionBoards, evidenceText } from "../content/detective";
 import { useState } from "react";
 import { ResetProgressDialog } from "./ResetProgressDialog";
 import { stages } from "../content/chapter";
@@ -165,7 +165,7 @@ export function ParentDashboard({
       <p>פעולות בתיק מסוים בלבד, בנפרד מאיות והקלדה. קריאה בטקסט; עזרת מבוגר אינה ניתנת לזיהוי. משחק חוזר אינו מדד לשיפור.</p>
       {(progress.detective ?? []).map(run => { const state = caseState(run); return <div key={run.id}>
         <b>הטרמפ של נוגה · {state.place === 'ending' ? 'התיק נפתר' : 'בחקירה'}</b>
-        {state.attempts.map((a, i) => <p key={i}>{decisions[a.decision].title} — {decisions[a.decision].choices[a.choice]} · {({ supported: 'קישור מבוסס טקסט', guided: 'פתרון יחד', explored: 'גילוי בחקירה חופשית', revisit: 'ניסיון שנבדק מחדש' })[a.result]} · רמז {a.hints} · משפטים: {a.support.join(', ') || 'ללא'}</p>)}
+        {state.attempts.map((a, i) => <p key={i}>{run.version === 2 ? deductionBoards[a.decision === 'identity' ? 'happened' : 'where'].title : decisions[a.decision].title} — {run.version === 2 ? (a.result === 'revisit' ? 'שילוב שנבדק מחדש' : deductionBoards[a.decision === 'identity' ? 'happened' : 'where'].conclusion) : decisions[a.decision].choices[a.choice]} · {({ supported: 'קישור מבוסס טקסט', guided: 'פתרון יחד', explored: 'גילוי בחקירה חופשית', revisit: 'ניסיון שנבדק מחדש' })[a.result]} · רמז {a.hints} · ראיות: {a.support.map(id => run.version === 2 ? evidenceText(id) : id).join(' / ') || 'ללא'}</p>)}
       </div>; })}
       {!(progress.detective ?? []).length && <p>עוד לא נפתח תיק בלשי.</p>}
       <h2>סשנים קודמים</h2>

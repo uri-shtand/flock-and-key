@@ -1,16 +1,24 @@
 import { useId } from "react";
 import { CharacterPortrait } from "./DialoguePanel";
 
-export function DadCratePrompt({ word }: { word: string }) {
+export function DadCratePrompt({
+  word,
+  celebrating,
+  paused,
+}: {
+  word: string;
+  celebrating: boolean;
+  paused: boolean;
+}) {
   return (
-    <section className="crate-prompt" aria-label="אבא מציג את המילה">
+    <section className={`crate-prompt${celebrating ? " celebrating" : ""}${paused ? " motion-paused" : ""}`} aria-label="אבא מציג את המילה">
       <div className="dialogue-turn character-dad">
         <div className="character-portrait">
           <CharacterPortrait character="dad" />
         </div>
         <div className="speech-bubble">
           <b className="character-name">אבא</b>
-          <p>על הארגז הזה נכתוב:</p>
+          <p>{celebrating ? "כל הכבוד!" : "על הארגז הזה נכתוב:"}</p>
           <strong className="crate-prompt-word" data-testid="target-word">
             {word}
           </strong>

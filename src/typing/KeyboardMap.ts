@@ -55,6 +55,7 @@ export const keyboardRows = letters.map((row, r) =>
     letter,
     code: codes[r][c],
     finger: fingers[c],
+    fingerIndex: c,
   })),
 );
 export const keyboardKeys = keyboardRows.flat();

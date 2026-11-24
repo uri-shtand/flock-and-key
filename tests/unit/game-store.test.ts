@@ -200,3 +200,26 @@ it("migrates a legacy chapter's level for every stage without changing its words
   expect(loaded.progress.sessions[0].stageDifficulties).toEqual([3, 3, 3, 3]);
   expect(loaded.progress.sessions[0].tasks).toEqual(p.sessions[0].tasks);
 });
+
+it("restores the exact higher crate round and rejects repeated targets or levels in the wrong mode", () => {
+  const p = newSession(initialProgress(), "guided");
+  p.sessions[0].phase = "warmup";
+  const selected = selectDifficulty(p, 5);
+  const run = selected.sessions[0];
+  run.phase = "play";
+  run.index = 1;
+  run.draft.input = run.tasks[0][1].expected.slice(0, 3);
+  let saved = JSON.stringify(selected);
+  vi.stubGlobal("localStorage", { getItem: () => saved });
+  expect(loadGame()).toEqual({ progress: selected, warning: "" });
+  const duplicate = structuredClone(selected);
+  duplicate.sessions[0].tasks[0][1] = duplicate.sessions[0].tasks[0][0];
+  saved = JSON.stringify(duplicate);
+  expect(loadGame().warning).not.toBe("");
+  const spelling = newSession(initialProgress(), "spelling");
+  spelling.sessions[0].phase = "warmup";
+  expect(selectDifficulty(spelling, 5)).toEqual(spelling);
+  spelling.sessions[0].stageDifficulties![2] = 5;
+  saved = JSON.stringify(spelling);
+  expect(loadGame().warning).not.toBe("");
+});

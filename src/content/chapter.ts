@@ -6,6 +6,7 @@ export type Word = (typeof vocabulary)[number];
 export const words: Word[] = vocabulary;
 export const stages: {
   mode: Mode;
+  hiddenReason?: string;
   title: string;
   place: string;
   dialogue: DialogueLine[];
@@ -35,6 +36,7 @@ export const stages: {
   },
   {
     mode: "blind",
+    hiddenReason: "קל מדי ולא מעניין מספיק — ממתין לתכנון מחדש (TASK-003)",
     title: "עקבות בחשיכה",
     place: "השביל המוצל",
     dialogue: [
@@ -76,6 +78,7 @@ export const stages: {
   },
   {
     mode: "speed",
+    hiddenReason: "קל מדי ולא מעניין מספיק — ממתין לתכנון מחדש (TASK-003)",
     title: "פיצי במרדף",
     place: "בדרך לאסם",
     dialogue: [
@@ -98,12 +101,21 @@ export const stages: {
     closing: "מהאסם נשמע צלצול… ועוד צלצול. מישהו מתאמן שם!",
   },
 ];
+export const availableStages = stages.filter((stage) => !stage.hiddenReason);
+export function nextAvailableStage(index: number): number {
+  return stages.findIndex((stage, i) => i > index && !stage.hiddenReason);
+}
 export const prizes = [
   { id: "hat", title: "כובע בלשי לפיצי", price: 30, icon: "🎩" },
   { id: "mustache", title: "שפמים לכבשים", price: 50, icon: "🥸" },
   { id: "rainbow", title: "גדר בצבעי קשת", price: 60, icon: "🌈" },
   { id: "duck", title: "ברווז ענק בחצר", price: 80, icon: "🦆" },
   { id: "dance", title: "כבשים רוקדות", price: 100, icon: "🎵" },
+  { id: "boots", title: "מגפיים לכבשים. ביי, שלולית!", price: 40, icon: "🥾" },
+  { id: "bowtie", title: "עניבה לפיצי, מנהל החטיפים", price: 35, icon: "🎀" },
+  { id: "sunglasses", title: "משקפי שמש לשמש", price: 45, icon: "🕶️" },
+  { id: "crown", title: "הוד ברווזותו הראשון", price: 70, icon: "👑" },
+  { id: "carrotFlag", title: "דגל גזר. יחי המרק!", price: 55, icon: "🥕" },
 ] as const;
 export type PrizeId = (typeof prizes)[number]["id"];
 export function wordById(id: string): Word | undefined {

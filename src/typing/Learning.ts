@@ -1,4 +1,4 @@
-import { typingVocabulary, type Difficulty } from "../content/difficulty";
+import { crateDifficultyLevels, crateVocabulary, difficultyLevels, typingVocabulary, type CrateDifficulty, type Difficulty } from "../content/difficulty";
 import { words, wordById, type Mode } from "../content/chapter";
 export type Aid = "independent" | "keyboard" | "hint" | "copy" | "recall";
 export type Attempt = {
@@ -197,29 +197,43 @@ export function chooseSpelling(
   selected.sort((a, b) => wordById(a)!.text.length - wordById(b)!.text.length);
   return [...selected, selected[0], selected[1]];
 }
+const typingLengths: Record<CrateDifficulty, number[]> = {
+  1: [2, 2, 3, 3, 3, 4, 4, 4],
+  2: [3, 3, 4, 4, 5, 5, 6, 6],
+  3: [4, 5, 5, 6, 6, 7, 8, 10],
+  4: [6, 6, 7, 7, 8, 8, 9, 10],
+  5: [8, 8, 9, 9, 10, 10, 11, 12],
+};
+
 export function typingSet(seed: number, difficulty: Difficulty = 1): string[] {
-  const pool = [
-    ...new Set(
-      ([1, 2, 3] as const)
-        .filter((level) => level <= difficulty)
-        .flatMap((level) => typingVocabulary[level]),
-    ),
-  ];
-  const targets = {
-    1: [2, 2, 3, 3, 3, 4, 4, 4],
-    2: [3, 3, 4, 4, 5, 5, 6, 6],
-    3: [4, 5, 5, 6, 6, 7, 8, 10],
-  }[difficulty];
+  const pool = difficultyLevels.filter(({ level }) => level <= difficulty)
+    .flatMap(({ level }) => typingVocabulary[level]);
+  return selectTypingWords(pool, typingLengths[difficulty], seed);
+}
+
+export function crateTypingSet(seed: number, difficulty: CrateDifficulty): string[] {
+  if (difficulty >= 4) return selectTypingWords(crateVocabulary[difficulty], typingLengths[difficulty], seed);
+  const pool = crateDifficultyLevels.filter(({ level }) => level <= difficulty)
+    .flatMap(({ level }) => crateVocabulary[level]);
+  const sharedWords = difficultyLevels.filter(({ level }) => level <= difficulty)
+    .flatMap(({ level }) => typingVocabulary[level]);
+  return selectTypingWords([...sharedWords, ...pool], typingLengths[difficulty], seed);
+}
+
+function selectTypingWords(pool: string[], targets: number[], seed: number): string[] {
+  const remaining = new Set(pool);
   const selected: string[] = [];
   for (const length of targets) {
-    const available = pool.filter((text) => !selected.includes(text));
+    const available = [...remaining];
     const distance = Math.min(
       ...available.map((text) => Math.abs(text.length - length)),
     );
     const candidates = available.filter(
       (text) => Math.abs(text.length - length) === distance,
     );
-    selected.push(candidates[seed % candidates.length]);
+    const word = candidates[seed % candidates.length];
+    remaining.delete(word);
+    selected.push(word);
   }
   return selected.sort((a, b) => a.length - b.length);
 }

@@ -57,6 +57,10 @@ export class FarmScene extends Phaser.Scene {
       g.lineStyle(2, 0x266d56).lineBetween(x, y, x, y - 11);
       g.fillStyle(i % 2 ? 0xffd36a : 0xffa8a1).fillCircle(x, y - 13, 4);
     }
+    if (equipped.includes("sunglasses")) {
+      g.fillStyle(0x293b31).fillRoundedRect(763, 53, 24, 18, 5).fillRoundedRect(793, 53, 24, 18, 5);
+      g.lineStyle(4, 0x293b31).lineBetween(787, 58, 793, 58);
+    }
     // Winding path, barn and post office.
     g.lineStyle(47, 0xf4d093)
       .beginPath()
@@ -65,6 +69,12 @@ export class FarmScene extends Phaser.Scene {
     g.strokePath();
     g.fillStyle(0xd77456).fillRoundedRect(675, 147, 182, 136, 5);
     g.fillStyle(0x663e51).fillTriangle(655, 155, 765, 75, 877, 155);
+    if (equipped.includes("carrotFlag")) {
+      g.lineStyle(4, 0x663e51).lineBetween(765, 76, 765, 14);
+      g.fillStyle(0xfff0c9).fillTriangle(767, 14, 830, 30, 767, 49);
+      g.fillStyle(0xe78a38).fillTriangle(785, 23, 801, 29, 781, 40);
+      g.lineStyle(3, 0x3f926a).lineBetween(795, 24, 800, 18).lineBetween(795, 24, 807, 23);
+    }
     g.fillStyle(revealed ? 0xffd785 : 0x61473e).fillRect(738, 209, 62, 74);
     g.lineStyle(3, 0xeccba7)
       .strokeRect(738, 209, 62, 74)
@@ -121,6 +131,8 @@ export class FarmScene extends Phaser.Scene {
         head,
         eye,
       ];
+      if (equipped.includes("boots"))
+        parts.push(this.add.rectangle(-15, 28, 19, 12, 0xdd8f4b), this.add.rectangle(10, 28, 19, 12, 0xdd8f4b));
       if (equipped.includes("mustache"))
         parts.push(this.add.ellipse(26, 6, 20, 6, 0x191d20));
       const sheep = this.add.container(x, y, parts);
@@ -148,6 +160,8 @@ export class FarmScene extends Phaser.Scene {
         this.add.rectangle(25, -34, 46, 7, 0x483e48),
         this.add.rectangle(25, -45, 29, 20, 0x483e48),
       );
+    if (equipped.includes("bowtie"))
+      dogParts.push(this.add.triangle(22, 2, -10, -7, 3, 0, -10, 7, 0xc57b89), this.add.triangle(32, 2, 10, -7, -3, 0, 10, 7, 0xc57b89), this.add.circle(27, 2, 4, 0x663e51));
     const destination = pitsiPathPosition(step, total);
     this.dog = this.add.container(destination.x, destination.y, dogParts);
     if (walking && previous) {
@@ -160,11 +174,15 @@ export class FarmScene extends Phaser.Scene {
         ease: "Sine.easeInOut",
       });
     }
-    if (equipped.includes("duck")) {
+    if (equipped.includes("duck") || equipped.includes("crown")) {
       this.add.ellipse(855, 348, 118, 60, 0xf3cc52);
       this.add.circle(885, 305, 35, 0xf3cc52);
       this.add.triangle(920, 311, 0, 0, 30, 10, 0, 18, 0xdd8f4b);
       this.add.circle(897, 297, 4, 0x293b31);
+    }
+    if (equipped.includes("crown")) {
+      // Draw above the duck, using the same palette as the sun.
+      this.add.graphics().fillStyle(0xffd36a).fillTriangle(857, 282, 853, 256, 873, 279).fillTriangle(871, 279, 884, 250, 895, 279).fillTriangle(891, 279, 912, 257, 908, 284).fillRect(859, 277, 47, 9);
     }
     if (revealed) {
       for (let i = 0; i < 12; i++) {

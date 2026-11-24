@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
-export type DetectiveView = { place: 'yard' | 'bridge' | 'ending'; stopped: boolean; reduced: boolean; reaction: number };
+export type DetectiveView = { place: 'yard' | 'bridge' | 'ending'; stopped: boolean; reduced: boolean; reaction: number; ribbonTaken: boolean; spoonTaken: boolean };
 // Visual commands only: no clue rules, answer checking or persistence in the scene.
 class DetectiveScene extends Phaser.Scene {
   private current?: DetectiveView;
@@ -8,7 +8,7 @@ class DetectiveScene extends Phaser.Scene {
   constructor(private ready: () => void) { super('detective'); }
   create() { this.ready(); }
   command(view: DetectiveView) {
-    const redraw = this.current?.place !== view.place || this.current?.reduced !== view.reduced;
+    const redraw = this.current?.place !== view.place || this.current?.reduced !== view.reduced || this.current?.ribbonTaken !== view.ribbonTaken || this.current?.spoonTaken !== view.spoonTaken;
     const react = this.current?.reaction !== view.reaction;
     this.current = view;
     if (redraw) this.draw(view);
@@ -45,8 +45,16 @@ class DetectiveScene extends Phaser.Scene {
       for (const x of [390, 585]) { g.fillStyle(0x3e4948).fillCircle(x, 445, 42); g.fillStyle(0xcaa36d).fillCircle(x, 445, 29); g.lineStyle(4, 0x665443).lineBetween(x - 29, 445, x + 29, 445).lineBetween(x, 416, x, 474); }
       g.fillStyle(0xd9c8a0).fillRoundedRect(405, 265, 150, 55, 22);
       g.lineStyle(5, 0x9b6f6b).strokeRoundedRect(410, 271, 140, 44, 18);
-      g.fillStyle(0xb45c69).fillTriangle(585, 310, 630, 340, 594, 380);
-      for (const [x, y] of [[600, 330], [608, 350]]) this.add.star(x, y, 5, 3, 7, 0xffe8b3);
+      if (!view.ribbonTaken) {
+        g.fillStyle(0xb45c69).fillTriangle(585, 310, 630, 340, 594, 380);
+        for (const [x, y] of [[600, 330], [608, 350]]) this.add.star(x, y, 5, 3, 7, 0xffe8b3);
+      }
+      // Picnic basket beside Pitsi. The collected spoon leaves the world.
+      g.lineStyle(6, 0x805637).strokeEllipse(430, 523, 62, 48);
+      g.fillStyle(0xb98b50).fillRoundedRect(388, 532, 84, 52, 10);
+      for (let x = 400; x < 470; x += 14) g.lineStyle(2, 0x805637).lineBetween(x, 535, x, 580);
+      g.lineStyle(3, 0x805637).lineBetween(393, 551, 467, 551).lineBetween(393, 566, 467, 566);
+      if (!view.spoonTaken) { g.lineStyle(7, 0xe3bd80).lineBetween(450, 542, 470, 500); g.fillStyle(0xe3bd80).fillEllipse(473, 493, 18, 25); }
       g.fillStyle(0xfff5d5).fillRect(455, 280, 65, 40);
       g.lineStyle(2, 0x836952).lineBetween(488, 280, 488, 320);
       for (let y = 290; y < 318; y += 8) g.lineBetween(460, y, 481, y).lineBetween(494, y, 514, y);
@@ -104,6 +112,6 @@ export function DetectiveWorld({ view }: { view: DetectiveView }) {
     const game = new Phaser.Game({ type: Phaser.AUTO, parent: host.current, width: 960, height: 640, backgroundColor: '#b6dee0', scene: [world], input: { keyboard: false }, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
     return () => { scene.current = null; game.destroy(true); };
   }, []);
-  useEffect(() => { scene.current?.command(view); }, [view.place, view.reduced, view.stopped, view.reaction]);
+  useEffect(() => { scene.current?.command(view); }, [view.place, view.reduced, view.stopped, view.reaction, view.ribbonTaken, view.spoonTaken]);
   return <div className="detective-canvas" ref={host} role="img" aria-label={view.place === 'yard' ? 'חצר החווה: עגלת הדוור, סרט כוכבים ועקבות ליד שולחן הפיקניק' : view.place === 'ending' ? 'נוגה מדגמנת על השטיח וסרט הכוכבים מתנופף ברוח' : 'גשר אבן: קשת רטובה מתחת ובמה מוקפת מעקה מעל, עם מחיצה סגורה'} />;
 }

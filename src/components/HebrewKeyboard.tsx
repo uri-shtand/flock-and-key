@@ -1,15 +1,19 @@
 import { keyboardRows, keyFor } from "../typing/KeyboardMap";
+import { HandGuide } from "./HandGuide";
+
 export function HebrewKeyboard({
   next,
   physical,
+  showHands = false,
 }: {
   next?: string;
   physical?: string;
+  showHands?: boolean;
 }) {
   const key = next ? keyFor(next) : undefined;
   return (
-    <section className="keyboard" aria-label="מקלדת עברית לעזרה">
-      <div dir="ltr">
+    <section className={showHands ? "keyboard with-hands" : "keyboard"} aria-label="מקלדת עברית לעזרה">
+      {showHands ? <HandGuide next={next} physical={physical} /> : <div dir="ltr">
         {keyboardRows.map((row, i) => (
           <div className="key-row" key={i}>
             {row.map((k) => (
@@ -24,12 +28,14 @@ export function HebrewKeyboard({
             ))}
           </div>
         ))}
-      </div>
+      </div>}
       <p>
         {key ? (
           <>
-            המקש הבא: <b>{next}</b> · אצבע מומלצת: {key.finger}
+            המקש הבא <b>{next}</b> · {key.finger}
           </>
+        ) : showHands ? (
+          "אצבעות בשורת הבית, אגודלים על הרווח"
         ) : (
           "אפשר להיעזר במקלדת. קחו את הזמן."
         )}
