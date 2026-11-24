@@ -1,3 +1,5 @@
+import { songFor, questionLabels } from "../content/Rehearsals";
+import { rehearsalQuestions } from "../typing/Rehearsal";
 import { caseState } from "../typing/DetectiveCase";
 import { decisions, deductionBoards, evidenceText } from "../content/detective";
 import { useState } from "react";
@@ -168,6 +170,20 @@ export function ParentDashboard({
         {state.attempts.map((a, i) => <p key={i}>{run.version === 2 ? deductionBoards[a.decision === 'identity' ? 'happened' : 'where'].title : decisions[a.decision].title} — {run.version === 2 ? (a.result === 'revisit' ? 'שילוב שנבדק מחדש' : deductionBoards[a.decision === 'identity' ? 'happened' : 'where'].conclusion) : decisions[a.decision].choices[a.choice]} · {({ supported: 'קישור מבוסס טקסט', guided: 'פתרון יחד', explored: 'גילוי בחקירה חופשית', revisit: 'ניסיון שנבדק מחדש' })[a.result]} · רמז {a.hints} · ראיות: {a.support.map(id => run.version === 2 ? evidenceText(id) : id).join(' / ') || 'ללא'}</p>)}
       </div>; })}
       {!(progress.detective ?? []).length && <p>עוד לא נפתח תיק בלשי.</p>}
+      {Boolean(progress.rehearsals?.length) && <>
+        <h2>חזרה באסם · אנגלית</h2>
+        <p>החזרה האחרונה לכל שיר. פרטי החזרות זמינים בייצוא JSON.</p>
+        {progress.rehearsals?.map(run => {
+          const questions = rehearsalQuestions(run);
+          return <div key={run.song}>
+            <b lang="en" dir="ltr">{songFor(run.song).title}</b>
+            <p>{run.results.length} מתוך {questions.length} שאלות · {run.finished ? "החזרה הסתיימה" : "חזרה בתהליך"}</p>
+            {run.results.length > 0 && <ul>{run.results.map((result, index) =>
+              <li key={index}>{questionLabels[questions[index].kind]} — {result.outcome === "independent" ? "ללא עזרה" : result.outcome === "supported" ? "עם עזרה" : "התשובה הוצגה"}{result.mistakes ? ` · תיקונים: ${result.mistakes}` : ""}</li>
+            )}</ul>}
+          </div>;
+        })}
+      </>}
       <h2>סשנים קודמים</h2>
       {!progress.sessions.length ? (
         <p>עוד אין סשנים. הנתונים יופיעו אחרי תחילת משחק.</p>

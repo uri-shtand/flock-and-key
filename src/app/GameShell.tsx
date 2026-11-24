@@ -1,3 +1,4 @@
+import { Rehearsal } from "./songs/Rehearsal";
 import { DetectiveCase } from "./detective/DetectiveCase";
 import { crateDifficultyLevels, difficultyLevels } from "../content/difficulty";
 import { GatesPrototype } from "./gates/GatesPrototype";
@@ -38,7 +39,7 @@ import {
   type Session,
 } from "../progress/GameStore";
 
-type Screen = "home" | "game" | "parent" | "shop" | "gates" | "detective";
+type Screen = "home" | "game" | "parent" | "shop" | "gates" | "detective" | "songs";
 export function GameShell() {
   const [loaded] = useState(loadGame);
   const [progress, setProgress] = useState<GameProgress>(loaded.progress);
@@ -100,7 +101,7 @@ export function GameShell() {
   }, [screen, session?.id, session?.stage]);
   useEffect(() => {
     audio.current?.setMusic(
-      progress.settings.music && screen !== "parent" && !paused,
+      progress.settings.music && screen !== "parent" && screen !== "songs" && !paused,
     );
   }, [progress.settings.music, screen, paused]);
   useEffect(() => {
@@ -552,7 +553,7 @@ export function GameShell() {
           ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
           : screen === "home"
             ? "home-screen"
-            : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" ? "detective-screen" : undefined
+            : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : undefined
       }
     >
       <header className="topbar">
@@ -572,23 +573,25 @@ export function GameShell() {
           <span className="balance" data-testid="balance">
             🔔 {progress.balance}
           </span>
-          <button
-            className="icon-button"
-            aria-pressed={progress.settings.music}
-            onClick={() => setSetting("music")}
-          >
-            מוזיקה {progress.settings.music ? "פועלת" : "כבויה"}
-          </button>
-          <button className="icon-button" onClick={() => audio.current?.nextTrack()}>
-            מנגינה אחרת
-          </button>
-          <button
-            className="icon-button"
-            aria-pressed={progress.settings.speech}
-            onClick={() => setSetting("speech")}
-          >
-            הקראה {progress.settings.speech ? "פועלת" : "כבויה"}
-          </button>
+          {screen !== "songs" && <>
+            <button
+              className="icon-button"
+              aria-pressed={progress.settings.music}
+              onClick={() => setSetting("music")}
+            >
+              מוזיקה {progress.settings.music ? "פועלת" : "כבויה"}
+            </button>
+            <button className="icon-button" onClick={() => audio.current?.nextTrack()}>
+              מנגינה אחרת
+            </button>
+            <button
+              className="icon-button"
+              aria-pressed={progress.settings.speech}
+              onClick={() => setSetting("speech")}
+            >
+              הקראה {progress.settings.speech ? "פועלת" : "כבויה"}
+            </button>
+          </>}
           <button
             className="icon-button"
             onClick={() => {
@@ -605,7 +608,11 @@ export function GameShell() {
           {warning}
         </p>
       )}
-      {screen === "detective" ? (
+      {screen === "songs" ? (
+        <Rehearsal runs={progress.rehearsals ?? []} save={run => setProgress(previous => ({
+          ...previous, rehearsals: [...(previous.rehearsals ?? []).filter(item => item.song !== run.song), run],
+        }))} onExit={leave} />
+      ) : screen === "detective" ? (
         <DetectiveCase runs={progress.detective ?? []} onChange={(run) => setProgress(p => ({ ...p, detective: [...(p.detective ?? []).filter(r => r.id !== run.id), run] }))} onExit={leave} />
       ) : screen === "gates" ? (
         <GatesPrototype onExit={leave} />
@@ -796,6 +803,7 @@ export function GameShell() {
               </p>
               <div className="game-menu-heading">
                 <h2>משחקונים</h2>
+                <button onClick={() => { audio.current?.stopSpeech(); setScreen("songs"); }}>♫ חזרה באסם</button>
                 <button onClick={() => setScreen("detective")}>🔎 תיק בלשי קטן</button>
                 <button aria-label="🐑 שומרי השערים (משחקון 5)" onClick={() => setScreen("gates")}>🐑 שומרי השערים</button>
               </div>

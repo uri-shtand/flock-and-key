@@ -1,3 +1,4 @@
+import { validRehearsal, type RehearsalRun } from "../typing/Rehearsal";
 import { validCase, caseState, type CaseRun } from "../typing/DetectiveCase";
 import type { CrateDifficulty, Difficulty } from "../content/difficulty";
 import {
@@ -45,6 +46,7 @@ export type Session = {
 export type GameProgress = {
   version: 2;
   detective?: CaseRun[];
+  rehearsals?: RehearsalRun[];
   sessions: Session[];
   currentId: string | null;
   balance: number;
@@ -344,7 +346,16 @@ export function loadGame(): { progress: GameProgress; warning: string } {
     const cases: unknown = x.detective;
     const invalidCases = cases !== undefined && (!Array.isArray(cases) || !cases.every(validCase));
     if (invalidCases) progress.detective = Array.isArray(cases) ? cases.filter(validCase) : [];
-    return { progress, warning: invalidCases ? "תיק בלשי שלא ניתן לשחזר הוסר. אפשר להתחיל תיק חדש; שאר ההתקדמות נשמרה." : "" };
+    const savedRehearsals = x.rehearsals;
+    const validRuns = Array.isArray(savedRehearsals) ? savedRehearsals.filter(validRehearsal) : [];
+    const uniqueRuns = [...new Map(validRuns.map(run => [run.song, run])).values()];
+    const invalidRehearsals = savedRehearsals !== undefined && (!Array.isArray(savedRehearsals) || uniqueRuns.length !== savedRehearsals.length);
+    if (invalidRehearsals) progress.rehearsals = uniqueRuns;
+    const warnings = [
+      invalidCases && "תיק בלשי שלא ניתן לשחזר הוסר. אפשר להתחיל תיק חדש; שאר ההתקדמות נשמרה.",
+      invalidRehearsals && "חזרה באסם שלא ניתן לשחזר הוסרה. אפשר להתחיל חזרה חדשה.",
+    ].filter(Boolean);
+    return { progress, warning: warnings.join(" ") };
   } catch {
     return {
       progress: initialProgress(),

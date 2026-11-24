@@ -12,3 +12,9 @@
 Each arrangement has a 32-bar form: opening, fuller accompaniment, quieter bridge and return. The brighter tracks include a soft kick, brushed snare, shuffled hats and moving bass. Synthesis is deterministic and note tails wrap around the loop boundary. All tracks are mono 16-bit PCM at 22,050 Hz; peak levels avoid clipping. The track list is authored in `src/content/music.json`. These remain synthesized prototype instruments; the child's listening feedback is needed to judge their suitability.
 
 All playback uses local static files. There is no browser speech synthesis, remote font, audio CDN or runtime AI request. The music ducks while speech plays. Speech files have been checked for presence and decoding; pronunciation and listening comfort still need a Hebrew-speaking human's review on the target computer.
+
+## חזרה באסם
+
+`rehearsals/rhythm.mp3`, `busted.mp3` ו־`gitchee.mp3` הם עותקים של שלוש הקלטות המשתמש שבתיקייה `temp-music`. שמות הקבצים הקצרים משמשים את הנגן המקומי. הטקסט, התרגום לעברית וזמני ההתחלה והסיום נמצאים ב־`src/content/rehearsalLyrics.json`. התמלול הוכן מקומית מקובצי המשתמש, הושווה בין שני תמלולים ונערך לפני התרגום. השורות שהצריכו ניחוש מפורש מסומנות לבדיקה. טווחי ההשמעה עוקפים פתיח דבור ושמע נוסף שמופיעים בחלק מהקבצים.
+
+`rehearsals/boots.wav`, `sock.wav` ו־`cheer.wav` הם שלושת קטעי החווה המקוריים. בכל קובץ 27 שניות עם דקלום אנגלי סינתטי של Flite שעובד מראש מעל ליווי מוזיקלי מקורי. הקטעים והמילים מופיעים בקבוצה ״שירי החווה״.
