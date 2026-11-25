@@ -464,26 +464,35 @@ test("correct answers advance automatically once, while mistakes, pause and navi
   page,
 }) => {
   await quiet(page);
-  await page.clock.install();
+  await page.clock.install({ time: new Date("2026-11-11T12:00:00Z") });
+  // Control the feedback timer without replaying every Phaser animation frame.
+  await page.clock.pauseAt(new Date("2026-11-11T12:01:00Z"));
+  const textbox = page.getByRole("textbox");
   await start(page);
   await submit(page, "דק");
-  await page.clock.runFor(2500);
-  await expect(page.getByRole("textbox")).toHaveValue("דק");
-  await expect(page.getByRole("textbox")).toBeEnabled();
+  await page.clock.fastForward(2500);
+  await expect(textbox).toHaveValue("דק");
+  await expect(textbox).toBeEnabled();
   await submit(page, "דג");
-  await page.clock.runFor(1500);
-  await expect(page.getByRole("textbox")).toBeDisabled();
+  await expect(textbox).toBeDisabled();
+  await page.clock.fastForward(1500);
+  await expect(textbox).toBeDisabled();
   await page.getByRole("button", { name: "הפסקה", exact: true }).click();
-  await page.clock.runFor(5000);
+  await expect(textbox).toHaveCount(0);
+  await page.clock.fastForward(5000);
   await page.getByRole("button", { name: "ממשיכים", exact: true }).click();
   await expect(page.getByTestId("target-word")).toHaveText("דג");
-  await page.clock.runFor(2100);
-  await expect(page.getByRole("textbox")).toBeEnabled();
-  await expect(page.getByRole("textbox")).toBeFocused();
+  await expect(textbox).toBeDisabled();
+  await page.clock.fastForward(2100);
+  await expect(textbox).toBeEnabled();
+  await expect(textbox).toBeFocused();
   await expect(page.getByTestId("target-word")).toHaveText("גל");
   await submit(page, "גל");
+  await expect(textbox).toBeDisabled();
   await page.getByRole("button", { name: "שמירה ויציאה", exact: true }).click();
-  await page.clock.runFor(5000);
+  const resume = page.getByRole("button", { name: "ממשיכים מאיפה שעצרנו", exact: true });
+  await expect(resume).toBeVisible();
+  await page.clock.fastForward(5000);
   expect(
     await page.evaluate(
       () =>
@@ -492,15 +501,17 @@ test("correct answers advance automatically once, while mistakes, pause and navi
         ).index,
     ),
   ).toBe(1);
-  await page
-    .getByRole("button", { name: "ממשיכים מאיפה שעצרנו", exact: true })
-    .click();
-  await page.clock.runFor(2100);
+  await resume.click();
+  await expect(textbox).toBeDisabled();
+  await page.clock.fastForward(2100);
+  await expect(textbox).toBeEnabled();
   await expect(page.getByTestId("target-word")).toHaveText(await expectedWord(page));
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("flock-and-key:game:v2")!).sessions.at(-1).index)).toBe(2);
   for (let i = 2; i < 8; i++) {
+    await expect(textbox).toBeEnabled();
     await submit(page, await expectedWord(page));
-    await page.clock.runFor(2100);
+    await expect(textbox).toBeDisabled();
+    await page.clock.fastForward(2100);
   }
   await expect(
     page.getByRole("heading", { name: "נייר מנצנץ עם ציור של תו מוזיקלי" }),

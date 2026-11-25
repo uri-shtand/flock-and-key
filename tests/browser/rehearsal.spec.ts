@@ -151,6 +151,8 @@ test("complete an English rehearsal with audio, translation, correction, resume 
 });
 
 test("both song groups, their six songbooks and separate progress fit the compact desktop viewport", async ({ page }) => {
+  // This flow checks all 37 songbook pages, plays three previews and verifies progress after reload.
+  test.setTimeout(60_000);
   await page.setViewportSize({ width: 1024, height: 600 });
   await openBarn(page);
   const media = page.locator(".rehearsal audio");
