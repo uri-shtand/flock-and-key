@@ -690,6 +690,11 @@ footer {
   padding: 25px;
   color: #c4dbe0;
 }
+.version-stamp { display: inline-block; margin-inline-start: 12px; }
+.track-button small { display: block; font-size: 0.75em; font-weight: 400; }
+.resume-options { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.resume-options p { margin: 0; }
+.resume-options button { padding: 2px 0; }
 @media (max-width: 760px) {
   main {
     padding: 14px 12px;
@@ -1726,7 +1731,8 @@ main.gates-screen { max-width: 1920px; width: 100%; }
   .home-screen .game-menu { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .game-tile { min-width: 0; padding: 12px; }
   .game-tile small { font-size: 0.85rem; }
-  .home-screen > footer, .playing > footer, .gates-screen > footer { display: none; }
+  .home-screen > footer { padding: 12px 0 0; }
+  .playing > footer, .gates-screen > footer { display: none; }
   main.playing { display: flex; flex-direction: column; }
   .playing > .topbar, .playing > .warning { order: 0; width: 100%; }
   .playing .world-column { display: contents; }

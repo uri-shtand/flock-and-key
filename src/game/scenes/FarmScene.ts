@@ -3,6 +3,8 @@ import type { GameCommand, WorldView } from "../bridge";
 import { FARM_PATH, pitsiPathPosition, pointOnFarmPath } from "../farmPath";
 export class FarmScene extends Phaser.Scene {
   private dog?: Phaser.GameObjects.Container;
+  private motionPaused = false;
+  private reducedMotion = false;
   private view: WorldView = {
     stage: 0,
     step: 0,
@@ -18,13 +20,23 @@ export class FarmScene extends Phaser.Scene {
     this.onReady();
   }
   command(command: GameCommand) {
-    if (command.type === "world") {
+    if (command.type === "motion") {
+      this.motionPaused = command.paused;
+      if (this.reducedMotion !== command.reduced) {
+        this.reducedMotion = command.reduced;
+        this.draw();
+      }
+      for (const tween of this.tweens.getTweens()) {
+        if (this.motionPaused) tween.pause();
+        else tween.resume();
+      }
+    } else if (command.type === "world") {
       const walking =
         command.view.stage === this.view.stage &&
         command.view.step > this.view.step;
       this.view = command.view;
       this.draw(walking);
-    } else if (this.dog) {
+    } else if (this.dog && !this.reducedMotion && !this.motionPaused) {
       this.tweens.add({
         // Celebrate with the body, leaving the paws and the walking path alone.
         targets: this.dog.list[0],
@@ -84,6 +96,22 @@ export class FarmScene extends Phaser.Scene {
     g.fillStyle(0x326883).fillTriangle(65, 182, 156, 116, 247, 182);
     g.fillStyle(0x77bfd1).fillRect(105, 202, 31, 32).fillRect(179, 202, 31, 32);
     g.fillStyle(0x83604b).fillRect(144, 236, 30, 56);
+    if (equipped.includes("mailbox")) {
+      g.fillStyle(0x83604b).fillRect(57, 239, 7, 52);
+      g.fillStyle(0xb7433f).fillRoundedRect(38, 222, 44, 28, 8);
+      g.lineStyle(3, 0x683b3e).lineBetween(45, 232, 67, 232);
+      g.fillStyle(0xffd785).fillRect(77, 211, 6, 18).fillRect(77, 211, 13, 7);
+    }
+    if (equipped.includes("bunting")) {
+      g.lineStyle(3, 0x663e51).beginPath().moveTo(679, 161);
+      for (let i = 1; i <= 6; i++) g.lineTo(679 + 29 * i, 161 + i * (6 - i) * 2);
+      g.strokePath();
+      const colors = [0xffd785, 0x9bdce4, 0x663e51];
+      for (let i = 0; i < 6; i++) {
+        const x = 683 + i * 29, y = 162 + i * (6 - i) * 2;
+        g.fillStyle(colors[i % colors.length]).fillTriangle(x, y, x + 21, y + (5 - 2 * i), x + 10, y + 20);
+      }
+    }
     g.fillStyle(0xc9aa7e).fillRect(289, 215, 8, 78);
     g.fillStyle(0xfff0c9).fillRoundedRect(254, 192, 82, 43, 4);
     // Sign paint progresses with the current exercise.
@@ -105,6 +133,26 @@ export class FarmScene extends Phaser.Scene {
     g.lineStyle(4, 0xe3d4aa)
       .lineBetween(0, 325, 325, 325)
       .lineBetween(455, 325, 960, 325);
+    if (equipped.includes("sunflowers")) {
+      for (let i = 0; i < 5; i++) {
+        const x = 104 + i * 36, y = 340 + (i % 2) * 13;
+        g.lineStyle(4, 0x266d56).lineBetween(x, y, x, y + 35);
+        g.fillStyle(0x61ad7d).fillEllipse(x + (i % 2 ? 8 : -8), y + 21, 18, 9);
+        for (let petal = 0; petal < 8; petal++) {
+          const angle = petal * Math.PI / 4;
+          g.fillStyle(0xffce61).fillCircle(x + Math.cos(angle) * 11, y + Math.sin(angle) * 11, 5);
+        }
+        g.fillStyle(0x83604b).fillCircle(x, y, 8);
+      }
+    }
+    if (equipped.includes("pond")) {
+      g.fillStyle(0x266d56).fillEllipse(827, 358, 228, 78);
+      g.fillStyle(0x77bfd1).fillEllipse(827, 357, 216, 66);
+      g.lineStyle(2, 0xd8eeeb).lineBetween(756, 373, 810, 373).lineBetween(840, 382, 876, 382);
+      g.fillStyle(0xf3cc52).fillEllipse(761, 354, 32, 18).fillCircle(772, 345, 10);
+      g.fillStyle(0xdd8f4b).fillTriangle(778, 345, 791, 347, 778, 350);
+      g.fillStyle(0x293b31).fillCircle(774, 344, 2);
+    }
     if (stage === 1)
       for (let i = 0; i < 8; i++) {
         const mark = pointOnFarmPath(0.15 + (i / 7) * 0.8);
@@ -135,8 +183,10 @@ export class FarmScene extends Phaser.Scene {
         parts.push(this.add.rectangle(-15, 28, 19, 12, 0xdd8f4b), this.add.rectangle(10, 28, 19, 12, 0xdd8f4b));
       if (equipped.includes("mustache"))
         parts.push(this.add.ellipse(26, 6, 20, 6, 0x191d20));
+      if (equipped.includes("scarves"))
+        parts.push(this.add.rectangle(20, 12, 25, 7, 0xb7433f), this.add.rectangle(14, 21, 9, 16, 0xb7433f));
       const sheep = this.add.container(x, y, parts);
-      if (equipped.includes("dance"))
+      if (equipped.includes("dance") && !this.reducedMotion)
         this.tweens.add({
           targets: sheep,
           y: y - 10,
@@ -164,7 +214,7 @@ export class FarmScene extends Phaser.Scene {
       dogParts.push(this.add.triangle(22, 2, -10, -7, 3, 0, -10, 7, 0xc57b89), this.add.triangle(32, 2, 10, -7, -3, 0, 10, 7, 0xc57b89), this.add.circle(27, 2, 4, 0x663e51));
     const destination = pitsiPathPosition(step, total);
     this.dog = this.add.container(destination.x, destination.y, dogParts);
-    if (walking && previous) {
+    if (walking && previous && !this.reducedMotion) {
       this.dog.setPosition(previous.x, previous.y);
       this.tweens.add({
         targets: this.dog,
@@ -192,7 +242,7 @@ export class FarmScene extends Phaser.Scene {
           4,
           [0xe8b659, 0xc57b89, 0x75a5a3][i % 3],
         );
-        this.tweens.add({
+        if (!this.reducedMotion) this.tweens.add({
           targets: dot,
           y: dot.y - 16,
           duration: 600 + i * 20,
@@ -200,6 +250,9 @@ export class FarmScene extends Phaser.Scene {
           repeat: -1,
         });
       }
+    }
+    if (this.motionPaused) {
+      for (const tween of this.tweens.getTweens()) tween.pause();
     }
   }
 }

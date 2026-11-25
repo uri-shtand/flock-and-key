@@ -71,7 +71,7 @@ export const stages: {
     mission: {
       title: "המשימה: משחזרים את המילים",
       instruction:
-        "הקשיבו למילה ולמשפט, כתבו את המילה ולחצו Enter. אפשר לשמוע שוב או לבקש רמז.",
+        "כתבו את המילה מההקראה ולחצו Enter. כשההקראה כבויה, המעטפה תציג את המילה להעתקה.",
     },
     clue: "הזמנה: ״חזרה חגיגית באסם. הביאו פעמון.״",
     closing: "הדוור: ואני חשבתי שמדובר בחתונה של אופניים.",
@@ -107,15 +107,20 @@ export function nextAvailableStage(index: number): number {
 }
 export const prizes = [
   { id: "hat", title: "כובע בלשי לפיצי", price: 30, icon: "🎩" },
-  { id: "mustache", title: "שפמים לכבשים", price: 50, icon: "🥸" },
-  { id: "rainbow", title: "גדר בצבעי קשת", price: 60, icon: "🌈" },
-  { id: "duck", title: "ברווז ענק בחצר", price: 80, icon: "🦆" },
-  { id: "dance", title: "כבשים רוקדות", price: 100, icon: "🎵" },
-  { id: "boots", title: "מגפיים לכבשים. ביי, שלולית!", price: 40, icon: "🥾" },
-  { id: "bowtie", title: "עניבה לפיצי, מנהל החטיפים", price: 35, icon: "🎀" },
-  { id: "sunglasses", title: "משקפי שמש לשמש", price: 45, icon: "🕶️" },
-  { id: "crown", title: "הוד ברווזותו הראשון", price: 70, icon: "👑" },
-  { id: "carrotFlag", title: "דגל גזר. יחי המרק!", price: 55, icon: "🥕" },
+  { id: "mustache", title: "שפמים לכבשים", price: 65, icon: "🥸" },
+  { id: "rainbow", title: "גדר בצבעי קשת", price: 100, icon: "🌈" },
+  { id: "duck", title: "ברווז ענק בחצר", price: 160, icon: "🦆" },
+  { id: "dance", title: "כבשים רוקדות", price: 240, icon: "🎵" },
+  { id: "boots", title: "מגפיים לכבשים. ביי, שלולית!", price: 80, icon: "🥾" },
+  { id: "bowtie", title: "עניבה לפיצי, מנהל החטיפים", price: 45, icon: "🎀" },
+  { id: "sunglasses", title: "משקפי שמש לשמש", price: 110, icon: "🕶️" },
+  { id: "crown", title: "הוד ברווזותו הראשון", price: 200, icon: "👑" },
+  { id: "carrotFlag", title: "דגל גזר. יחי המרק!", price: 130, icon: "🥕" },
+  { id: "mailbox", title: "תיבת דואר אדומה", price: 140, icon: "📮" },
+  { id: "sunflowers", title: "ערוגת חמניות", price: 180, icon: "🌻" },
+  { id: "scarves", title: "צעיפים לצמר", price: 260, icon: "🧣" },
+  { id: "pond", title: "בריכת ברווזים", price: 320, icon: "🪷" },
+  { id: "bunting", title: "דגלוני מסיבה לאסם", price: 420, icon: "🎊" },
 ] as const;
 export type PrizeId = (typeof prizes)[number]["id"];
 export function wordById(id: string): Word | undefined {

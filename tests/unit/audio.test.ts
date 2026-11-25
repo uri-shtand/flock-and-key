@@ -23,13 +23,12 @@ class FakeAudio {
   pause() {
     this.paused = true;
   }
-  getAttribute() {
-    return this.src || null;
-  }
   removeAttribute() {
     this.src = "";
   }
-  load() {}
+  load() {
+    this.currentTime = 0;
+  }
 }
 afterEach(() => {
   FakeAudio.clips = [];
@@ -50,7 +49,7 @@ it("does not let a stopped clip rejection cancel a newer word, and releases audi
   await Promise.resolve();
   expect(failed).not.toHaveBeenCalled();
   expect(current.paused).toBe(false);
-  expect(FakeAudio.clips[0].volume).toBeLessThan(0.1);
+  expect(FakeAudio.clips[0].volume).toBeLessThan(0.08);
   player.destroy();
   expect(current.paused).toBe(true);
   expect(current.src).toBe("");
@@ -87,13 +86,13 @@ it("keeps mute and speech ducking when choosing another background track", () =>
   player.setMusic(true);
   player.speak("/word.mp3", vi.fn());
   player.beginStage("two");
-  expect(music.volume).toBe(0.035);
+  expect(music.volume).toBe(0.02);
   expect(music.paused).toBe(false);
   player.setMusic(false);
   player.beginStage("three");
   expect(music.paused).toBe(true);
   player.stopSpeech();
-  expect(music.volume).toBe(0.16);
+  expect(music.volume).toBe(0.08);
   expect(music.paused).toBe(true);
   player.destroy();
 });

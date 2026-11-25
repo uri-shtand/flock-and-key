@@ -4,7 +4,6 @@ const storageKey = "flock-and-key:game:v2";
 async function quiet(page: Page) {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "יוצאים לחקירה ←", exact: true })).toBeEnabled();
-  await page.getByRole("button", { name: "מוזיקה פועלת", exact: true }).click();
 }
 async function start(page: Page, mode?: string, difficulty?: number) {
   if (mode)
@@ -62,7 +61,7 @@ test("Hebrew correction, physical keys, exact position and prizes survive refres
   await page.keyboard.insertText("ג");
   await page.getByRole("textbox").press("Enter");
   await expect(page.getByRole("status")).toContainText("כל הכבוד");
-  await expect(page.getByTestId("balance")).toContainText("10");
+  await expect(page.getByTestId("balance")).toContainText("8");
   await page.getByRole("button", { name: "המשך עכשיו ←", exact: true }).click();
   await page.getByRole("textbox").fill("ג");
   await page.reload();
@@ -210,7 +209,7 @@ test("complete the available chapter, skip difficulty, decorate the world and ex
       if (stage === 2 && index === 1)
         await page
           .getByRole("button", {
-            name: "קשה כרגע? ממשיכים בסיפור",
+            name: "דילוג על המילה",
             exact: true,
           })
           .click();
@@ -271,8 +270,8 @@ test("recall after a reveal in this session is kept separate from independent sp
   page,
 }) => {
   await quiet(page);
-  await page.getByRole("button", { name: "הקראה פועלת", exact: true }).click();
   await start(page, "הדואר המבולבל");
+  await page.getByRole("button", { name: "דילוג על ההקראה", exact: true }).click();
   const first = await expectedWord(page);
   await page
     .getByRole("button", { name: "צריכים להעתיק?", exact: true })
@@ -281,13 +280,14 @@ test("recall after a reveal in this session is kept separate from independent sp
   await page.getByRole("button", { name: "המשך עכשיו ←", exact: true }).click();
   for (let i = 1; i < 8; i++) {
     await page
-      .getByRole("button", { name: "קשה כרגע? ממשיכים בסיפור", exact: true })
+      .getByRole("button", { name: "דילוג על המילה", exact: true })
       .click();
     await page
       .getByRole("button", { name: "למשימה הבאה ←", exact: true })
       .click();
   }
   expect(await expectedWord(page)).toBe(first);
+  await page.getByRole("button", { name: "דילוג על ההקראה", exact: true }).click();
   await submit(page, first);
   await expect(page.getByRole("status")).toContainText("אחרי שראינו אותה קודם");
   expect(
@@ -317,11 +317,19 @@ test("missing audio offers an explicit copying fallback rather than blocking the
   ).toBeVisible();
 });
 
-test("engagement time is saved separately and stops during a break", async ({
+test("engagement time and farm animation stop during a break, and the farm respects reduced motion", async ({
   page,
 }) => {
+  await page.addInitScript(key => {
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, JSON.stringify({
+      version: 2, sessions: [], currentId: null, balance: 0, earned: 240,
+      owned: ["dance"], equipped: ["dance"], knownCodes: [],
+      settings: { music: false, speech: false },
+    }));
+  }, storageKey);
   await quiet(page);
-  await start(page);
+  await start(page, "הדואר המבולבל");
   await page.bringToFront();
   const engagement = () =>
     page.evaluate(
@@ -331,19 +339,28 @@ test("engagement time is saved separately and stops during a break", async ({
         ).playMs as number,
     );
   await expect.poll(engagement).toBeGreaterThan(0);
+  const canvas = page.locator(".stage canvas");
+  const moving = await canvas.screenshot();
+  await expect.poll(async () => (await canvas.screenshot()).equals(moving)).toBe(false);
   await page.getByRole("button", { name: "הפסקה", exact: true }).click();
   const paused = await engagement();
+  const frozen = await canvas.screenshot();
   await page.waitForTimeout(1100);
   expect(await engagement()).toBe(paused);
+  expect((await canvas.screenshot()).equals(frozen)).toBe(true);
   await page.getByRole("button", { name: "ממשיכים", exact: true }).click();
   await expect.poll(engagement).toBeGreaterThan(paused);
+  await expect.poll(async () => (await canvas.screenshot()).equals(frozen)).toBe(false);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const settled = await canvas.screenshot();
+  await page.waitForTimeout(400);
+  expect((await canvas.screenshot()).equals(settled)).toBe(true);
 });
 
 test("spelling keyboard help finds keys without revealing or highlighting the answer", async ({
   page,
 }) => {
   await quiet(page);
-  await page.getByRole("button", { name: "הקראה פועלת", exact: true }).click();
   await start(page, "הדואר המבולבל");
   await page
     .getByRole("button", { name: "פתיחת מקלדת עזר", exact: true })
@@ -353,6 +370,8 @@ test("spelling keyboard help finds keys without revealing or highlighting the an
   ).toBeVisible();
   await expect(page.locator(".key.target")).toHaveCount(0);
   await expect(page.getByTestId("revealed-word")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "דילוג על ההקראה", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "בדיקה ←", exact: true })).toBeEnabled();
   await submit(page, await expectedWord(page));
   const attempt = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("flock-and-key:game:v2")!)
@@ -450,6 +469,9 @@ test("desktop home fits without scrolling, also when resuming", async ({
       fullPage: true,
     });
     await newChapter.click();
+    if (await page.getByRole("dialog").isVisible()) {
+      await page.getByRole("button", { name: "מתחילים פרק חדש", exact: true }).click();
+    }
     await page
       .getByRole("button", { name: "שמירה ויציאה", exact: true })
       .click();
@@ -458,6 +480,45 @@ test("desktop home fits without scrolling, also when resuming", async ({
     ).toBeVisible();
     await expect.poll(fits).toBe(true);
   }
+});
+
+test("the chapter and standalone drafts survive switching, reload and cancelling a restart", async ({ page }) => {
+  await quiet(page);
+  await page.setViewportSize({ width: 1024, height: 600 });
+  const version = await page.locator("footer time").getAttribute("datetime");
+  expect(Number.isFinite(Date.parse(version!))).toBe(true);
+  await expect(page.locator("footer time")).toBeInViewport();
+  await start(page);
+  await page.getByRole("textbox").fill("ד");
+  const save = page.getByRole("button", { name: "שמירה ויציאה", exact: true });
+  await save.click();
+  await page.getByRole("button", { name: "הקראה פועלת", exact: true }).click();
+  await start(page, "הדואר המבולבל");
+  await expect(page.getByTestId("revealed-word")).toHaveText(await expectedWord(page));
+  await page.getByRole("textbox").fill("מ");
+  await save.click();
+  await page.reload();
+  await expect(page.locator("footer time")).toHaveAttribute("datetime", version!);
+  await fitsViewport(page);
+  await page.getByRole("button", { name: "פרק חדש", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "להתחיל את הפרק מחדש?" });
+  await expect(dialog.getByRole("button", { name: "ביטול", exact: true })).toBeFocused();
+  await expect(dialog).toBeInViewport();
+  await page.screenshot({ path: test.info().outputPath("restart-1024.png") });
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await page.getByRole("button", { name: "להמשיך בפרק השמור", exact: true }).click();
+  await expect(page.getByRole("textbox")).toHaveValue("ד");
+  await save.click();
+  await page.getByRole("button", { name: "להמשיך במשחקון השמור", exact: true }).click();
+  await expect(page.getByRole("textbox")).toHaveValue("מ");
+  await fitsViewport(page);
+  await page.screenshot({ path: test.info().outputPath("quiet-post-resume-1024.png") });
+  await page.getByRole("button", { name: "הקראה כבויה", exact: true }).click();
+  await expect(page.getByTestId("revealed-word")).toHaveText(await expectedWord(page));
+  await page.getByRole("button", { name: "דילוג על ההקראה", exact: true }).click();
+  await submit(page, await expectedWord(page));
+  await expect(page.getByRole("status")).toContainText("בעזרת המילה הכתובה");
 });
 
 test("correct answers advance automatically once, while mistakes, pause and navigation do not", async ({
@@ -543,6 +604,8 @@ test("parent reset requires confirmation, supports cancellation and stays reset 
   await submit(page, "דג");
   await page.getByRole("button", { name: "המשך עכשיו ←", exact: true }).click();
   await submit(page, "גל");
+  await page.getByRole("button", { name: "המשך עכשיו ←", exact: true }).click();
+  await submit(page, await expectedWord(page));
   await page.getByRole("button", { name: "שמירה ויציאה", exact: true }).click();
   await page
     .getByRole("button", { name: "משנים את החווה", exact: true })
@@ -684,20 +747,31 @@ test("music is picked at stage entry, stays through tasks and resumes, and respe
   expect((await music()).paused).toBe(true);
   await page.getByRole("button", { name: "מוזיקה כבויה", exact: true }).click();
   await expect.poll(async () => (await music()).paused).toBe(false);
+  const initialTitle = await page.locator("#track-title").textContent();
+  await page.getByRole("button", { name: "מנגינה אחרת", exact: true }).click();
+  await expect.poll(async () => (await music()).path).not.toBe(chosen);
+  await expect(page.locator("#track-title")).not.toHaveText(initialTitle!);
+  await expect.poll(async () => (await music()).paused).toBe(false);
+  const manuallyChosen = (await music()).path;
   await submit(page, "דג");
   await expect(page.getByTestId("target-word")).toHaveText("גל");
-  expect((await music()).path).toBe(chosen);
+  expect((await music()).path).toBe(manuallyChosen);
   await page.getByRole("button", { name: "הפסקה", exact: true }).click();
   await expect.poll(async () => (await music()).paused).toBe(true);
   await page.getByRole("button", { name: "ממשיכים", exact: true }).click();
   await expect.poll(async () => (await music()).paused).toBe(false);
-  expect((await music()).path).toBe(chosen);
+  expect((await music()).path).toBe(manuallyChosen);
   await page.getByRole("button", { name: "שמירה ויציאה", exact: true }).click();
   await page
     .getByRole("button", { name: "ממשיכים מאיפה שעצרנו", exact: true })
     .click();
-  expect((await music()).path).toBe(chosen);
+  expect((await music()).path).toBe(manuallyChosen);
   await page.getByRole("button", { name: "מוזיקה פועלת", exact: true }).click();
+  await expect.poll(async () => (await music()).paused).toBe(true);
+  await page.getByRole("button", { name: "מנגינה אחרת", exact: true }).click();
+  const mutedChoice = (await music()).path;
+  expect(mutedChoice).not.toBe(manuallyChosen);
+  expect((await music()).paused).toBe(true);
   for (let index = 1; index < 8; index++) {
     await page
       .getByRole("button", { name: "קשה כרגע? ממשיכים בסיפור", exact: true })
@@ -712,7 +786,7 @@ test("music is picked at stage entry, stays through tasks and resumes, and respe
   await page
     .getByRole("button", { name: "ממשיכים בעקבות הרמז ←", exact: true })
     .click();
-  await expect.poll(async () => (await music()).path).not.toBe(chosen);
+  await expect.poll(async () => (await music()).path).not.toBe(mutedChoice);
   expect((await music()).paused).toBe(true);
 });
 
@@ -738,12 +812,12 @@ test("retired games are hidden and their saved progress stays intact", async ({ 
   await expect(page.getByRole("textbox")).toBeVisible();
 });
 
-test("new farm decorations can be bought, toggled and restored on both shop pages", async ({ page }) => {
+test("farm decorations can be bought, toggled and restored, including the expanded catalog", async ({ page }) => {
   const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
   page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
   await quiet(page); await start(page);
   await page.evaluate(key => {
-    const p = JSON.parse(localStorage.getItem(key)!); p.balance = 1000; p.earned = 1000;
+    const p = JSON.parse(localStorage.getItem(key)!); p.balance = 2500; p.earned = 2500;
     localStorage.setItem(key, JSON.stringify(p));
   }, storageKey);
   await page.reload();
@@ -767,6 +841,17 @@ test("new farm decorations can be bought, toggled and restored on both shop page
     await page.getByRole("button", { name: "לעמוד הקודם", exact: true }).click(); await fitsViewport(page);
     await page.getByRole("button", { name: "לעוד שטויות ←", exact: true }).click();
   }
+  await page.getByRole("button", { name: "לעוד שטויות ←", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("עמוד 3 מתוך 3");
+  await expect(page.getByText("420 פעמונים", { exact: true })).toBeVisible();
+  for (const article of await page.locator(".prize").all()) await article.getByRole("button", { name: "לפתוח", exact: true }).click();
+  for (const viewport of [{ width: 1024, height: 600 }, { width: 1280, height: 720 }, { width: 1440, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    await fitsViewport(page);
+    for (const button of await page.locator(".prize button, .shop-pages button").all()) await expect(button).toBeInViewport({ ratio: 0.99 });
+    await page.screenshot({ path: test.info().outputPath(`premium-decorations-${viewport.width}.png`) });
+  }
+  await page.getByRole("button", { name: "לעמוד הקודם", exact: true }).click();
   await page.locator(".prize").first().getByRole("button", { name: "להוריד", exact: true }).click();
   await page.reload();
   await page.getByRole("button", { name: "משנים את החווה", exact: true }).click();
@@ -807,6 +892,7 @@ test("difficulty persists while saved games keep their original words and level"
   }
   await page.getByRole("button", { name: "שמירה ויציאה", exact: true }).click();
   await page.getByRole("button", { name: "פרק חדש", exact: true }).click();
+  await page.getByRole("button", { name: "מתחילים פרק חדש", exact: true }).click();
   await page.getByRole("button", { name: "מכירים את המשימה ←", exact: true }).click();
   await expect(page.getByRole("radio", { name: /4 · מתרגלים רצף/ })).toBeChecked();
   await page.getByRole("radio", { name: /1 · מתחילים/ }).check();
@@ -870,9 +956,8 @@ test("game introductions, level selection, input, help, feedback and endings fit
       await page.getByRole("button", { name: "מוכנים, מתחילים ←", exact: true }).click();
       if (name !== "צובעים ארגזים") await page.getByRole("button", { name: "פתיחת מקלדת עזר", exact: true }).click();
       if (name === "הדואר המבולבל") {
-        await page.getByRole("button", { name: "רמז ראשון", exact: true }).click();
-        await fitsViewport(page);
-        await page.getByRole("button", { name: "צריכים להעתיק?", exact: true }).click();
+        await expect(page.getByTestId("revealed-word")).toHaveText(await expectedWord(page));
+        await page.screenshot({ path: test.info().outputPath(`quiet-post-${viewport.width}.png`) });
       }
       await fitsViewport(page);
       if (name === "צובעים ארגזים") {

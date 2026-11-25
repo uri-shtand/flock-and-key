@@ -62,6 +62,16 @@ it("keeps an interrupted session when starting another one", () => {
   expect(second.sessions[0].status).toBe("abandoned");
   expect(second.sessions[1].status).toBe("active");
 });
+it("retains the chapter and the standalone round in separate local save slots", () => {
+  const chapter = newSession(initialProgress());
+  const standalone = newSession(chapter, "spelling");
+  const replacement = newSession(standalone);
+  expect(replacement.sessions.map((s) => s.status)).toEqual(["abandoned", "active", "active"]);
+  vi.stubGlobal("localStorage", { getItem: () => JSON.stringify(replacement) });
+  expect(loadGame()).toEqual({ progress: replacement, warning: "" });
+  replacement.sessions[0].status = "active";
+  expect(loadGame().warning).not.toBe("");
+});
 it("quotes exported cells and neutralizes spreadsheet formulas in child input", () => {
   const p = newSession(initialProgress());
   p.sessions[0].attempts.push({

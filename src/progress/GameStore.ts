@@ -83,7 +83,7 @@ export function initialProgress(): GameProgress {
     owned: [],
     equipped: [],
     knownCodes: [],
-    settings: { music: true, speech: true },
+    settings: { music: false, speech: true },
   };
 }
 export function allAttempts(p: GameProgress): Attempt[] {
@@ -118,7 +118,7 @@ export function newSession(p: GameProgress, mode?: Mode): GameProgress {
     difficulty,
     stageDifficulties,
     ratedStages: [],
-    stage: mode ? stages.findIndex((s) => s.mode === mode) : 0,
+    stage: startStage,
     index: 0,
     phase: "intro",
     tasks,
@@ -129,7 +129,7 @@ export function newSession(p: GameProgress, mode?: Mode): GameProgress {
     playMs: 0,
   };
   const sessions = p.sessions.map((s) =>
-    s.id === p.currentId && s.status === "active"
+    s.standalone === session.standalone && s.status === "active"
       ? {
           ...s,
           status: "abandoned" as const,
@@ -331,6 +331,9 @@ export function loadGame(): { progress: GameProgress; warning: string } {
     )
       throw Error("invalid");
     const progress = x as unknown as GameProgress;
+    const unfinished = progress.sessions.filter((s) => s.status === "active");
+    if (new Set(unfinished.map((s) => s.standalone)).size !== unfinished.length)
+      throw Error("multiple saves for the same game type");
     if (
       progress.currentId &&
       !progress.sessions.some((s) => s.id === progress.currentId)
