@@ -2,7 +2,7 @@ import { test, expect, type Page, type Locator } from '@playwright/test';
 import { adventureInteractions, evidenceText, type InteractionId } from '../../src/content/detective';
 
 async function open(page: Page) {
-  await page.goto('/'); await page.getByRole('button', { name: '🔎 תיק בלשי קטן', exact: true }).click();
+  await page.goto('/?edition=farm'); await page.getByRole('button', { name: '🔎 תיק בלשי קטן', exact: true }).click();
   await bounds(page); await page.screenshot({ path: test.info().outputPath('adventure-intro.png') });
   await page.getByRole('button', { name: 'פותחים בחקירה', exact: true }).click();
 }

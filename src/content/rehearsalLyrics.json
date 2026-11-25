@@ -1,4 +1,22 @@
 {
+  "soundcheck": {
+    "start": 0,
+    "end": 20.4,
+    "parts": [
+      { "start": 0, "end": 6.8, "lines": [
+        { "start": 0, "english": "Put the drum beside the suitcase.", "hebrew": "שימו את התוף ליד המזוודה." },
+        { "start": 3.4, "english": "Pitsi, leave a little space.", "hebrew": "פיצי, תשאיר קצת מקום." }
+      ] },
+      { "start": 6.8, "end": 13.6, "lines": [
+        { "start": 6.8, "english": "Now the drum is behind the suitcase.", "hebrew": "עכשיו התוף מאחורי המזוודה." },
+        { "start": 10.2, "english": "The bell is right in front.", "hebrew": "הפעמון ממש מלפנים." }
+      ] },
+      { "start": 13.6, "end": 20.4, "lines": [
+        { "start": 13.6, "english": "Dad can play the suitcase.", "hebrew": "אבא יכול לנגן על המזוודה." },
+        { "start": 17, "english": "Pitsi wants to take a bow.", "hebrew": "פיצי רוצה לקוד קידה." }
+      ] }
+    ]
+  },
   "rhythm": {
     "start": 28.22,
     "end": 142.1,

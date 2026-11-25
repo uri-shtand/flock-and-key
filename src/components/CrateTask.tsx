@@ -5,16 +5,18 @@ export function DadCratePrompt({
   word,
   celebrating,
   paused,
+  station = false,
 }: {
   word: string;
   celebrating: boolean;
   paused: boolean;
+  station?: boolean;
 }) {
   return (
     <section className={`crate-prompt${celebrating ? " celebrating" : ""}${paused ? " motion-paused" : ""}`} aria-label="אבא מציג את המילה">
       <div className="dialogue-turn character-dad">
         <div className="character-portrait">
-          <CharacterPortrait character="dad" />
+          <CharacterPortrait character="dad" station={station} />
         </div>
         <div className="speech-bubble">
           <b className="character-name">אבא</b>

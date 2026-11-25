@@ -1,19 +1,20 @@
-import { adventureItems, interactionIds, itemIds, evidenceSentences, deductionBoards, boardIds, type BoardId, type InteractionId, type ItemId } from '../content/detective';
+import { boardIds, type BoardId, type InteractionId, type ItemId } from '../content/detective';
+import { adventureContent, adventureLines, type AdventureEdition, type CasePlace } from '../content/stationCases';
 import { caseSources, clues, decisions, decisionIds, sourceIds, defaultCaseSettings, defaultAdventureSettings, type CaseSettings, type Clue, type SourceId, type DecisionId } from '../content/detective';
-export type AdventureEvent = { type: 'observe'; interaction: InteractionId } | { type: 'bookmark'; passage: string } | { type: 'collect'; item: ItemId } | { type: 'placeEvidence'; board: BoardId; evidence: string } | { type: 'removeEvidence'; board: BoardId; evidence: string } | { type: 'checkBoard'; board: BoardId; guided: boolean } | { type: 'adventureHint'; board: BoardId } | { type: 'visit'; place: 'yard' | 'bridge' };
+export type AdventureEvent = { type: 'observe'; interaction: InteractionId } | { type: 'bookmark'; passage: string } | { type: 'collect'; item: ItemId } | { type: 'placeEvidence'; board: BoardId; evidence: string } | { type: 'removeEvidence'; board: BoardId; evidence: string } | { type: 'checkBoard'; board: BoardId; guided: boolean } | { type: 'adventureHint'; board: BoardId } | { type: 'visit'; place: CasePlace } | { type: 'parcelReceipt'; assisted: boolean };
 export type CaseEvent = AdventureEvent | { type: 'pin'; decision: DecisionId; passage: string } | { type: 'select'; decision: DecisionId; choice: number } | { type: 'inspect'; clue: Clue } | { type: 'hint'; decision: DecisionId } | { type: 'theory'; decision: DecisionId; choice: number; support: string[]; guided: boolean } | { type: 'travel' };
-export type CaseRun = { version: 1 | 2; id: string; startedAt: string; settings: CaseSettings; events: CaseEvent[] };
+export type CaseRun = { version: 1 | AdventureEdition; id: string; startedAt: string; settings: CaseSettings; events: CaseEvent[] };
 export type CaseAttempt = { decision: DecisionId; choice: number; support: string[]; result: 'supported' | 'guided' | 'explored' | 'revisit'; hints: number; inspected: Clue[]; observed?: InteractionId[] };
-export type CaseState = { edition: 1 | 2; observed: InteractionId[]; notebook: string[]; bag: ItemId[]; boards: Record<BoardId, string[]>; place: 'yard' | 'bridge' | 'ending'; inspected: Clue[]; hints: Record<DecisionId, number>; links: Partial<Record<DecisionId, 'supported' | 'guided' | 'explored'>>; attempts: CaseAttempt[]; drafts: Record<DecisionId, { choice: number | null; support: string[] }> };
+export type CaseState = { edition: CaseRun['version']; observed: InteractionId[]; notebook: string[]; bag: ItemId[]; boards: Record<BoardId, string[]>; place: CasePlace | 'ending'; inspected: Clue[]; hints: Record<DecisionId, number>; links: Partial<Record<DecisionId, 'supported' | 'guided' | 'explored'>>; attempts: CaseAttempt[]; drafts: Record<DecisionId, { choice: number | null; support: string[] }> };
 export function newCase(settings: CaseSettings = defaultCaseSettings): CaseRun {
   return { version: 1, id: crypto.randomUUID(), startedAt: new Date().toISOString(), settings: { ...settings }, events: [] };
 }
-export function newAdventure(settings: CaseSettings = defaultAdventureSettings): CaseRun { return { ...newCase(settings), version: 2 }; }
-export function initialCaseState(edition: 1 | 2 = 1): CaseState { return { edition, observed: [], notebook: [], bag: [], boards: { happened: [], where: [] }, place: 'yard', inspected: [], hints: { identity: 0, route: 0, search: 0 }, links: {}, attempts: [], drafts: { identity: { choice: null, support: [] }, route: { choice: null, support: [] }, search: { choice: null, support: [] } } }; }
+export function newAdventure(settings: CaseSettings = defaultAdventureSettings, version: AdventureEdition = 2): CaseRun { return { ...newCase(settings), version }; }
+export function initialCaseState(edition: CaseRun['version'] = 1): CaseState { return { edition, observed: [], notebook: [], bag: [], boards: { happened: [], where: [] }, place: 'yard', inspected: [], hints: { identity: 0, route: 0, search: 0 }, links: {}, attempts: [], drafts: { identity: { choice: null, support: [] }, route: { choice: null, support: [] }, search: { choice: null, support: [] } } }; }
 export function reduceCase(s: CaseState, e: CaseEvent): CaseState | null {
   if (s.place === 'ending') return null;
-  if (s.edition === 2) return reduceAdventure(s, e);
-  if (['observe', 'bookmark', 'collect', 'placeEvidence', 'removeEvidence', 'checkBoard', 'adventureHint', 'visit'].includes(e.type)) return null;
+  if (s.edition !== 1) return reduceAdventure(s, e, s.edition);
+  if (['observe', 'bookmark', 'collect', 'placeEvidence', 'removeEvidence', 'checkBoard', 'adventureHint', 'visit', 'parcelReceipt'].includes(e.type)) return null;
   const legacy = e as Exclude<CaseEvent, AdventureEvent>;
   return reduceLegacy(s, legacy);
 }
@@ -47,7 +48,7 @@ export function appendCase(run: CaseRun, event: CaseEvent): CaseRun { return red
 export function validCase(value: unknown): value is CaseRun {
   if (!value || typeof value !== 'object') return false;
   const r = value as CaseRun;
-  if (![1, 2].includes(r.version) || typeof r.id !== 'string' || !r.id || typeof r.startedAt !== 'string' || !Number.isFinite(Date.parse(r.startedAt)) || !r.settings || ['guided', 'labels', 'reducedMotion'].some(k => typeof r.settings[k as keyof CaseSettings] !== 'boolean') || !Array.isArray(r.events) || r.events.length > 5000) return false;
+  if (![1, 2, 3, 4].includes(r.version) || typeof r.id !== 'string' || !r.id || typeof r.startedAt !== 'string' || !Number.isFinite(Date.parse(r.startedAt)) || !r.settings || ['guided', 'labels', 'reducedMotion'].some(k => typeof r.settings[k as keyof CaseSettings] !== 'boolean') || !Array.isArray(r.events) || r.events.length > 5000) return false;
   let s = initialCaseState(r.version);
   try { for (const event of r.events) { if (!event || typeof event !== 'object') return false; const next = reduceCase(s, event); if (!next) return false; s = next; } } catch { return false; }
   return true;
@@ -57,22 +58,28 @@ export function openedSources(s: CaseState): SourceId[] { return sourceIds.filte
 export function availableEvidence(s: CaseState): string[] { return [...s.notebook, ...s.bag]; }
 export function boardDecision(board: BoardId): DecisionId { return board === 'happened' ? 'identity' : 'route'; }
 export function boardSolved(s: CaseState, board: BoardId): boolean { return Boolean(s.links[boardDecision(board)]); }
-function reduceAdventure(s: CaseState, event: CaseEvent): CaseState | null {
+function reduceAdventure(s: CaseState, event: CaseEvent, edition: AdventureEdition): CaseState | null {
   const e = event as AdventureEvent;
+  const content = adventureContent(edition);
   if (e.type === 'observe') {
-    if (!interactionIds.includes(e.interaction) || (['note', 'lower', 'curtain'].includes(e.interaction) ? s.place !== 'bridge' : s.place !== 'yard')) return null;
+    if (!content.spots.some(spot => spot.id === e.interaction && spot.place === s.place)) return null;
     return { ...s, observed: [...new Set([...s.observed, e.interaction])], inspected: [...new Set([...s.inspected, ...((clues as readonly string[]).includes(e.interaction) ? [e.interaction as Clue] : [])])] };
   }
-  if (e.type === 'visit') return ['yard', 'bridge'].includes(e.place) && e.place !== s.place ? { ...s, place: e.place } : null;
+  if (e.type === 'visit') return Object.hasOwn(content.places, e.place) && e.place !== s.place ? { ...s, place: e.place } : null;
+  if (e.type === 'parcelReceipt') {
+    if (edition !== 4 || s.place !== 'yard' || typeof e.assisted !== 'boolean' || !s.observed.includes('dad') || s.bag.includes('delivery')) return null;
+    return { ...s, bag: [...s.bag, 'delivery'] };
+  }
   if (e.type === 'bookmark') {
-    if (!evidenceSentences.some(line => line.id === e.passage && s.observed.includes(line.source))) return null;
+    if (!adventureLines(edition).some(line => line.id === e.passage && s.observed.includes(line.source))) return null;
     // Removing a note also returns any copies on the deduction board.
     const removing = s.notebook.includes(e.passage);
     if (removing && boardIds.some(board => boardSolved(s, board) && s.boards[board].includes(e.passage))) return null;
     return { ...s, notebook: removing ? s.notebook.filter(id => id !== e.passage) : [...s.notebook, e.passage], boards: removing ? { happened: s.boards.happened.filter(id => id !== e.passage), where: s.boards.where.filter(id => id !== e.passage) } : s.boards };
   }
   if (e.type === 'collect') {
-    if (!itemIds.includes(e.item) || s.bag.includes(e.item) || !s.observed.includes(adventureItems[e.item].source)) return null;
+    const item = content.items[e.item];
+    if (!item || s.bag.includes(e.item) || !s.observed.includes(item.source) || (edition === 4 && e.item === 'delivery')) return null;
     return { ...s, bag: [...s.bag, e.item] };
   }
   if (!('board' in e) || !boardIds.includes(e.board)) return null;
@@ -87,7 +94,7 @@ function reduceAdventure(s: CaseState, event: CaseEvent): CaseState | null {
   if (e.type !== 'checkBoard' || typeof e.guided !== 'boolean' || (e.guided && s.hints[decision] !== 3)) return null;
   const selected = s.boards[board];
   if (!e.guided && selected.length !== 3) return null;
-  const supported = selected.length === 3 && deductionBoards[board].groups.every(group => (group as readonly string[]).some(id => selected.includes(id)));
+  const supported = selected.length === 3 && content.boards[board].groups.every(group => group.some(id => selected.includes(id)));
   const result = e.guided ? 'guided' : supported ? 'supported' : 'revisit';
   const links = result === 'revisit' ? s.links : { ...s.links, [decision]: result };
   return { ...s, links, place: links.identity && links.route ? 'ending' : s.place, attempts: [...s.attempts, { decision, choice: decisions[decision].correct, support: [...selected], result, hints: s.hints[decision], inspected: [...s.inspected], observed: [...s.observed] }] };

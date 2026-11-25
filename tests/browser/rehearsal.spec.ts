@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const storage = "flock-and-key:game:v2";
 const openBarn = async (page: Page) => {
-  await page.goto("/");
+  await page.goto("/?edition=farm");
   await page.getByRole("button", { name: /חזרה באסם/ }).click();
 };
 

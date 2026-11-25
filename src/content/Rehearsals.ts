@@ -5,8 +5,8 @@ export const songGroups = [
   { id: "series", label: "שירי הסדרה" },
   { id: "farm", label: "שירי החווה" },
 ] as const;
-export type SongGroup = typeof songGroups[number]["id"];
-export type SceneAction = "boots" | "hat" | "hats" | "sock" | "drum" | "bell" | "pitsi-chases" | "noga-chases" | "duck-chases";
+export type SongGroup = typeof songGroups[number]["id"] | "station";
+export type SceneAction = "boots" | "hat" | "hats" | "sock" | "drum" | "bell" | "pitsi-chases" | "noga-chases" | "duck-chases" | "drum-beside" | "drum-behind" | "drum-front";
 export type QuestionKind = "word" | "listening" | "reading" | "grammar" | "recall";
 type Question = {
   part: number;
@@ -65,6 +65,23 @@ const barnVariations = {
 } satisfies Record<string, readonly Variation[]>;
 
 export const songs: readonly Song[] = [
+  {
+    id: "soundcheck", group: "station", audio: "station-soundcheck.wav", title: "The Suitcase Soundcheck", subtitle: "בדיקת קול עם מזוודה וקידה", accent: "#e5af63",
+    glossary: { 0: [["beside", "ליד"], ["suitcase", "מזוודה"]], 1: [["behind", "מאחורי"], ["in front", "מלפנים"]], 2: [["can", "יכול"], ["take a bow", "לקוד קידה"]] },
+    questions: [
+      { part: 0, kind: "listening", prompt: "איזה כלי מבקשים להזיז?", solution: "תוף", options: ["תוף", "פעמון", "גיטרה"], hint: "הקשיבו למילה שאחרי Put the.", explanation: "drum פירושו תוף." },
+      { part: 0, kind: "word", prompt: "מה לעשות עם התוף?", stimulus: "Put the drum beside the suitcase.", solution: "לשים אותו ליד המזוודה", options: ["לשים אותו ליד המזוודה", "לשים אותו בתוך המזוודה", "לשים אותו על הכיסא"], hint: "beside מתאר שני דברים שנמצאים זה לצד זה.", explanation: "beside פירושו ליד." },
+      { part: 1, kind: "reading", prompt: "איפה התוף נמצא עכשיו?", stimulus: "Now the drum is behind the suitcase.", solution: "מאחורי המזוודה", options: ["לפני המזוודה", "מאחורי המזוודה", "בתוך המזוודה"], hint: "חפשו את המילה שמגיעה לפני the suitcase.", explanation: "behind פירושו מאחורי." },
+      { part: 1, kind: "listening", prompt: "מה נמצא ממש מלפנים?", solution: "הפעמון", options: ["התוף", "המזוודה", "הפעמון"], hint: "הקשיבו לשורה השנייה בקטע.", explanation: "The bell is right in front." },
+      { part: 2, kind: "grammar", prompt: "מה אבא יכול לעשות?", stimulus: "Dad can play the suitcase.", solution: "לנגן על המזוודה", options: ["לסגור את המזוודה", "לנגן על המזוודה", "לקוד קידה"], hint: "חפשו את הפעולה אחרי can.", explanation: "can מציין יכולת. אבא יכול לנגן על המזוודה." },
+      { part: 2, kind: "recall", prompt: "איך כותבים באנגלית ״מזוודה״?", solution: "suitcase", alternatives: ["a suitcase"], hint: "המילה מתחילה ב־suit.", explanation: "מזוודה באנגלית היא suitcase." },
+    ],
+    variations: [
+      { choice: "ליד", sentence: "Put the drum beside the suitcase.", caption: "התוף ליד המזוודה. פיצי מבקש מקום ליד שניהם.", action: "drum-beside" },
+      { choice: "מאחורי", sentence: "Put the drum behind the suitcase.", caption: "התוף הציץ מאחורי המזוודה. אבא טוען שזה היה הרעיון שלו.", action: "drum-behind" },
+      { choice: "מלפני", sentence: "Put the drum in front of the suitcase.", caption: "התוף תפס את מרכז הבמה. המזוודה תבקש הדרן.", action: "drum-front" },
+    ],
+  },
   {
     id: "rhythm", group: "series", audio: "rhythm.mp3", title: "Ain’t Got Rhythm", subtitle: "אבא והלהקה של המגפיים", accent: "#f4bf6c",
     glossary: {

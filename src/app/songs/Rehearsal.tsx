@@ -58,11 +58,12 @@ function cueIndex(cues: readonly { start: number }[], time: number) {
   return (next === -1 ? cues.length : next) - 1;
 }
 
-export function Rehearsal({ runs, save, onExit }: {
-  runs: RehearsalRun[]; save: (run: RehearsalRun) => void; onExit: () => void;
+export function Rehearsal({ runs, save, onExit, station = false }: {
+  runs: RehearsalRun[]; save: (run: RehearsalRun) => void; onExit: () => void; station?: boolean;
 }) {
-  const [group, setGroup] = useState<SongGroup>("series");
-  const [active, setActive] = useState<SongId | null>(null);
+  const title = station ? "חזרה בכיכר" : "חזרה באסם";
+  const [group, setGroup] = useState<SongGroup>(station ? "station" : "series");
+  const [active, setActive] = useState<SongId | null>(() => station && runs.some(run => run.song === "soundcheck") ? "soundcheck" : null);
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [dialog, setDialog] = useState<"pause" | "options" | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
@@ -228,17 +229,17 @@ export function Rehearsal({ runs, save, onExit }: {
   }
   const notices = <p role="status" className="rehearsal-audio-notice">{audioIssue ? "השמע לא זמין כרגע. אפשר להמשיך עם מילות השיר." : ""}</p>;
 
-  return <section className="rehearsal" aria-label="חזרה באסם">
+  return <section className="rehearsal" aria-label={title}>
     <audio ref={audio} preload="none" onEnded={stopAudio} />
     <header className="rehearsal-heading">
-      <div><h1 tabIndex={active ? undefined : -1} ref={active ? undefined : focus}>חזרה באסם</h1>
-        <p>{song ? <b lang="en" dir="ltr">{song.title}</b> : "בוחרים שיר באנגלית ומביימים את להקת החווה."}</p></div>
+      <div><h1 tabIndex={active ? undefined : -1} ref={active ? undefined : focus}>{title}</h1>
+        <p>{song ? <b lang="en" dir="ltr">{song.title}</b> : station ? "בוחרים שיר באנגלית ומביימים את הלהקה בכיכר." : "בוחרים שיר באנגלית ומביימים את להקת החווה."}</p></div>
       <div className="rehearsal-buttons">
         {song && <><button className="secondary" onClick={() => openSheet(song.id, question?.part ?? 0)}>מילות השיר ותרגום</button>
           <button className="secondary" onClick={() => { stopAudio(); setDialog("pause"); }}>הפסקה</button>
           <button className="rehearsal-quiet" onClick={() => { resetUi(); setActive(null); }}>לבחירת שיר</button></>}
         {!song && <>
-          <div className="rehearsal-buttons" role="group" aria-label="קבוצת שירים">
+          {!station && <div className="rehearsal-buttons" role="group" aria-label="קבוצת שירים">
             {songGroups.map(({ id, label }) =>
               <button key={id} className="secondary" aria-pressed={group === id} onClick={() => {
                 if (id === group) return;
@@ -247,14 +248,14 @@ export function Rehearsal({ runs, save, onExit }: {
                 setGroup(id);
               }}>{label}</button>
             )}
-          </div>
-          <button className="rehearsal-quiet" onClick={onExit}>לחווה</button>
+          </div>}
+          <button className="rehearsal-quiet" onClick={onExit}>{station ? "לתחנה" : "לחווה"}</button>
         </>}
       </div>
     </header>
 
     {!song ? <div className="rehearsal-poster">
-      <div className="rehearsal-poster-art"><RehearsalStage command={{ action: "idle", cue, reduced, stopped }} /></div>
+      <div className="rehearsal-poster-art"><RehearsalStage station={station} command={{ action: "idle", cue, reduced, stopped }} /></div>
       <div className="rehearsal-songs">
         {songs.filter(item => item.group === group).map(item => {
           const existing = runs.find(candidate => candidate.song === item.id);
@@ -317,10 +318,10 @@ export function Rehearsal({ runs, save, onExit }: {
       </section>
 
       <figure className="rehearsal-world">
-        <RehearsalStage command={{ action: variation?.action ?? (result || run?.finished ? "applause" : "idle"), cue, stopped, reduced }} />
+        <RehearsalStage station={station} command={{ action: variation?.action ?? (result || run?.finished ? "applause" : "idle"), cue, stopped, reduced }} />
         <figcaption aria-live="polite">
-          <CharacterPortrait character={variation ? "pitsi" : "tom"} />
-          <span>{variation?.caption ?? (run?.finished ? "פיצי קָד קידה. הקהל בכלל מאחוריו." : "תום מחכה ליד הבמה. פיצי מחכה שהמקל ייפול.")}</span>
+          <CharacterPortrait character={variation ? "pitsi" : "tom"} station={station} />
+          <span>{variation?.caption ?? (run?.finished ? "פיצי קָד קידה. הקהל בכלל מאחוריו." : station ? "אבא הביא מזוודה. הוא מתעקש שזה כלי הקשה." : "תום מחכה ליד הבמה. פיצי מחכה שהמקל ייפול.")}</span>
         </figcaption>
       </figure>
     </div>}

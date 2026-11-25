@@ -1,8 +1,12 @@
 import { PitsiIllustration } from "./PitsiIllustration";
+import { stationArt } from "../content/station";
 import type { CharacterId, DialogueLine } from "../content/chapter";
 const names: Record<CharacterId, string> = {
   dad: "אבא",
   tom: "תום",
+  sister: "האחות",
+  organizer: "מארגנת התערוכה",
+  cafeOwner: "בעלת בית הקפה",
   postman: "הדוור",
   narrator: "בינתיים בחווה",
   pitsi: "פיצי",
@@ -10,10 +14,12 @@ const names: Record<CharacterId, string> = {
 
 // Original vector portraits: UI illustrations, no learning state or external assets.
 export function CharacterPortrait({
-  character,
+  character, station = false,
 }: {
   character: Exclude<CharacterId, "narrator">;
+  station?: boolean;
 }) {
+  if (station) return <img className="station-portrait" src={stationArt(`portrait-${character}`)} alt="" />;
   if (character === "pitsi") return <PitsiIllustration />;
   const dad = character === "dad",
     postman = character === "postman";
@@ -21,7 +27,7 @@ export function CharacterPortrait({
     <svg viewBox="0 0 88 96" aria-hidden="true" focusable="false">
       <path
         d="M9 96V82Q10 66 34 64H54Q78 66 79 82V96"
-        fill={dad ? "#369c91" : postman ? "#4b75bf" : "#e87450"}
+        fill={dad ? "#369c91" : postman ? "#4b75bf" : character === "sister" ? "#a7513e" : "#e87450"}
         stroke="#24334b"
         strokeWidth="3"
       />
@@ -55,7 +61,8 @@ export function CharacterPortrait({
         stroke="#24334b"
         strokeWidth="3"
       />
-      {!dad && !postman && (
+      {character === "sister" && <path d="M18 43C7 13 27 7 39 10C38-2 65-4 67 14C78 22 77 38 69 49L62 25L41 25L25 40Z" fill="#49342d" stroke="#24334b" strokeWidth="3" />}
+      {!dad && !postman && character !== "sister" && (
         <path
           d="M18 34L16 16L29 18L30 6L44 13L57 4L62 16L74 16L69 37L60 25L42 28L30 22Z"
           fill="#61423b"
@@ -142,7 +149,7 @@ export function CharacterPortrait({
     </svg>
   );
 }
-export function DialoguePanel({ lines }: { lines: DialogueLine[] }) {
+export function DialoguePanel({ lines, station = false }: { lines: DialogueLine[]; station?: boolean }) {
   return (
     <ol className="dialogue-thread" aria-label="שיחת הדמויות">
       {lines.map((line, index) =>
@@ -154,10 +161,10 @@ export function DialoguePanel({ lines }: { lines: DialogueLine[] }) {
         ) : (
           <li className={`dialogue-turn character-${line.speaker}`} key={index}>
             <div className="character-portrait">
-              <CharacterPortrait character={line.speaker} />
+              <CharacterPortrait character={line.speaker} station={station} />
             </div>
             <div className="speech-bubble">
-              <b className="character-name">{names[line.speaker]}</b>
+              <b className="character-name">{station && line.speaker === "tom" ? "האח" : names[line.speaker]}</b>
               <p>{line.text}</p>
             </div>
           </li>

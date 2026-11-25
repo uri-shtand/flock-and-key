@@ -1,6 +1,6 @@
 # Flock & Key
 
-A Hebrew typing and spelling mystery for a child aged 12. The playable prototype contains one story chapter, two available word mini-games (two more temporarily hidden), a standalone Gates game, a small detective case, 120 useful words, prerecorded Hebrew speech, six original background music arrangements, local progress, cosmetic rewards and a parent dashboard with JSON/CSV export.
+A Hebrew typing and spelling mystery for ages 9–14. The default game takes place at a rural village station. It includes a parcel mystery, four word games, an English rehearsal, a separate detective case, Gatekeepers, a local shop and a parent dashboard with JSON/CSV export.
 
 ## Run on Windows
 
@@ -10,6 +10,12 @@ Install Git and Node.js 24 LTS (npm included). From the repository in PowerShell
 npm ci
 npm run dev
 ```
+
+Open http://localhost:5173 and choose **יוצאים לחקירה** to investigate parcel 27. **משחקונים** opens the station activities. Label storage boxes, restore postcards with the postman, follow Pitsi's clues, choose a courier route, direct the village rehearsal or find Noga. Gatekeepers is available from the same board. **חנות התחנה** previews new decorations before spending bells. Use a physical Hebrew keyboard for word games. The rehearsal provides a bilingual songbook.
+
+Use **לחווה הקודמת ולשמירות שלה** to open the earlier farm edition. Its unfinished chapter, word game, detective case, rehearsal tracks and decorations remain available there. The editions share the bell balance, past learning results and parent dashboard. See [the station implementation notes](docs/design/rural-station-implementation.md) and [concept art](docs/design/rural-station-concept-art/README.md).
+
+### Earlier farm edition
 
 Open http://localhost:5173 and choose **יוצאים לחקירה**. The chapter currently connects sign painting and reconstructing letters. Tracks and Pitsi’s chase are temporarily hidden after playtest feedback that they were too easy and not interesting enough; their code and history are retained. A saved run inside either hidden game stays stored, with an explanatory home notice instead of resume. You can also enter each mini-game directly. Home keeps one save for the chapter and one for standalone word games, and shows the build time in Israel time. Help and skipping remain free; speed never blocks story completion.
 
@@ -30,7 +36,7 @@ The shortened chapter’s duration, enjoyment and learning effect still need tes
 - `npm test` — learning, content and persistence tests.
 - `npm run build` — typecheck and production output in `dist/`.
 - `npm run preview` — serve the production build locally.
-- `npx playwright install chromium` then `npm run test:e2e` — browser integration tests. On Linux, Chromium may also require system libraries (`npx playwright install-deps chromium`).
+- `npx playwright install chromium` then `npm run test:e2e` — browser integration tests. On Linux, Chromium may also require system libraries (`npx playwright install-deps chromium`). If the default test port 5186 is busy, set `FLOCK_E2E_PORT` to a free port other than 5173.
 
 The dev/preview server listens on all interfaces. For loopback only, run `npm run dev -- --host 127.0.0.1`. Keep the same hostname and port when checking saved progress.
 

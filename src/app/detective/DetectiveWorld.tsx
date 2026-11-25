@@ -1,11 +1,16 @@
 import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
-export type DetectiveView = { place: 'yard' | 'bridge' | 'ending'; stopped: boolean; reduced: boolean; reaction: number; ribbonTaken: boolean; spoonTaken: boolean };
+import { stationArt } from '../../content/station';
+import type { CasePlace } from '../../content/stationCases';
+export type DetectiveView = { place: CasePlace | 'ending'; art?: string; label?: string; stopped: boolean; reduced: boolean; reaction: number; ribbonTaken: boolean; spoonTaken: boolean };
 // Visual commands only: no clue rules, answer checking or persistence in the scene.
 class DetectiveScene extends Phaser.Scene {
   private current?: DetectiveView;
   private dog?: Phaser.GameObjects.Container;
-  constructor(private ready: () => void) { super('detective'); }
+  constructor(private ready: () => void, private station: boolean) { super('detective'); }
+  preload() {
+    if (this.station) for (const art of ['station-hall', 'station-cafe', 'square', 'forecourt']) this.load.image(art, stationArt(art));
+  }
   create() { this.ready(); }
   command(view: DetectiveView) {
     const redraw = this.current?.place !== view.place || this.current?.reduced !== view.reduced || this.current?.ribbonTaken !== view.ribbonTaken || this.current?.spoonTaken !== view.spoonTaken;
@@ -22,6 +27,10 @@ class DetectiveScene extends Phaser.Scene {
   }
   private draw(view: DetectiveView) {
     this.tweens.killAll(); this.children.removeAll(true);
+    if (view.art) {
+      this.add.image(480, 320, view.art).setDisplaySize(960, 640);
+      return;
+    }
     const g = this.add.graphics();
     g.fillStyle(0xb6dee0).fillRect(0, 0, 960, 640);
     g.fillStyle(0xffe6a0).fillCircle(785, 85, 45);
@@ -106,12 +115,13 @@ class DetectiveScene extends Phaser.Scene {
 export function DetectiveWorld({ view }: { view: DetectiveView }) {
   const host = useRef<HTMLDivElement>(null), scene = useRef<DetectiveScene | null>(null), latest = useRef(view);
   latest.current = view;
+  const station = Boolean(view.art);
   useEffect(() => {
     if (!host.current) return;
-    const world = new DetectiveScene(() => { scene.current = world; world.command(latest.current); });
+    const world = new DetectiveScene(() => { scene.current = world; world.command(latest.current); }, station);
     const game = new Phaser.Game({ type: Phaser.AUTO, parent: host.current, width: 960, height: 640, backgroundColor: '#b6dee0', scene: [world], input: { keyboard: false }, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
     return () => { scene.current = null; game.destroy(true); };
-  }, []);
-  useEffect(() => { scene.current?.command(view); }, [view.place, view.reduced, view.stopped, view.reaction, view.ribbonTaken, view.spoonTaken]);
-  return <div className="detective-canvas" ref={host} role="img" aria-label={view.place === 'yard' ? 'חצר החווה: עגלת הדוור, סרט כוכבים ועקבות ליד שולחן הפיקניק' : view.place === 'ending' ? 'נוגה מדגמנת על השטיח וסרט הכוכבים מתנופף ברוח' : 'גשר אבן: קשת רטובה מתחת ובמה מוקפת מעקה מעל, עם מחיצה סגורה'} />;
+  }, [station]);
+  useEffect(() => { scene.current?.command(view); }, [view.place, view.art, view.reduced, view.stopped, view.reaction, view.ribbonTaken, view.spoonTaken]);
+  return <div className="detective-canvas" ref={host} role="img" aria-label={station ? view.label : view.place === 'yard' ? 'חצר החווה: עגלת הדוור, סרט כוכבים ועקבות ליד שולחן הפיקניק' : view.place === 'ending' ? 'נוגה מדגמנת על השטיח וסרט הכוכבים מתנופף ברוח' : 'גשר אבן: קשת רטובה מתחת ובמה מוקפת מעקה מעל, עם מחיצה סגורה'} />;
 }

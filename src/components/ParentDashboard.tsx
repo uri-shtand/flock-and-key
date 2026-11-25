@@ -1,7 +1,8 @@
 import { songFor, questionLabels } from "../content/Rehearsals";
 import { rehearsalQuestions } from "../typing/Rehearsal";
 import { caseState } from "../typing/DetectiveCase";
-import { decisions, deductionBoards, evidenceText } from "../content/detective";
+import { decisions } from "../content/detective";
+import { adventureContent, adventureLines } from "../content/stationCases";
 import { useState } from "react";
 import { ResetProgressDialog } from "./ResetProgressDialog";
 import { stages } from "../content/chapter";
@@ -165,13 +166,24 @@ export function ParentDashboard({
       </p>
       <h2>תיקים בלשיים · הבנת הנקרא</h2>
       <p>פעולות בתיק מסוים בלבד, בנפרד מאיות והקלדה. קריאה בטקסט; עזרת מבוגר אינה ניתנת לזיהוי. משחק חוזר אינו מדד לשיפור.</p>
-      {(progress.detective ?? []).map(run => { const state = caseState(run); return <div key={run.id}>
-        <b>הטרמפ של נוגה · {state.place === 'ending' ? 'התיק נפתר' : 'בחקירה'}</b>
-        {state.attempts.map((a, i) => <p key={i}>{run.version === 2 ? deductionBoards[a.decision === 'identity' ? 'happened' : 'where'].title : decisions[a.decision].title} — {run.version === 2 ? (a.result === 'revisit' ? 'שילוב שנבדק מחדש' : deductionBoards[a.decision === 'identity' ? 'happened' : 'where'].conclusion) : decisions[a.decision].choices[a.choice]} · {({ supported: 'קישור מבוסס טקסט', guided: 'פתרון יחד', explored: 'גילוי בחקירה חופשית', revisit: 'ניסיון שנבדק מחדש' })[a.result]} · רמז {a.hints} · ראיות: {a.support.map(id => run.version === 2 ? evidenceText(id) : id).join(' / ') || 'ללא'}</p>)}
-      </div>; })}
+      {(progress.detective ?? []).map(run => {
+        const state = caseState(run);
+        const content = run.version === 1 ? undefined : adventureContent(run.version);
+        const lines = run.version === 1 ? [] : adventureLines(run.version);
+        return <div key={run.id}>
+          <b>{content?.title ?? 'הטרמפ של נוגה'} · {state.place === 'ending' ? 'התיק נפתר' : 'בחקירה'}</b>
+          {state.attempts.map((a, i) => {
+            const board = content?.boards[a.decision === 'identity' ? 'happened' : 'where'];
+            const title = board?.title ?? decisions[a.decision].title;
+            const explanation = board ? (a.result === 'revisit' ? 'שילוב שנבדק מחדש' : board.conclusion) : decisions[a.decision].choices[a.choice];
+            const evidence = a.support.map(id => lines.find(line => line.id === id)?.text ?? Object.entries(content?.items ?? {}).find(([itemId]) => itemId === id)?.[1].description ?? id);
+            return <p key={i}>{title} — {explanation} · {({ supported: 'קישור מבוסס טקסט', guided: 'פתרון יחד', explored: 'גילוי בחקירה חופשית', revisit: 'ניסיון שנבדק מחדש' })[a.result]} · רמז {a.hints} · ראיות: {evidence.join(' / ') || 'ללא'}</p>;
+          })}
+        </div>;
+      })}
       {!(progress.detective ?? []).length && <p>עוד לא נפתח תיק בלשי.</p>}
       {Boolean(progress.rehearsals?.length) && <>
-        <h2>חזרה באסם · אנגלית</h2>
+        <h2>{progress.rehearsals?.some(run => run.song === 'soundcheck') ? 'חזרות · אנגלית' : 'חזרה באסם · אנגלית'}</h2>
         <p>החזרה האחרונה לכל שיר. פרטי החזרות זמינים בייצוא JSON.</p>
         {progress.rehearsals?.map(run => {
           const questions = rehearsalQuestions(run);

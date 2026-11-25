@@ -1,10 +1,10 @@
 import vocabulary from "./words.json";
 export type Mode = "guided" | "blind" | "spelling" | "speed";
-export type CharacterId = "dad" | "tom" | "postman" | "pitsi" | "narrator";
+export type CharacterId = "dad" | "tom" | "sister" | "postman" | "pitsi" | "narrator" | "organizer" | "cafeOwner";
 export type DialogueLine = { speaker: CharacterId; text: string };
 export type Word = (typeof vocabulary)[number];
 export const words: Word[] = vocabulary;
-export const stages: {
+export type Stage = {
   mode: Mode;
   hiddenReason?: string;
   title: string;
@@ -13,7 +13,8 @@ export const stages: {
   mission: { title: string; instruction: string };
   clue: string;
   closing: string;
-}[] = [
+};
+export const stages: Stage[] = [
   {
     mode: "guided",
     title: "צובעים ארגזים",
@@ -122,7 +123,7 @@ export const prizes = [
   { id: "pond", title: "בריכת ברווזים", price: 320, icon: "🪷" },
   { id: "bunting", title: "דגלוני מסיבה לאסם", price: 420, icon: "🎊" },
 ] as const;
-export type PrizeId = (typeof prizes)[number]["id"];
+export type PrizeId = (typeof prizes)[number]["id"] | import("./station").StationPrizeId;
 export function wordById(id: string): Word | undefined {
   return words.find((word) => word.id === id);
 }

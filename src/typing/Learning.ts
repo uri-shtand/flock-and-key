@@ -153,6 +153,7 @@ export function previousComparable(
         !p.skipped &&
         p.mode === a.mode &&
         p.expected === a.expected &&
+        (!a.wordId.startsWith("station:") || p.wordId === a.wordId) &&
         p.aid === a.aid &&
         p.timed === a.timed &&
         p.keyboardHelp === a.keyboardHelp &&
@@ -164,17 +165,18 @@ export function chooseSpelling(
   history: Attempt[],
   seed: number,
   difficulty: Difficulty = 1,
+  bank = words,
 ): string[] {
   const last = new Map<string, Attempt>();
   for (const a of history.filter((a) => a.mode === "spelling"))
     last.set(a.wordId, a);
-  const pool = words.filter((word) => word.text.length <= [0, 4, 5, 7][difficulty]);
+  const pool = bank.filter((word) => word.text.length <= [0, 4, 5, 7][difficulty]);
   const scored = pool
     .map((word, index) => {
       const a = last.get(word.id);
       const priority =
         a && (!a.correct || a.aid !== "independent") ? 0 : !a ? 1 : 2;
-      return { word, priority, order: (index * 37 + seed * 17) % words.length };
+      return { word, priority, order: (index * 37 + seed * 17) % bank.length };
     })
     .sort((a, b) => a.priority - b.priority || a.order - b.order);
   const selected: string[] = [];

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import Phaser from "phaser";
 import type { SceneAction } from "../../content/Rehearsals";
+import { stationArt } from "../../content/station";
 
 type Action = SceneAction | "idle" | "applause";
 type StageCommand = { action: Action; cue: number; stopped: boolean; reduced: boolean };
@@ -12,7 +13,8 @@ class BarnScene extends Phaser.Scene {
   private duck!: Phaser.GameObjects.Container;
   private props!: Phaser.GameObjects.Container;
 
-  constructor(private ready: () => void) { super("rehearsal-barn"); }
+  constructor(private ready: () => void, private station: boolean) { super("rehearsal-stage"); }
+  preload() { if (this.station) this.load.image("village-square", stationArt("square")); }
 
   create() {
     const g = this.add.graphics();
@@ -39,6 +41,14 @@ class BarnScene extends Phaser.Scene {
     }
     g.fillStyle(0x60404a).fillRoundedRect(95, 307, 94, 70, 7);
     g.lineStyle(3, 0xa67363).strokeRect(103, 316, 78, 51).lineBetween(105, 320, 177, 364);
+    if (this.station) {
+      g.clear();
+      this.add.image(400, 245, "village-square").setDisplaySize(800, 490);
+      const boards = this.add.graphics();
+      boards.fillStyle(0xb77b51).fillRoundedRect(70, 320, 658, 124, 16);
+      boards.fillStyle(0x84583e).fillRoundedRect(70, 422, 658, 30, 8);
+      for (let y = 341; y < 417; y += 23) boards.lineStyle(2, 0x84583e, .7).lineBetween(74, y, 724, y);
+    }
 
     this.sheep = this.add.container(204, 359, [
       this.add.rectangle(-22, 24, 10, 29, 0x344b4c), this.add.rectangle(21, 24, 10, 29, 0x344b4c),
@@ -64,8 +74,26 @@ class BarnScene extends Phaser.Scene {
       this.add.circle(24, -24, 23, 0xffcb66), this.add.ellipse(46, -18, 26, 10, 0xe98851),
       this.add.circle(30, -29, 4, 0x333248), this.add.ellipse(0, 22, 26, 7, 0xe98851),
     ]);
+    if (this.station) {
+      this.sheep.destroy();
+      this.duck.destroy();
+      this.sheep = this.actor(204, 359, 0xb45b4b, 0x58392a, 1);
+      this.duck = this.actor(613, 369, 0x3f4d65, 0x524337, 1.22);
+    }
     this.props = this.add.container();
     this.ready();
+  }
+
+  private actor(x: number, y: number, coat: number, hair: number, scale: number) {
+    return this.add.container(x, y, [
+      this.add.ellipse(0, 39, 76, 15, 0x563f30, .32),
+      this.add.rectangle(-13, 18, 15, 37, 0x574253), this.add.rectangle(13, 18, 15, 37, 0x574253),
+      this.add.ellipse(-15, 38, 25, 11, 0x324543), this.add.ellipse(15, 38, 25, 11, 0x324543),
+      this.add.ellipse(0, -15, 60, 48, coat), this.add.circle(0, -43, 25, hair),
+      this.add.circle(1, -39, 20, 0xe4b287), this.add.ellipse(-5, -56, 46, 18, hair).setAngle(-10),
+      this.add.circle(-6, -41, 3, 0x302a28), this.add.circle(8, -40, 3, 0x302a28),
+      this.add.graphics().lineStyle(2, 0x794a40).lineBetween(-1, -30, 10, -32),
+    ]).setScale(scale);
   }
 
   command(view: StageCommand) {
@@ -81,10 +109,30 @@ class BarnScene extends Phaser.Scene {
     this.props.removeAll(true);
     this.sheep.setPosition(204, 359).setAngle(0).setScale(1);
     this.dog.setPosition(402, 364).setAngle(0).setScale(1);
-    this.duck.setPosition(613, 369).setAngle(0).setScale(1);
+    this.duck.setPosition(613, 369).setAngle(0).setScale(this.station ? 1.22 : 1);
     const bounce = (target: Phaser.GameObjects.Container, height: number) => {
       if (!reduced) this.tweens.add({ targets: target, y: target.y - height, duration: 250, ease: "Sine.easeOut", yoyo: true, repeat: 1 });
     };
+
+    if (this.station) {
+      const drum = this.add.container(484, 358, [
+        this.add.rectangle(0, 5, 57, 40, 0xb95146), this.add.ellipse(0, -14, 60, 18, 0xffe1ac),
+        this.add.graphics().lineStyle(2, 0xffebc0).lineBetween(-18, -4, -10, 24).lineBetween(14, -4, 7, 24),
+      ]);
+      const suitcase = this.add.graphics().fillStyle(0x734937).fillRoundedRect(454, 357, 74, 48, 7)
+        .lineStyle(3, 0xe0ab71).strokeRoundedRect(476, 348, 31, 14, 3).lineBetween(468, 359, 468, 403).lineBetween(514, 359, 514, 403);
+      const x = action === "drum-beside" ? 420 : 499;
+      const y = action === "drum-behind" ? 337 : action === "drum-front" ? 395 : 368;
+      this.props.add(action === "drum-behind" ? [drum, suitcase] : [suitcase, drum]);
+      if (reduced || action === "idle" || action === "applause") drum.setPosition(action === "idle" || action === "applause" ? 418 : x, y);
+      else this.tweens.add({ targets: drum, x, y, duration: 410, ease: "Cubic.easeOut" });
+      if (action === "applause") {
+        bounce(this.sheep, 23);
+        bounce(this.dog, 18);
+        bounce(this.duck, 21);
+      }
+      return;
+    }
 
     if (action === "hat" || action === "hats") {
       const hats = this.add.container(637, 318);
@@ -150,7 +198,7 @@ class BarnScene extends Phaser.Scene {
   }
 }
 
-export function RehearsalStage({ command }: { command: StageCommand }) {
+export function RehearsalStage({ command, station = false }: { command: StageCommand; station?: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const scene = useRef<BarnScene | null>(null);
   const latest = useRef(command);
@@ -165,7 +213,7 @@ export function RehearsalStage({ command }: { command: StageCommand }) {
       if (!mount.isConnected) return;
       scene.current = barn;
       barn.command(latest.current);
-    });
+    }, station);
     const game = new Phaser.Game({
       type: Phaser.AUTO, parent: mount, width: 800, height: 490, scene: [barn],
       input: { keyboard: false },
@@ -176,7 +224,7 @@ export function RehearsalStage({ command }: { command: StageCommand }) {
       mount.remove();
       game.destroy(true);
     };
-  }, []);
+  }, [station]);
 
   useLayoutEffect(() => { scene.current?.command(command); }, [command]);
   return <div className="rehearsal-canvas" ref={host} aria-hidden="true" />;

@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import words from "../../src/content/words.json" with { type: "json" };
 const storageKey = "flock-and-key:game:v2";
 async function quiet(page: Page) {
-  await page.goto("/");
+  await page.goto("/?edition=farm");
   await expect(page.getByRole("button", { name: "יוצאים לחקירה ←", exact: true })).toBeEnabled();
 }
 async function start(page: Page, mode?: string, difficulty?: number) {
@@ -441,7 +441,7 @@ test("desktop home fits without scrolling, also when resuming", async ({
     { width: 1440, height: 900 },
   ]) {
     await page.setViewportSize(viewport);
-    await page.goto("/");
+    await page.goto("/?edition=farm");
     const newChapter = page.getByRole("button", { name: "יוצאים לחקירה ←", exact: true })
       .or(page.getByRole("button", { name: "פרק חדש", exact: true }));
     await expect(newChapter).toBeEnabled();

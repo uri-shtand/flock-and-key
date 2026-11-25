@@ -1,16 +1,19 @@
 import { useEffect, useRef } from "react";
 import Phaser from "phaser";
 import { FarmScene } from "../game/scenes/FarmScene";
+import { StationScene } from "../game/scenes/StationScene";
 import type { GameBridge } from "../game/bridge";
 export function PhaserStage({
-  onReady,
+  onReady, station = false,
 }: {
   onReady: (bridge: GameBridge | null) => void;
+  station?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!host.current) return;
-    const scene = new FarmScene(() =>
+    const Scene = station ? StationScene : FarmScene;
+    const scene = new Scene(() =>
       onReady({ send: (command) => scene.command(command) }),
     );
     const game = new Phaser.Game({
@@ -27,13 +30,13 @@ export function PhaserStage({
       onReady(null);
       game.destroy(true);
     };
-  }, [onReady]);
+  }, [onReady, station]);
   return (
     <div
       className="stage"
       ref={host}
       role="img"
-      aria-label="החווה של תום ופיצי, עם האסם, הכבשים והקישוטים שבחרתם"
+      aria-label={station ? "איור חי של התחנה והכפר" : "החווה של תום ופיצי, עם האסם, הכבשים והקישוטים שבחרתם"}
     />
   );
 }

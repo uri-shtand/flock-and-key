@@ -5,10 +5,12 @@ import {
   stages,
   prizes,
   wordById,
+  words,
   type Mode,
   type PrizeId,
 } from "../content/chapter";
-import { chooseSpelling, crateTypingSet, typingSet, stageSuccess, type Attempt } from "../typing/Learning";
+import { chooseSpelling, crateTypingSet, typingSet, stageSuccess, taskResults, type Attempt } from "../typing/Learning";
+import { courierWords, stationPrizes, storageLabels, trail, type CourierRoute } from "../content/station";
 export type Phase = "intro" | "warmup" | "play" | "clue" | "ending";
 export type Task = { mode: Mode; wordId: string; expected: string };
 export type Draft = {
@@ -25,6 +27,8 @@ export type Draft = {
   message: string;
 };
 export type Session = {
+  edition?: "station";
+  route?: CourierRoute;
   id: string;
   startedAt: string;
   endedAt?: string;
@@ -53,11 +57,13 @@ export type GameProgress = {
   earned: number;
   owned: PrizeId[];
   equipped: PrizeId[];
+  trainPinWearer?: "brother" | "sister";
   knownCodes: string[];
   recommendations?: Partial<Record<Mode, CrateDifficulty>>;
   settings: { music: boolean; speech: boolean; difficulty?: Difficulty };
 };
 export const STORAGE_KEY = "flock-and-key:game:v2";
+const stationSpellingWords = words.filter(word => word.topic !== "בחווה");
 export function emptyDraft(): Draft {
   return {
     input: "",
@@ -101,16 +107,18 @@ export function updateSession(
     sessions: p.sessions.map((s) => (s.id === p.currentId ? update(s) : s)),
   };
 }
-export function newSession(p: GameProgress, mode?: Mode): GameProgress {
+export function newSession(p: GameProgress, mode?: Mode, edition?: Session["edition"]): GameProgress {
   const seed = p.sessions.length;
   const stageDifficulties = stages.map((s) => p.recommendations?.[s.mode] ?? 1);
   const startStage = mode ? stages.findIndex((s) => s.mode === mode) : 0;
   const difficulty = stageDifficulties[startStage];
   const history = allAttempts(p);
   const tasks = stages.map((_, index) =>
-    stageTasks(index, stageDifficulties[index], seed, history),
+    stageTasks(index, stageDifficulties[index], seed, history, edition),
   );
   const session: Session = {
+    edition,
+    route: edition ? "orchard" : undefined,
     id: crypto.randomUUID(),
     startedAt: new Date().toISOString(),
     status: "active",
@@ -129,7 +137,7 @@ export function newSession(p: GameProgress, mode?: Mode): GameProgress {
     playMs: 0,
   };
   const sessions = p.sessions.map((s) =>
-    s.standalone === session.standalone && s.status === "active"
+    s.edition === edition && s.standalone === session.standalone && s.status === "active"
       ? {
           ...s,
           status: "abandoned" as const,
@@ -149,18 +157,31 @@ function stageTasks(
   level: CrateDifficulty,
   seed: number,
   history: Attempt[],
+  edition?: Session["edition"],
+  route: CourierRoute = "orchard",
 ): Task[] {
   const mode = stages[stage].mode;
   const standardLevel = level === 4 || level === 5 ? 3 : level;
   if (mode === "spelling") {
-    return chooseSpelling(history, seed, standardLevel)
+    return chooseSpelling(history, seed, standardLevel, edition === "station" ? stationSpellingWords : words)
       .map((id) => ({ mode, wordId: id, expected: wordById(id)!.text }));
   }
+  if (edition === "station") {
+    const words = stationWords(mode, level, route);
+    return words.map(expected => ({ mode, expected, wordId: mode === "speed" ? `station:${route}:${level}:${expected}` : `typing:${expected}` }));
+  }
   const typingSeed = seed + stage * 3;
-  const words = mode === "guided"
+  const wordsForStage = mode === "guided"
     ? crateTypingSet(typingSeed, level)
     : typingSet(typingSeed, standardLevel);
-  return words.map((expected) => ({ mode, wordId: "typing:" + expected, expected }));
+  return wordsForStage.map((expected) => ({ mode, wordId: "typing:" + expected, expected }));
+}
+
+function stationWords(mode: Exclude<Mode, "spelling">, level: CrateDifficulty, route: CourierRoute) {
+  if (mode === "guided") return storageLabels[level - 1];
+  if (mode === "speed") return courierWords(route, level);
+  const start = (level - 1) * 2;
+  return trail.slice(start, start + 4).map(item => item.word);
 }
 
 // Only the not-yet-started mini-game can change its word set.
@@ -170,12 +191,35 @@ export function selectDifficulty(p: GameProgress, level: CrateDifficulty): GameP
     const mode = stages[s.stage].mode;
     const seed = Math.max(0, p.sessions.findIndex((x) => x.id === s.id));
     if (!validDifficulty(mode, level)) return s;
-    const group = stageTasks(s.stage, level, seed, allAttempts(p));
+    const group = stageTasks(s.stage, level, seed, allAttempts(p), s.edition, s.route);
     return { ...s, difficulty: level,
       stageDifficulties: stages.map((_, index) => index === s.stage ? level : (s.stageDifficulties?.[index] ?? (s.difficulty > 3 ? 3 : s.difficulty))),
       tasks: s.tasks.map((tasks, index) => index === s.stage ? group : tasks),
     };
   });
+}
+export function selectCourierRoute(p: GameProgress, route: CourierRoute): GameProgress {
+  return updateSession(p, (s) => {
+    if (s.edition !== "station" || s.stage !== 3 || s.phase !== "warmup") return s;
+    const group = stageTasks(3, s.difficulty, 0, [], s.edition, route);
+    return { ...s, route, tasks: s.tasks.map((tasks, index) => index === 3 ? group : tasks) };
+  });
+}
+export function courierPace(session: Session, history: Session[]) {
+  function timedResults(run: Session) {
+    const results = taskResults(run.attempts).filter(attempt => attempt.mode === "speed");
+    return results.length === run.tasks[3].length && results.every(attempt => attempt.timed && attempt.correct && !attempt.skipped && !attempt.pasted) ? results : null;
+  }
+  if (session.edition !== "station" || session.stage !== 3 || !session.timed) return null;
+  const results = timedResults(session);
+  if (!results) return null;
+  const total = (attempts: Attempt[]) => attempts.reduce((sum, attempt) => sum + attempt.elapsedMs, 0);
+  const comparable = history.filter(run => run.id !== session.id && run.status === "completed" && run.edition === "station" && run.route === session.route)
+    .map(timedResults).filter((attempts): attempts is Attempt[] => Boolean(attempts?.every((attempt, index) => {
+      const current = results[index];
+      return current && attempt.wordId === current.wordId && attempt.aid === current.aid && attempt.keyboardHelp === current.keyboardHelp;
+    })) && attempts?.length === results.length);
+  return { current: total(results), best: comparable.length ? Math.min(...comparable.map(total)) : null };
 }
 export function recordStageCompletion(p: GameProgress): GameProgress {
   const s = activeSession(p);
@@ -201,7 +245,8 @@ const finite = (x: unknown): x is number =>
 const integer = (x: unknown): x is number =>
   finite(x) && Number.isSafeInteger(x);
 const modes = ["guided", "blind", "spelling", "speed"];
-const prizeIds: string[] = prizes.map((p) => p.id);
+const allPrizes = [...prizes, ...stationPrizes];
+const prizeIds: string[] = allPrizes.map((p) => p.id);
 function validDraft(d: unknown): boolean {
   return (
     record(d) &&
@@ -253,6 +298,8 @@ function validSession(s: unknown): boolean {
   if (!record(s)) return false;
   const { stageDifficulties } = s;
   if (
+    (s.edition !== undefined && s.edition !== "station") ||
+    (s.edition === "station" ? s.route !== "orchard" && s.route !== "cafe" : s.route !== undefined) ||
     typeof s.id !== "string" ||
     typeof s.startedAt !== "string" ||
     (s.endedAt !== undefined && typeof s.endedAt !== "string") ||
@@ -300,6 +347,14 @@ function validSession(s: unknown): boolean {
     ) &&
     Array.isArray(s.tasks[s.stage]) &&
     s.index < s.tasks[s.stage].length
+    && (s.edition !== "station" || Array.isArray(stageDifficulties) && s.tasks.every((group, index) => {
+      const mode = stages[index].mode;
+      if (mode === "spelling") return true;
+      const route = s.route as CourierRoute;
+      const level = stageDifficulties[index] as CrateDifficulty;
+      const expected = stageTasks(index, level, 0, [], "station", route);
+      return group.length === expected.length && expected.every((task, i) => group[i].expected === task.expected && group[i].wordId === task.wordId);
+    }))
   );
 }
 export function loadGame(): { progress: GameProgress; warning: string } {
@@ -319,6 +374,7 @@ export function loadGame(): { progress: GameProgress; warning: string } {
       !strings(x.owned) ||
       !x.owned.every((id) => prizeIds.includes(id)) ||
       !strings(x.equipped) ||
+      (x.trainPinWearer !== undefined && x.trainPinWearer !== "brother" && x.trainPinWearer !== "sister") ||
       !x.equipped.every(
         (id) => x.owned instanceof Array && x.owned.includes(id),
       ) ||
@@ -332,7 +388,7 @@ export function loadGame(): { progress: GameProgress; warning: string } {
       throw Error("invalid");
     const progress = x as unknown as GameProgress;
     const unfinished = progress.sessions.filter((s) => s.status === "active");
-    if (new Set(unfinished.map((s) => s.standalone)).size !== unfinished.length)
+    if (new Set(unfinished.map((s) => `${s.edition ?? "farm"}:${s.standalone}`)).size !== unfinished.length)
       throw Error("multiple saves for the same game type");
     if (
       progress.currentId &&
@@ -356,7 +412,7 @@ export function loadGame(): { progress: GameProgress; warning: string } {
     if (invalidRehearsals) progress.rehearsals = uniqueRuns;
     const warnings = [
       invalidCases && "תיק בלשי שלא ניתן לשחזר הוסר. אפשר להתחיל תיק חדש; שאר ההתקדמות נשמרה.",
-      invalidRehearsals && "חזרה באסם שלא ניתן לשחזר הוסרה. אפשר להתחיל חזרה חדשה.",
+      invalidRehearsals && "חזרה שלא ניתן לשחזר הוסרה. אפשר להתחיל חזרה חדשה.",
     ].filter(Boolean);
     return { progress, warning: warnings.join(" ") };
   } catch {
@@ -382,7 +438,7 @@ export function resetGame(p: GameProgress): GameProgress | null {
   return saveGame(next) ? next : null;
 }
 export function buyOrToggle(p: GameProgress, id: PrizeId): GameProgress {
-  const prize = prizes.find((x) => x.id === id)!;
+  const prize = allPrizes.find((x) => x.id === id)!;
   if (p.owned.includes(id))
     return {
       ...p,
@@ -470,9 +526,9 @@ export function exportCsv(p: GameProgress): string {
     const state = caseState(run);
     for (const a of state.attempts) rows.push([
       run.id, state.place === "ending" ? "completed" : "active", run.startedAt,
-      "", "reading-comprehension-case", "", run.version === 2 ? a.support.join(" + ") : a.choice, a.result === "supported", false,
+      "", "reading-comprehension-case", "", run.version !== 1 ? a.support.join(" + ") : a.choice, a.result === "supported", false,
       a.result, a.hints, "", "", "", "", "", "", "", "", "", "",
-      run.version === 2 ? (a.decision === "identity" ? "what-happened" : "where-now") : a.decision, a.support.join(" "), (a.observed ?? a.inspected).join(" "), a.result, a.hints, "text; adult help unobserved",
+      run.version !== 1 ? (a.decision === "identity" ? "what-happened" : "where-now") : a.decision, a.support.join(" "), (a.observed ?? a.inspected).join(" "), a.result, a.hints, "text; adult help unobserved",
     ]);
   }
   return "\uFEFF" + rows.map((row) => row.map(cell).join(",")).join("\r\n");

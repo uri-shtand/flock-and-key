@@ -22,6 +22,14 @@ main.detective-screen { height: 100dvh; max-width: 1700px; padding: 8px 20px; di
 .show-labels .detective-hotspot b, .detective-hotspot:focus-visible b, .detective-hotspot:hover b { display: inline; }
 .detective button.detective-hotspot.visited { border-color: #497366; }
 .detective button.case-travel { position: absolute; left: 14px; bottom: 14px; background: #466b84; border-color: #263e46; color: #fff4d5; }
+.station-case-travel { position: absolute; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; inset: auto 10px 8px; }
+.station-case-travel button { padding: 5px 9px; }
+.station-evidence-icon { display: inline-grid; place-items: center; min-width: 24px; color: #815330; }
+.station-receipt { margin-top: 8px; }
+.station-receipt > div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.station-receipt input { width: min(100%, 210px); min-height: 35px; background: #fffdf4; }
+.case-modal .station-receipt button { font-size: .88rem; padding: 5px 9px; }
+.station-case-finale-portrait { width: 56px; height: 56px; border-radius: 10px; float: left; margin-inline-start: 8px; object-fit: cover; }
 .detective-hud { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 18px; padding: 3px 6px 5px; }
 .detective-prop { display: block; width: 70px; height: 62px; flex-shrink: 0; }
 .detective .case-tool { display: flex; align-items: center; gap: 7px; padding: 0 12px 0 3px; color: #fff4d5; background: transparent; border: 0; box-shadow: none; text-align: right; }

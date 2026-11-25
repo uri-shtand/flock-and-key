@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { sceneryAssets, stageOneScenery } from "../../src/content/gatesScenery";
 import { gateControls, routeForLevel } from "../../src/content/gates";
 async function open(page: Page) {
-  await page.goto("/");
+  await page.goto("/?edition=farm");
   await page.getByRole("button", { name: "🐑 שומרי השערים (משחקון 5)" }).click();
 }
 async function fits(page: Page) {
@@ -205,7 +205,7 @@ test("five rounds are playable through the UI, with safe help and persistent med
 });
 
 test("invalid save recovers without touching word progress; blocked storage remains playable", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?edition=farm");
   const wordsBefore = await page.evaluate(() => localStorage.getItem("flock-and-key:game:v2"));
   await page.evaluate(() => localStorage.setItem("flock-key-gates-v1", '{"version":1,"game":{}}'));
   await page.getByRole("button", { name: "🐑 שומרי השערים (משחקון 5)" }).click();
@@ -302,7 +302,7 @@ test("levels unlock actual route gates and every physical key has a distinct per
 
 test("upgrading the older route keeps medals and starts the revised level safely", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 600 });
-  await page.goto("/");
+  await page.goto("/?edition=farm");
   await page.evaluate(() => localStorage.setItem("flock-key-gates-v1", JSON.stringify({ version: 1, game: { config: { level: 2, speed: 145, sheepCount: 4, openSeconds: 3, gearboxSeconds: 0.45, hints: false, reducedMotion: true } }, best: [3, 2, 0, 0, 0] })));
   await page.getByRole("button", { name: "🐑 שומרי השערים (משחקון 5)" }).click();
   await expect(page.getByText("המסלול עודכן: השלב מתחיל מחדש. המדליות והעדפות העזרה נשמרו.")).toBeVisible();

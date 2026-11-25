@@ -3,6 +3,9 @@ import { DetectiveCase } from "./detective/DetectiveCase";
 import { crateDifficultyLevels, difficultyLevels } from "../content/difficulty";
 import { GatesPrototype } from "./gates/GatesPrototype";
 import { DadCratePrompt, CrateBackdrop } from "../components/CrateTask";
+import { StationActivities, StationPicture, StationShop } from "./StationHub";
+import { courierRoutes, spellingFromStation, stationStages, trail, type CourierRoute } from "../content/station";
+import "./station.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PhaserStage } from "../components/PhaserStage";
 import { DialoguePanel } from "../components/DialoguePanel";
@@ -28,19 +31,23 @@ import {
   allAttempts,
   buyOrToggle,
   emptyDraft,
+  courierPace,
   loadGame,
   newSession,
   saveGame,
   resetGame,
   selectDifficulty,
+  selectCourierRoute,
   recordStageCompletion,
   updateSession,
   type Draft,
   type GameProgress,
   type Session,
 } from "../progress/GameStore";
+import { caseState } from "../typing/DetectiveCase";
+import { adventureContent } from "../content/stationCases";
 
-type Screen = "home" | "game" | "parent" | "shop" | "gates" | "detective" | "songs";
+type Screen = "home" | "activities" | "game" | "parent" | "shop" | "gates" | "detective" | "parcel" | "songs";
 const prizesPerPage = 5;
 const versionDate = new Intl.DateTimeFormat("he-IL", {
   timeZone: "Asia/Jerusalem",
@@ -56,9 +63,12 @@ function resumeDescription(session: Session) {
 }
 
 export function GameShell() {
+  const [station] = useState(() => new URLSearchParams(location.search).get("edition") !== "farm");
+  const edition = station ? "station" : undefined;
   const [loaded] = useState(loadGame);
   const [progress, setProgress] = useState<GameProgress>(loaded.progress);
   const [screen, setScreen] = useState<Screen>("home");
+  const [freshParcel, setFreshParcel] = useState(false);
   const [shopPage, setShopPage] = useState(0);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [warning, setWarning] = useState(loaded.warning);
@@ -69,28 +79,40 @@ export function GameShell() {
   const [physical, setPhysical] = useState("");
   const [dadReaction, setDadReaction] = useState("");
   const [audioError, setAudioError] = useState("");
+  const [trailFeedback, setTrailFeedback] = useState("");
   const bridge = useRef<GameBridge | null>(null);
   const audio = useRef<AudioPlayer | null>(null);
   const restartDialog = useRef<HTMLDialogElement>(null);
+  const homeFocus = useRef<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const composing = useRef(false);
   const compositionBase = useRef("");
   const submitted = useRef(false);
   const session = activeSession(progress);
-  const chapterSave = progress.sessions.find((s) => s.status === "active" && !s.standalone);
-  const standaloneSave = progress.sessions.find((s) => s.status === "active" && s.standalone);
+  const chapterSave = progress.sessions.find((s) => s.edition === edition && s.status === "active" && !s.standalone);
+  const standaloneSave = progress.sessions.find((s) => s.edition === edition && s.status === "active" && s.standalone);
+  const parcelRun = [...(progress.detective ?? [])].reverse().find(run => run.version === 4);
+  const parcelPlace = screen === "home" && parcelRun ? caseState(parcelRun).place : undefined;
   const resumeOptions = [chapterSave, standaloneSave].filter(
-    (s): s is Session => Boolean(s && !stages[s.stage].hiddenReason),
+    (s): s is Session => Boolean(s && (station || !stages[s.stage].hiddenReason)),
   );
   const resumeSave = resumeOptions.find((s) => s.id === progress.currentId) ?? resumeOptions[0];
   const otherSave = resumeOptions.find((s) => s.id !== resumeSave?.id);
-  const stage = session ? stages[session.stage] : stages[0];
+  const gameStages = station ? stationStages : stages;
+  const stage = gameStages[session?.stage ?? 0];
   const task = session?.tasks[session.stage][session.index];
+  const trace = station && task?.mode === "blind" ? trail.find(item => item.word === task.expected) : undefined;
   const draft = session?.draft;
   const word = task?.mode === "spelling" ? wordById(task.wordId) : undefined;
   const isPlaying =
     screen === "game" && session?.phase === "play" && !draft?.done && !paused;
   useEffect(() => setToolsOpen(false), [screen]);
+  useEffect(() => setTrailFeedback(""), [screen, session?.id, session?.index]);
+  useEffect(() => {
+    if (screen !== "home" || !homeFocus.current) return;
+    document.getElementById(homeFocus.current)?.focus();
+    homeFocus.current = null;
+  }, [screen]);
   const connect = useCallback((value: GameBridge | null) => {
     bridge.current = value;
     setReady(Boolean(value));
@@ -157,6 +179,8 @@ export function GameShell() {
           : 0,
         total: session?.tasks[session.stage].length ?? 8,
         equipped: progress.equipped,
+        route: station ? session?.route : undefined,
+        labels: station && session?.stage === 0 ? session.tasks[0].map(task => task.expected) : undefined,
         revealed: session?.phase === "ending" || screen === "shop",
       },
     });
@@ -166,8 +190,10 @@ export function GameShell() {
     session?.index,
     session?.phase,
     session?.tasks,
+    session?.route,
     progress.equipped,
     screen,
+    station,
   ]);
   const playWord = useCallback(() => {
     if (!word || !progress.settings.speech) return;
@@ -261,9 +287,9 @@ export function GameShell() {
   ]);
 
   function start(mode?: Mode) {
-    if (mode && stages.find((stage) => stage.mode === mode)?.hiddenReason) return;
+    if (!station && mode && stages.find((stage) => stage.mode === mode)?.hiddenReason) return;
     audio.current?.stopSpeech();
-    setProgress((p) => newSession(p, mode));
+    setProgress((p) => newSession(p, mode, edition));
     setScreen("game");
     setPaused(false);
     audio.current?.resume();
@@ -275,10 +301,17 @@ export function GameShell() {
     audio.current?.resume();
   }
   function leave() {
+    if (station && screen !== "home") homeFocus.current = screen === "shop" ? "station-shop-button" : screen === "parcel" ? "station-story-button" : "station-activities-button";
     setDadReaction("");
     audio.current?.stopSpeech();
     setScreen("home");
     setPaused(false);
+  }
+  function openActivity(mode: Mode | "songs" | "detective" | "gates") {
+    if (mode === "songs" || mode === "detective" || mode === "gates") {
+      audio.current?.stopSpeech();
+      setScreen(mode);
+    } else start(mode);
   }
   function resetProgress() {
     const reset = resetGame(progress);
@@ -356,6 +389,7 @@ export function GameShell() {
     )
       return;
     const answer = value ?? draft.input;
+    if (trace) setTrailFeedback("");
     const correct = !skipped && isCorrectAnswer(answer, task.expected);
     if (!skipped && !answer.trim()) {
       patchDraft({ message: "כתבו את המילה, או בקשו עזרה. אין לחץ." });
@@ -566,6 +600,7 @@ export function GameShell() {
     }));
   }
   const activeResults = session ? taskResults(session.attempts) : [];
+  const deliveryPace = session?.phase === "ending" ? courierPace(session, progress.sessions) : null;
   const score = session
     ? session.attempts.reduce((n, a) => n + a.points, 0)
     : 0;
@@ -584,11 +619,11 @@ export function GameShell() {
     <main
       onClick={() => audio.current?.resume()}
       className={
-        screen === "game"
+        `${station ? "station-shell " : ""}${screen === "game"
           ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
           : screen === "home"
             ? "home-screen"
-            : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : undefined
+            : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" || screen === "parcel" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : screen === "activities" ? "station-activities-screen" : ""}`
       }
     >
       <header className="topbar">
@@ -598,7 +633,7 @@ export function GameShell() {
           </span>
           <span>
             <b dir="ltr">Flock & Key</b>
-            <small>תעלומת הכבשים הנעלמות</small>
+            <small>{station ? "תחנת הגבעות" : "תעלומת הכבשים הנעלמות"}</small>
           </span>
         </button>
         <button className="icon-button mobile-tools-toggle" aria-expanded={toolsOpen} aria-controls="game-tools" onClick={() => setToolsOpen((open) => !open)}>
@@ -646,9 +681,9 @@ export function GameShell() {
       {screen === "songs" ? (
         <Rehearsal runs={progress.rehearsals ?? []} save={run => setProgress(previous => ({
           ...previous, rehearsals: [...(previous.rehearsals ?? []).filter(item => item.song !== run.song), run],
-        }))} onExit={leave} />
-      ) : screen === "detective" ? (
-        <DetectiveCase runs={progress.detective ?? []} onChange={(run) => setProgress(p => ({ ...p, detective: [...(p.detective ?? []).filter(r => r.id !== run.id), run] }))} onExit={leave} />
+        }))} onExit={leave} station={station} />
+      ) : screen === "detective" || screen === "parcel" ? (
+        <DetectiveCase key={screen} edition={station ? screen === "parcel" ? 4 : 3 : 2} fresh={screen === "parcel" && freshParcel} runs={progress.detective ?? []} onChange={(run) => setProgress(p => ({ ...p, detective: [...(p.detective ?? []).filter(r => r.id !== run.id), run] }))} onExit={leave} />
       ) : screen === "gates" ? (
         <GatesPrototype onExit={leave} />
       ) : screen === "parent" ? (
@@ -657,6 +692,36 @@ export function GameShell() {
           onBack={() => setScreen("home")}
           onReset={resetProgress}
         />
+      ) : station && screen === "home" ? (
+        <>
+          <div className="station-home-art"><StationPicture equipped={progress.equipped} /></div>
+          <section className="panel home station-home">
+            <h1>תחנת הגבעות</h1>
+            <p className="lead">חבילה הגיעה לכתובת ישנה. למה אותו שם מופיע בתצלום חדש?</p>
+            <div className="station-primary-actions">
+              <button id="station-story-button" onClick={() => { setFreshParcel(false); setScreen("parcel"); }}>{parcelPlace === "ending" ? "לתיק החבילה" : parcelRun ? "ממשיכים בחקירה" : "יוצאים לחקירה"}</button>
+              <button id="station-activities-button" className="secondary" onClick={() => setScreen("activities")}>משחקונים</button>
+              <button id="station-shop-button" className="secondary" onClick={() => setScreen("shop")}>חנות התחנה</button>
+            </div>
+            {parcelPlace && <div className="resume-options">
+              <p className="muted">פרק ראשון · {parcelPlace === "ending" ? "התיק נפתר" : adventureContent(4).places[parcelPlace]?.label}</p>
+              <button className="text-button" onClick={() => restartDialog.current?.showModal()}>פרק חדש</button>
+              <dialog ref={restartDialog} className="reset-dialog" aria-label="להתחיל את החקירה מחדש?">
+                <h2>להתחיל את החקירה מחדש?</h2><p>תיפתח חקירה חדשה. החקירה הקודמת תישאר בהיסטוריה.</p>
+                <div className="actions"><button autoFocus className="secondary" onClick={() => restartDialog.current?.close()}>ביטול</button><button onClick={() => { restartDialog.current?.close(); setFreshParcel(true); setScreen("parcel"); }}>מתחילים פרק חדש</button></div>
+              </dialog>
+            </div>}
+            {standaloneSave && <button className="text-button" onClick={() => resume(standaloneSave)}>ממשיכים · {stationStages[standaloneSave.stage].title} · {standaloneSave.phase === "play" ? `משימה ${standaloneSave.index + 1}` : "הכנה"}</button>}
+            <p><a className="station-legacy" href="?edition=farm">לחווה הקודמת ולשמירות שלה</a></p>
+          </section>
+        </>
+      ) : station && screen === "activities" ? (
+        <StationActivities start={openActivity} resumeMode={standaloneSave && stationStages[standaloneSave.stage].mode}
+          resume={() => { if (standaloneSave) resume(standaloneSave); }} savedDetective={Boolean(progress.detective?.some(run => run.version === 3))}
+          savedSong={Boolean(progress.rehearsals?.some(run => run.song === "soundcheck"))} back={leave} />
+      ) : station && screen === "shop" ? (
+        <StationShop balance={progress.balance} owned={progress.owned} equipped={progress.equipped} back={leave} toggle={id => setProgress(p => buyOrToggle(p, id))}
+          pinWearer={progress.trainPinWearer} setPinWearer={trainPinWearer => setProgress(p => ({ ...p, trainPinWearer }))} />
       ) : (
         <>
           <div className="world-column">
@@ -667,7 +732,7 @@ export function GameShell() {
                     ? `${String((session?.stage ?? 0) + 1).padStart(2, "0")} / ${stage.place}`
                     : "ניו זילנד · בוקר קצת חשוד"}
                 </span>
-                {!ready && <span className="status">טוענים את החווה…</span>}
+                {!ready && <span className="status">{station ? "טוענים את התחנה…" : "טוענים את החווה…"}</span>}
               </div>
               {screen === "game" &&
                 session?.phase === "play" &&
@@ -676,15 +741,16 @@ export function GameShell() {
                     word={task.expected}
                     celebrating={dadReaction === `${session.id}:${session.index}`}
                     paused={paused}
+                    station={station}
                   />
                 )}
-              <PhaserStage onReady={connect} />
+              <PhaserStage onReady={connect} station={station} />
               <div className="world-caption">
                 <span>
                   {screen === "shop"
                     ? "החווה שלכם, ההומור שלכם"
                     : screen === "game"
-                      ? "כל מילה מקרבת אותנו לפתרון"
+                      ? station ? stage.place : "כל מילה מקרבת אותנו לפתרון"
                       : "ארבעה רמזים. כלב אחד. יותר מדי נצנצים."}
                 </span>
                 {screen === "game" && (
@@ -719,7 +785,7 @@ export function GameShell() {
                     <p>
                       {progress.settings.speech
                         ? "תשמעו מילה בתוך משפט. Enter בודק את התשובה, ואפשר לבקש רמז."
-                        : "ההקראה כבויה. המילה תופיע על המעטפה ואפשר להעתיק אותה. Enter בודק את התשובה."}
+                        : station ? "ההקראה כבויה. המילה תופיע על הגלויה ואפשר להעתיק אותה." : "ההקראה כבויה. המילה תופיע על המעטפה ואפשר להעתיק אותה. Enter בודק את התשובה."}
                     </p>
                     <p>שתי מילים יחזרו בסוף הסיבוב.</p>
                   </>
@@ -742,7 +808,7 @@ export function GameShell() {
                     )}
                   </>
                 )}
-                {stage.mode === "speed" && (
+                {stage.mode === "speed" && !station && (
                   <fieldset>
                     <legend>באיזה קצב?</legend>
                     <label>
@@ -806,6 +872,7 @@ export function GameShell() {
                 פרק ראשון · תעלומה בשני משחקונים
               </span>
               <h1>מי חגג בחווה בלילה?</h1>
+              <a className="station-legacy" href="?">חזרה לתחנת הגבעות</a>
               <p className="lead">
                 שלטים הפוכים, עקבות מנצנצים והזמנה שנרטבה. עזרו לתום ולפיצי
                 לגלות מה קרה כאן.
@@ -908,7 +975,7 @@ export function GameShell() {
                 <>
                   {session.phase === "intro" && (
                     <div className="dialogue">
-                      <DialoguePanel lines={stage.dialogue} />
+                      <DialoguePanel lines={stage.dialogue} station={station} />
                       <button onClick={warmup}>מכירים את המשימה ←</button>
                     </div>
                   )}
@@ -939,8 +1006,17 @@ export function GameShell() {
                           ))}
                         </div>
                         <p>הצעת המשחק: רמה {progress.recommendations?.[stage.mode] ?? 1}. אפשר לבחור כל רמה.</p>
-                        {stage.mode !== "guided" && <p>הבחירה קובעת את המילים לסיבוב שעומד להתחיל. 80% הצלחה בניסיון הראשון בלי רמז או העתקה יעלו את ההצעה לפעם הבאה.{stage.mode === "spelling" && " מילות הזיכרון החוזרות לא נספרות."}</p>}
+                        {stage.mode !== "guided" && !station && <p>הבחירה קובעת את המילים לסיבוב שעומד להתחיל. 80% הצלחה בניסיון הראשון בלי רמז או העתקה יעלו את ההצעה לפעם הבאה.{stage.mode === "spelling" && " מילות הזיכרון החוזרות לא נספרות."}</p>}
                       </fieldset>
+                      {station && stage.mode === "speed" && <>
+                        <div className="station-route-options" role="group" aria-label="דרך לכיכר">
+                          {(Object.keys(courierRoutes) as CourierRoute[]).map(route => <button className="secondary" key={route} aria-pressed={session.route === route} onClick={() => setProgress(p => selectCourierRoute(p, route))}>{courierRoutes[route]}</button>)}
+                        </div>
+                        <div className="station-route-options" role="group" aria-label="קצב השליחות">
+                          <button className="secondary" aria-pressed={!session.timed} onClick={() => setProgress(p => updateSession(p, s => ({ ...s, timed: false })))}>קצב רגוע</button>
+                          <button className="secondary" aria-pressed={session.timed} onClick={() => setProgress(p => updateSession(p, s => ({ ...s, timed: true })))}>אתגר קצב אישי</button>
+                        </div>
+                      </>}
                       <button onClick={begin}>מוכנים, מתחילים ←</button>
                     </div>
                   )}
@@ -963,11 +1039,12 @@ export function GameShell() {
                         >
                           <span className="eyebrow">
                             {task.mode === "spelling"
-                              ? "מילה מסתתרת בהזמנה"
-                              : "המילה שלכם"}
+                              ? station ? "מילה חסרה בגלויה" : "מילה מסתתרת בהזמנה"
+                              : task.mode === "speed" && station ? courierRoutes[session.route ?? "orchard"] : trace ? "לאן מוביל הרמז?" : "המילה שלכם"}
                           </span>
                           {task.mode === "spelling" ? (
                             <>
+                              {station && word && <p className="station-postcard-context">{spellingFromStation(word.sentence, task.expected)}</p>}
                               {draft.hint >= 2 ? (
                                 <p className="target-word" data-testid="revealed-word">{task.expected}</p>
                               ) : draft.hint === 1 ? (
@@ -982,7 +1059,15 @@ export function GameShell() {
                                 </button>
                               )}
                             </>
-                          ) : (
+                          ) : trace ? <div className="station-trail">
+                            <p>{trace.clue}</p>
+                            <div className="station-route-options" role="group" aria-label="מקומות לבדיקה">
+                              {(session.index % 2 ? [trace.other, trace.word] : [trace.word, trace.other]).map(place => <button className="secondary target-word" key={place} disabled={draft.done} onClick={() => {
+                                if (place === trace.word) { setTrailFeedback("זה המקום. הקלידו את השם שלו כדי להתקדם."); input.current?.focus(); }
+                                else setTrailFeedback("פיצי בדק שם. הרמז מצביע על מקום אחר. אפשר לנסות שוב.");
+                              }}>{place}</button>)}
+                            </div>
+                          </div> : (
                             <p
                               className="target-word"
                               data-testid="target-word"
@@ -1004,7 +1089,7 @@ export function GameShell() {
                               ? `זמן פעיל: ${Math.floor(draft.elapsedMs / 1000)} שניות · אין זמן קצוב`
                               : "קצב רגוע · בלי שעון"}
                           </span>
-                          <button
+                          {!station && <button
                             className="text-button"
                             onClick={() =>
                               setProgress((p) =>
@@ -1018,7 +1103,7 @@ export function GameShell() {
                             {session.timed
                               ? "לעבור לקצב רגוע"
                               : "לנסות אתגר קצב"}
-                          </button>
+                          </button>}
                         </div>
                       )}
                       <form
@@ -1032,10 +1117,10 @@ export function GameShell() {
                       >
                         <label htmlFor="answer">
                           {task.mode === "spelling"
-                            ? draft.hint >= 2 ? "העתיקו את המילה מהמעטפה" : "כתבו את המילה ששמעתם"
+                            ? draft.hint >= 2 ? station ? "העתיקו את המילה מהגלויה" : "העתיקו את המילה מהמעטפה" : "כתבו את המילה ששמעתם"
                             : task.mode === "guided"
                               ? "כתבו על הארגז את המילה שאבא מבקש"
-                              : "הקלידו את המילה שמופיעה למעלה"}
+                              : trace ? "הקלידו את שם המקום שמתאים לרמז" : "הקלידו את המילה שמופיעה למעלה"}
                         </label>
                         <div
                           className={
@@ -1138,7 +1223,7 @@ export function GameShell() {
                         {task.mode === "guided" && (
                           <div className="crate-submit-actions">
                             <button disabled={draft.done} type="submit">
-                              סיימתי לצבוע ←
+                              {station ? "להדביק את התווית ←" : "סיימתי לצבוע ←"}
                             </button>
                             <span className="crate-submit-hint">
                               אפשר ומומלץ ללחוץ על <kbd dir="ltr">Enter ↵</kbd>
@@ -1150,7 +1235,7 @@ export function GameShell() {
                         className={`feedback ${draft.done ? "success" : ""}`}
                         role="status"
                       >
-                        {draft.message ||
+                        {trailFeedback || draft.message ||
                           (speaking
                             ? "מקשיבים למילה…"
                             : task.mode === "guided" && next
@@ -1209,9 +1294,19 @@ export function GameShell() {
                       <span className="eyebrow">רמז חדש במחברת הבלש</span>
                       <h2>{stage.clue}</h2>
                       <p>{stage.closing}</p>
-                      <button onClick={nextStage}>
+                      {station && stage.mode === "guided" && <>
+                        <p>המארגנת ביקשה: <strong>{session.tasks[0].at(-1)?.expected}</strong></p>
+                        <div className="station-shelf-options" role="group" aria-label="ארגזים על המדף">
+                          {session.tasks[0].slice(-3).map(box => <button className="secondary" key={box.wordId} onClick={() => {
+                            if (box === session.tasks[0].at(-1)) nextStage();
+                            else setTrailFeedback("זה ארגז אחר. בדקו את התווית ובחרו שוב.");
+                          }}>{box.expected}</button>)}
+                        </div>
+                        {trailFeedback && <p role="status">{trailFeedback}</p>}
+                      </>}
+                      <button className={station && stage.mode === "guided" ? "secondary" : undefined} onClick={nextStage}>
                         {nextAvailableStage(session.stage) === -1 || session.standalone
-                          ? "לסיום ←"
+                          ? station && stage.mode === "guided" ? "נמצא יחד ←" : "לסיום ←"
                           : "ממשיכים בעקבות הרמז ←"}
                       </button>
                     </div>
@@ -1261,12 +1356,13 @@ export function GameShell() {
                           משימות שהושלמו
                         </div>
                       </div>
+                      {deliveryPace && <p>זמן הקלדה במסלול: {(deliveryPace.current / 1000).toFixed(1)} שניות{deliveryPace.best === null ? "" : ` · השיא הקודם בתנאים דומים: ${(deliveryPace.best / 1000).toFixed(1)} שניות`}</p>}
                       <p>באיזה משחקון תרצו לשחק שוב?</p>
                       <div className="actions">
                         <button onClick={() => setScreen("shop")}>
-                          משנים את החווה ←
+                          {station ? "לחנות התחנה ←" : "משנים את החווה ←"}
                         </button>
-                        <button className="secondary" onClick={leave}>
+                        <button className="secondary" onClick={station ? () => setScreen("activities") : leave}>
                           לבחירת משחקון
                         </button>
                       </div>

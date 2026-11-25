@@ -1,5 +1,13 @@
 # Architecture decisions
 
+## Rural station edition
+
+The default entry is the station. `?edition=farm` opens the earlier edition for compatibility. React renders the station menu, shop, dialogue, text input and evidence controls. The typed word-game world snapshot carries the route, completed labels and step to the station Phaser scene. The world uses local WebP derivatives of the [concept art](design/rural-station-concept-art/README.md). Station case and rehearsal scenes also use local concept scenery. All Phaser scenes keep global keyboard capture disabled.
+
+Station word sessions add an optional edition and courier route in the existing local profile. The edition distinguishes saved tasks and active slots from the farm. Authored route words are checked when reloading a station save. The same catalog ledger keeps historical prize IDs alongside new station prizes. Detective editions 3 and 4 use the existing replayable notebook and evidence model with station-specific places, sources and proof groups. The parcel receipt is tracked as a case event, separate from independent spelling. The new soundcheck uses the existing rehearsal score and save format under its own song ID. All are included in the existing export and reset behavior. Gatekeepers retains its own storage and implementation. See the [station implementation notes](design/rural-station-implementation.md).
+
+## Farm edition and shared engines
+
 The first four mini-games use the React/Phaser architecture described below. The fifth mini-game, **שומרי השערים**, has a standalone five-level React/SVG game with a pure simulation, a tuning lab and separate local persistence. The current group routes are documented in [Gates groups](gates-groups.md), following [the playtest revision](gates-playtest-revision.md), with earlier experiments retained in [Gates polish](gates-polish.md). See [its current architecture and planned extensions](minigame-five-architecture.he.md), [game description](minigame-five.he.md), [map decisions](minigame-five-map.he.md), and [remaining build work](minigame-five-build-plan.he.md).
 
 ## Browser-first 2D
