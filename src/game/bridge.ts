@@ -7,5 +7,7 @@ export type WorldView = {
   revealed: boolean;
 };
 export type GameCommand =
-  { type: "world"; view: WorldView } | { type: "celebrate" };
+  | { type: "world"; view: WorldView }
+  | { type: "celebrate" }
+  | { type: "motion"; paused: boolean; reduced: boolean };
 export type GameBridge = { send: (command: GameCommand) => void };

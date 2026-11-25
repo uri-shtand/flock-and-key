@@ -1,3 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-export default defineConfig({ plugins: [react()], build: { rollupOptions: { output: { manualChunks: (id) => id.includes('/node_modules/phaser/') ? 'phaser' : undefined } }, chunkSizeWarningLimit: 1800 } });
+export default defineConfig({
+  plugins: [react()],
+  define: { __VERSION_TIMESTAMP__: JSON.stringify(new Date().toISOString()) },
+  build: { rollupOptions: { output: { manualChunks: (id) => id.includes('/node_modules/phaser/') ? 'phaser' : undefined } }, chunkSizeWarningLimit: 1800 },
+});

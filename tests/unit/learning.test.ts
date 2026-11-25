@@ -71,6 +71,14 @@ describe("learning evidence", () => {
       reward(attempt(), [attempt({ correct: false, answer: "מחברט" })]),
     ).toBe(10);
   });
+  it("pays for letters painted so shorter crate words have no fixed reward advantage", () => {
+    const short = attempt({ mode: "guided", expected: "דג", aid: "keyboard" });
+    const long = attempt({ mode: "guided", expected: "מחשבים", aid: "keyboard" });
+    expect(reward(short, [])).toBe(12);
+    expect(reward(long, [])).toBe(36);
+    expect(reward({ ...long, errors: 1 }, [])).toBe(24);
+    expect(reward({ ...long, skipped: true, correct: false }, [])).toBe(0);
+  });
   it("only gives a speed improvement bonus for comparable accurate timed trials", () => {
     const previous = attempt({ mode: "speed", timed: true, elapsedMs: 10000 });
     const now = attempt({ mode: "speed", timed: true, elapsedMs: 5000 });

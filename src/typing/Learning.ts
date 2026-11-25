@@ -109,6 +109,10 @@ export function reward(
   history: Attempt[] = [],
 ): number {
   if (!a.correct || a.skipped) return 0;
+  if (a.mode === "guided") {
+    const bellsPerLetter = a.errors === 0 && a.aid !== "copy" ? 6 : 4;
+    return [...a.expected].length * bellsPerLetter;
+  }
   const own = previous.filter((p) => p.task === a.task);
   const first = !own.length;
   const bonus =

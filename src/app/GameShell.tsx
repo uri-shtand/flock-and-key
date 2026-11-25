@@ -10,6 +10,7 @@ import { HebrewKeyboard } from "../components/HebrewKeyboard";
 import { ParentDashboard } from "../components/ParentDashboard";
 import { stages, availableStages, nextAvailableStage, prizes, wordById, type Mode } from "../content/chapter";
 import { AudioPlayer } from "../audio/AudioPlayer";
+import { musicTracks } from "../audio/Music";
 import type { GameBridge } from "../game/bridge";
 import { keyFor, keyboardKeys } from "../typing/KeyboardMap";
 import { isCorrectAnswer } from "../typing/TypingEngine";
@@ -40,6 +41,20 @@ import {
 } from "../progress/GameStore";
 
 type Screen = "home" | "game" | "parent" | "shop" | "gates" | "detective" | "songs";
+const prizesPerPage = 5;
+const versionDate = new Intl.DateTimeFormat("he-IL", {
+  timeZone: "Asia/Jerusalem",
+  dateStyle: "short",
+  timeStyle: "short",
+}).format(new Date(__VERSION_TIMESTAMP__));
+
+function resumeDescription(session: Session) {
+  const phase = session.phase === "play"
+    ? `מילה ${session.index + 1} מתוך ${session.tasks[session.stage].length}`
+    : { intro: "פתיחה", warmup: "הכנה", clue: "הרמז שמצאנו", ending: "סיום" }[session.phase];
+  return `${stages[session.stage].title} · ${phase}`;
+}
+
 export function GameShell() {
   const [loaded] = useState(loadGame);
   const [progress, setProgress] = useState<GameProgress>(loaded.progress);
@@ -50,17 +65,25 @@ export function GameShell() {
   const [ready, setReady] = useState(false);
   const [paused, setPaused] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [trackTitle, setTrackTitle] = useState(musicTracks[0].title);
   const [physical, setPhysical] = useState("");
   const [dadReaction, setDadReaction] = useState("");
   const [audioError, setAudioError] = useState("");
   const bridge = useRef<GameBridge | null>(null);
   const audio = useRef<AudioPlayer | null>(null);
+  const restartDialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const composing = useRef(false);
   const compositionBase = useRef("");
   const submitted = useRef(false);
   const session = activeSession(progress);
-  const canResume = session?.status === "active" && !stages[session.stage].hiddenReason;
+  const chapterSave = progress.sessions.find((s) => s.status === "active" && !s.standalone);
+  const standaloneSave = progress.sessions.find((s) => s.status === "active" && s.standalone);
+  const resumeOptions = [chapterSave, standaloneSave].filter(
+    (s): s is Session => Boolean(s && !stages[s.stage].hiddenReason),
+  );
+  const resumeSave = resumeOptions.find((s) => s.id === progress.currentId) ?? resumeOptions[0];
+  const otherSave = resumeOptions.find((s) => s.id !== resumeSave?.id);
   const stage = session ? stages[session.stage] : stages[0];
   const task = session?.tasks[session.stage][session.index];
   const draft = session?.draft;
@@ -87,7 +110,7 @@ export function GameShell() {
       );
   }, [progress]);
   useEffect(() => {
-    const player = new AudioPlayer(setSpeaking);
+    const player = new AudioPlayer(setSpeaking, setTrackTitle);
     audio.current = player;
     return () => {
       player.destroy();
@@ -100,24 +123,27 @@ export function GameShell() {
     }
   }, [screen, session?.id, session?.stage]);
   useEffect(() => {
-    audio.current?.setMusic(
-      progress.settings.music && screen !== "parent" && screen !== "songs" && !paused,
-    );
-  }, [progress.settings.music, screen, paused]);
-  useEffect(() => {
-    if (!progress.settings.speech) audio.current?.stopSpeech();
-  }, [progress.settings.speech]);
-  useEffect(() => {
     const handler = () => {
       if (document.hidden) audio.current?.pause();
-      else if (!paused && screen !== "parent") audio.current?.resume();
+      else audio.current?.setMusic(
+        progress.settings.music && screen !== "parent" && screen !== "songs" && !paused,
+      );
     };
+    handler();
     document.addEventListener("visibilitychange", handler);
     return () => document.removeEventListener("visibilitychange", handler);
-  }, [paused, screen]);
+  }, [progress.settings.music, paused, screen]);
   useEffect(() => {
     if (paused || screen !== "game") audio.current?.stopSpeech();
   }, [paused, screen]);
+  useEffect(() => {
+    if (!ready) return;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncMotion = () => bridge.current?.send({ type: "motion", paused, reduced: motion.matches });
+    syncMotion();
+    motion.addEventListener("change", syncMotion);
+    return () => motion.removeEventListener("change", syncMotion);
+  }, [ready, paused]);
   useEffect(() => {
     if (!ready) return;
     bridge.current?.send({
@@ -155,15 +181,17 @@ export function GameShell() {
   useEffect(() => {
     if (isPlaying && word) playWord();
     return () => audio.current?.stopSpeech();
-  }, [
-    session?.id,
-    session?.stage,
-    session?.index,
-    session?.phase,
-    screen,
-    paused,
-    playWord,
-  ]);
+  }, [session?.id, session?.stage, session?.index, isPlaying, playWord]);
+  useEffect(() => {
+    if (screen === "game" && session?.phase === "play" && task?.mode === "spelling" &&
+        !draft?.done && !progress.settings.speech && draft?.hint !== 2) {
+      setProgress((p) => updateSession(p, (s) => ({
+        ...s,
+        exposedWords: [...new Set([...s.exposedWords, task.expected])],
+        draft: { ...s.draft, hint: 2 },
+      })));
+    }
+  }, [screen, session?.phase, task, draft?.done, draft?.hint, progress.settings.speech]);
   useEffect(() => {
     submitted.current = false;
     composing.current = false;
@@ -240,8 +268,8 @@ export function GameShell() {
     setPaused(false);
     audio.current?.resume();
   }
-  function resume() {
-    if (!canResume) return;
+  function resume(saved: Session) {
+    setProgress((p) => ({ ...p, currentId: saved.id }));
     setScreen("game");
     setPaused(false);
     audio.current?.resume();
@@ -526,9 +554,15 @@ export function GameShell() {
     reveal(2);
   }
   function setSetting(name: "music" | "speech") {
+    const enabled = !progress.settings[name];
+    if (name === "music") {
+      audio.current?.setMusic(enabled && !paused && screen !== "parent" && !document.hidden);
+    } else if (!enabled) {
+      audio.current?.stopSpeech();
+    }
     setProgress((p) => ({
       ...p,
-      settings: { ...p.settings, [name]: !p.settings[name] },
+      settings: { ...p.settings, [name]: enabled },
     }));
   }
   const activeResults = session ? taskResults(session.attempts) : [];
@@ -548,6 +582,7 @@ export function GameShell() {
 
   return (
     <main
+      onClick={() => audio.current?.resume()}
       className={
         screen === "game"
           ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
@@ -581,8 +616,8 @@ export function GameShell() {
             >
               מוזיקה {progress.settings.music ? "פועלת" : "כבויה"}
             </button>
-            <button className="icon-button" onClick={() => audio.current?.nextTrack()}>
-              מנגינה אחרת
+            <button className="icon-button track-button" aria-label="מנגינה אחרת" aria-describedby="track-title" onClick={() => audio.current?.nextTrack()}>
+              מנגינה אחרת <small id="track-title" aria-live="polite">{trackTitle}</small>
             </button>
             <button
               className="icon-button"
@@ -682,16 +717,11 @@ export function GameShell() {
                 {stage.mode === "spelling" ? (
                   <>
                     <p>
-                      תשמעו מילה בתוך משפט. האיות לא יוצג מראש. Enter בודק
-                      את התשובה; הרמזים כאן כשצריך.
+                      {progress.settings.speech
+                        ? "תשמעו מילה בתוך משפט. Enter בודק את התשובה, ואפשר לבקש רמז."
+                        : "ההקראה כבויה. המילה תופיע על המעטפה ואפשר להעתיק אותה. Enter בודק את התשובה."}
                     </p>
-                    <p>שתי מילים יחזרו בסוף כדי לראות מה נשאר בזיכרון.</p>
-                    {!progress.settings.speech && (
-                      <p className="warning">
-                        ההקראה כבויה. אפשר להפעיל אותה למעלה, או להיעזר
-                        בהצגת המילה כתרגול העתקה.
-                      </p>
-                    )}
+                    <p>שתי מילים יחזרו בסוף הסיבוב.</p>
                   </>
                 ) : (
                   <>
@@ -708,7 +738,7 @@ export function GameShell() {
                       </b>
                     </p>
                     {stage.mode === "guided" && (
-                      <p>בחירת הרמה קובעת את המילים לסיבוב הזה. 80% הצלחה בניסיון הראשון בלי רמז או העתקה יעלו את ההצעה בפעם הבאה.</p>
+                      <p>מילים ארוכות שוות יותר פעמונים. 80% הצלחה בניסיון הראשון בלי רמז או העתקה יעלו את הצעת הרמה בפעם הבאה.</p>
                     )}
                   </>
                 )}
@@ -781,26 +811,43 @@ export function GameShell() {
                 לגלות מה קרה כאן.
               </p>
               <div className="actions">
-                {canResume && (
-                  <button onClick={resume} disabled={!ready}>
+                {resumeSave && (
+                  <button onClick={() => resume(resumeSave)} disabled={!ready} aria-describedby="resume-place">
                     ממשיכים מאיפה שעצרנו
                   </button>
                 )}
                 <button
-                  className={canResume ? "secondary" : ""}
-                  onClick={() => start()}
+                  className={resumeSave ? "secondary" : ""}
+                  onClick={() => chapterSave ? restartDialog.current?.showModal() : start()}
                   disabled={!ready}
                 >
-                  {canResume ? "פרק חדש" : "יוצאים לחקירה ←"}
+                  {resumeSave || chapterSave ? "פרק חדש" : "יוצאים לחקירה ←"}
                 </button>
                 <button className="secondary" onClick={() => setScreen("shop")}>
                   משנים את החווה
                 </button>
               </div>
-              {session?.status === "active" && !canResume && <p className="muted">המשחקון ששמרתם נח בינתיים לקראת שיפור. ההתקדמות נשמרה; אפשר לפתוח פרק חדש או לבחור משחקון אחר.</p>}
-              <p className="muted">
-                בלי לחץ. עזרה בחינם, אפשר לתקן ואפשר לעצור בכל רגע.
-              </p>
+              {resumeSave ? (
+                <div className="resume-options">
+                  <p className="muted" id="resume-place">
+                    {resumeSave.standalone ? "משחקון שמור" : "פרק שמור"} · {resumeDescription(resumeSave)}
+                  </p>
+                  {otherSave && (
+                    <button className="text-button" disabled={!ready} onClick={() => resume(otherSave)}>
+                      {otherSave.standalone ? "להמשיך במשחקון השמור" : "להמשיך בפרק השמור"}
+                    </button>
+                  )}
+                </div>
+              ) : <p className="muted">בלי לחץ. עזרה בחינם, אפשר לתקן ואפשר לעצור בכל רגע.</p>}
+              {session?.status === "active" && stages[session.stage].hiddenReason && <p className="muted">המשחקון ששמרתם נח בינתיים לקראת שיפור. ההתקדמות נשמרה.</p>}
+              <dialog ref={restartDialog} className="reset-dialog" aria-labelledby="restart-title" aria-describedby="restart-description">
+                <h2 id="restart-title">להתחיל את הפרק מחדש?</h2>
+                <p id="restart-description">הפרק החדש יחליף את נקודת ההמשך בפרק השמור. הפעמונים והפרסים שכבר אספתם נשארים אצלכם.</p>
+                <div className="actions">
+                  <button className="secondary" autoFocus onClick={() => restartDialog.current?.close()}>ביטול</button>
+                  <button onClick={() => { restartDialog.current?.close(); start(); }}>מתחילים פרק חדש</button>
+                </div>
+              </dialog>
               <div className="game-menu-heading">
                 <h2>משחקונים</h2>
                 <button onClick={() => { audio.current?.stopSpeech(); setScreen("songs"); }}>♫ חזרה באסם</button>
@@ -868,7 +915,7 @@ export function GameShell() {
                   {session.phase === "warmup" && (
                     <div className="warmup">
                       <h2>
-                        {stage.mode === "spelling"
+                        {stage.mode === "spelling" && progress.settings.speech
                           ? "הקשיבו, דמיינו, כתבו"
                           : "חימום קצר לפני שיוצאים"}
                       </h2>
@@ -926,15 +973,14 @@ export function GameShell() {
                               ) : draft.hint === 1 ? (
                                 <h2 className="hint">האות הראשונה: <b>{task.expected[0]}</b></h2>
                               ) : <h2>איזו מילה שמעתם?</h2>}
-                              <button
-                                className="secondary"
-                                onClick={playWord}
-                                disabled={
-                                  !progress.settings.speech || draft.done
-                                }
-                              >
-                                ◖ השמעת המילה והמשפט
-                              </button>
+                              {progress.settings.speech && !draft.done && (
+                                <button
+                                  className="secondary"
+                                  onClick={speaking ? () => audio.current?.stopSpeech() : playWord}
+                                >
+                                  {speaking ? "דילוג על ההקראה" : "◖ השמעת המילה והמשפט"}
+                                </button>
+                              )}
                             </>
                           ) : (
                             <p
@@ -986,7 +1032,7 @@ export function GameShell() {
                       >
                         <label htmlFor="answer">
                           {task.mode === "spelling"
-                            ? "כתבו את המילה ששמעתם"
+                            ? draft.hint >= 2 ? "העתיקו את המילה מהמעטפה" : "כתבו את המילה ששמעתם"
                             : task.mode === "guided"
                               ? "כתבו על הארגז את המילה שאבא מבקש"
                               : "הקלידו את המילה שמופיעה למעלה"}
@@ -1081,7 +1127,7 @@ export function GameShell() {
                             />
                             {task.mode !== "guided" && (
                               <button
-                                disabled={draft.done || speaking}
+                                disabled={draft.done}
                                 type="submit"
                               >
                                 בדיקה ←
@@ -1113,23 +1159,15 @@ export function GameShell() {
                       </p>
                       {!draft.done && (
                         <div className="help-actions">
-                          {task.mode === "spelling" ? (
+                          {task.mode === "spelling" && draft.hint < 2 ? (
                             <>
                               <button
                                 className="secondary"
                                 onClick={hint}
-                                disabled={draft.hint >= 2}
                               >
                                 {draft.hint === 0 ? "רמז ראשון" : "הצגת המילה"}
                               </button>
-                              {draft.hint < 2 && (
-                                <button
-                                  className="text-button"
-                                  onClick={showWord}
-                                >
-                                  צריכים להעתיק?
-                                </button>
-                              )}
+                              <button className="text-button" onClick={showWord}>צריכים להעתיק?</button>
                             </>
                           ) : null}
                           {task.mode !== "guided" && (
@@ -1144,7 +1182,7 @@ export function GameShell() {
                             className="text-button"
                             onClick={() => finish(true)}
                           >
-                            קשה כרגע? ממשיכים בסיפור
+                            {task.mode === "spelling" ? "דילוג על המילה" : "קשה כרגע? ממשיכים בסיפור"}
                           </button>
                         </div>
                       )}
@@ -1243,17 +1281,15 @@ export function GameShell() {
               <div className="section-title">
                 <div>
                   <span className="eyebrow">קצת שטויות, הרבה אופי</span>
-                  <h1>החווה שלכם</h1>
+                  <h1>חנות החווה</h1>
                 </div>
                 <button className="secondary" onClick={leave}>
                   חזרה לחקירה
                 </button>
               </div>
-              <p>
-                פותחים פעם אחת. מפעילים ומחליפים בחינם.
-              </p>
+              <p>קונים פעם אחת. מפעילים ומחליפים בחינם.</p>
               <div className="shop-grid">
-                {prizes.slice(shopPage * 5, shopPage * 5 + 5).map((prize) => {
+                {prizes.slice(shopPage * prizesPerPage, (shopPage + 1) * prizesPerPage).map((prize) => {
                   const owned = progress.owned.includes(prize.id),
                     on = progress.equipped.includes(prize.id);
                   return (
@@ -1278,14 +1314,17 @@ export function GameShell() {
               </div>
               <nav className="shop-pages" aria-label="עמודי קישוטים">
                 <button className="secondary" disabled={shopPage === 0} onClick={() => setShopPage(p => p - 1)}>לעמוד הקודם</button>
-                <span role="status">עמוד {shopPage + 1} מתוך {Math.ceil(prizes.length / 5)}</span>
-                <button className="secondary" disabled={(shopPage + 1) * 5 >= prizes.length} onClick={() => setShopPage(p => p + 1)}>לעוד שטויות ←</button>
+                <span role="status">עמוד {shopPage + 1} מתוך {Math.ceil(prizes.length / prizesPerPage)}</span>
+                <button className="secondary" disabled={(shopPage + 1) * prizesPerPage >= prizes.length} onClick={() => setShopPage(p => p + 1)}>לעוד שטויות ←</button>
               </nav>
             </section>
           )}
         </>
       )}
-      <footer>סקרנות, כמה מילים וכלב שמאוד רוצה לעזור.</footer>
+      <footer>
+        סקרנות, כמה מילים וכלב שמאוד רוצה לעזור.
+        {screen === "home" && <span className="version-stamp">גרסה <time dir="ltr" dateTime={__VERSION_TIMESTAMP__}>{versionDate}</time></span>}
+      </footer>
     </main>
   );
 }
