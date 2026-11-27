@@ -6,9 +6,9 @@ This is a worked proposal for the first chapter of [The Station](rural-station-s
 
 ## The first minute
 
-The siblings are in the station hall waiting for Dad's shift to finish. Across the square, the village is putting together an exhibit for the station's anniversary. Dad places a parcel on the counter with the name **תחנת הגבעה** on its label. The sign outside says **תחנת הגבעות**. He recognizes **תחנת הגבעה** as the station's old name and suggests the sender used an old address. Before the player leaves the hall, the café owner arrives with prints for the exhibit and says she took them on Tuesday. The top print shows the old sign above this week's anniversary poster. The square is already visible as a place to go, and the next question is on the siblings' lips.
+The siblings are in the station hall waiting for Dad's shift to finish. Across the square, the village is putting together an exhibit for the station's anniversary. Dad places a parcel on the counter with the name **ראטן** on its label. The sign outside says **Kurort Rathen**. He recognizes the old form of the name and suggests the sender used an old address. Before the player leaves the hall, the café owner arrives with prints for the exhibit and says she took them on Tuesday. The top print shows the old sign above this week's anniversary poster. The square is already visible as a place to go, and the next question is on the siblings' lips.
 
-> **אבא** — הגבעה? ככה קראו לתחנה פעם. אולי העתיקו כתובת ישנה.
+> **אבא** — רק ״ראטן״? ככה היה כתוב על השלט הישן. היום כתוב ״Kurort Rathen״. אולי העתיקו כתובת ישנה.
 >
 > **אחד האחים** — אז למה השלט הישן מופיע בתמונה מיום שלישי?
 >
@@ -17,6 +17,8 @@ The siblings are in the station hall waiting for Dad's shift to finish. Across t
 > **אבא** — גם בה האריח ליד הדלת עקום?
 
 The player can compare the photo with the entrance or ask the organizer in the square why the parcel matters. Both leads stay available. The organizer is introduced when the children first enter the square and is named on the exhibit notice in the hall.
+
+The clue uses the short forms of real station names. In 1934, Rathen became Kurort Rathen (Sächs Schweiz), and in 1939 the suffix changed to (Kr Pirna). The exhibit, temporary sign installation and parcel are fictional. The available art references include the [platform on 9 November 1989](https://commons.wikimedia.org/wiki/File:The_day_the_Berlin_Wall_came_down_-_9_November_1989._Bahnhof_Kurort_Rathen,DDR._(3015538576).jpg) and the [Bastei from the Elbe in June 1990](https://www.flickr.com/photos/34148515@N03/5422263514/). The former is CC BY-SA 2.0 and the latter is marked all rights reserved. [Station name chronology](https://www.saechsische-schweiz-ring.de/Eisenbahn/6240/Bf_Kurort_Rathen.html)
 
 ## What happened
 

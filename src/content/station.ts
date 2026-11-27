@@ -1,5 +1,9 @@
 import type { Stage } from "./chapter";
 
+export const stationName = "תחנת ראטן";
+export const stationGermanName = "Kurort Rathen";
+export const stationFormerName = "ראטן";
+
 export const stationArt = (name: string) => `${import.meta.env.BASE_URL}assets/station/${name}.webp`;
 export type CourierRoute = "orchard" | "cafe";
 export const courierRoutes = { orchard: "שביל הבוסתן", cafe: "דרך בית הקפה" } as const;
@@ -64,17 +68,17 @@ export function spellingFromStation(sentence: string, word: string) {
 
 export const stationShopTabs = ["פיצי והמשפחה", "אולם התחנה", "הכניסה והכיכר"] as const;
 export const stationPrizes = [
-  { id: "stationScarf", title: "מטפחת לפיצי", price: 30, icon: "🧣", tab: 0, art: "family-lineup", x: 85, y: 76 },
-  { id: "carriageTag", title: "תג בצורת קרון", price: 55, icon: "🚃", tab: 0, art: "family-lineup", x: 86, y: 82 },
-  { id: "trainPin", title: "סיכת רכבת", price: 80, icon: "🚂", tab: 0, art: "family-lineup", x: 23, y: 42 },
-  { id: "dadBow", title: "עניבת הפפיון של אבא", price: 125, icon: "🎀", tab: 0, art: "family-lineup", x: 61, y: 29 },
-  { id: "dogCushion", title: "כרית לפיצי", price: 65, icon: "🟪", tab: 1, art: "station-hall", x: 9, y: 69 },
-  { id: "windowHerbs", title: "עציצים לחלון", price: 110, icon: "🪴", tab: 1, art: "station-hall", x: 7, y: 39 },
-  { id: "railPhotos", title: "תמונות מהקו הישן", price: 160, icon: "🖼️", tab: 1, art: "station-hall", x: 32, y: 19 },
-  { id: "modelTrain", title: "רכבת מיניאטורית", price: 300, icon: "🚂", tab: 1, art: "station-hall", x: 78, y: 22 },
-  { id: "carriageMosaic", title: "פסיפס קרון", price: 95, icon: "🚃", tab: 2, art: "forecourt", x: 40, y: 74 },
-  { id: "orchardPlanters", title: "אדניות מהבוסתן", price: 145, icon: "🌻", tab: 2, art: "forecourt", x: 57, y: 69 },
-  { id: "squareLights", title: "שרשרת אורות לכיכר", price: 220, icon: "💡", tab: 2, art: "square", x: 67, y: 22 },
-  { id: "stationBunting", title: "דגלוני יום התחנה", price: 360, icon: "🎊", tab: 2, art: "square", x: 71, y: 49 },
+  { id: "stationScarf", title: "מטפחת לפיצי", price: 30, tab: 0, art: "family-lineup", x: 83, y: 77, width: 7.8 },
+  { id: "carriageTag", title: "תג בצורת קרון", price: 55, tab: 0, art: "family-lineup", x: 83.9, y: 79.8, width: 3.2 },
+  { id: "trainPin", title: "סיכת רכבת", price: 80, tab: 0, art: "family-lineup", x: 22, y: 42, width: 3.2 },
+  { id: "dadBow", title: "עניבת הפפיון של אבא", price: 125, tab: 0, art: "family-lineup", x: 61, y: 26, width: 6.5 },
+  { id: "dogCushion", title: "כרית לפיצי", price: 65, tab: 1, art: "station-hall", x: 14.1, y: 74.8, width: 17 },
+  { id: "windowHerbs", title: "עציצים לחלון", price: 110, tab: 1, art: "station-hall", x: 7.8, y: 46, width: 6.3 },
+  { id: "railPhotos", title: "תמונות מהקו הישן", price: 160, tab: 1, art: "station-hall", x: 38, y: 23, width: 15 },
+  { id: "modelTrain", title: "רכבת מיניאטורית", price: 300, tab: 1, art: "station-hall", x: 90, y: 11.7, width: 10 },
+  { id: "carriageMosaic", title: "פסיפס קרון", price: 95, tab: 2, art: "forecourt", x: 39, y: 90, width: 21 },
+  { id: "orchardPlanters", title: "אדניות מהבוסתן", price: 145, tab: 2, art: "forecourt", x: 55, y: 73.5, width: 14 },
+  { id: "squareLights", title: "שרשרת אורות לכיכר", price: 220, tab: 2, art: "square", x: 80.4, y: 36, width: 26 },
+  { id: "stationBunting", title: "דגלוני יום התחנה", price: 360, tab: 2, art: "square", x: 80.5, y: 68, width: 26 },
 ] as const;
 export type StationPrizeId = (typeof stationPrizes)[number]["id"];

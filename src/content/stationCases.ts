@@ -1,5 +1,6 @@
 import { adventureInteractions, adventureItems, caseOpening, deductionBoards, evidenceSentences, type BoardId, type InteractionId, type ItemId } from "./detective";
 import type { CharacterId, DialogueLine } from "./chapter";
+import { stationFormerName, stationGermanName } from "./station";
 
 export type AdventureEdition = 2 | 3 | 4;
 export type CasePlace = "yard" | "cafe" | "bridge";
@@ -64,7 +65,7 @@ const noga: CaseContent = {
 
 const parcel: CaseContent = {
   title: "החבילה לתחנה הישנה",
-  opening: [{ speaker: "dad", text: "תחנת הגבעה? ככה קראו לתחנה פעם. אולי העתיקו כתובת ישנה." }, { speaker: "sister", text: "אז למה השלט הישן מופיע בתצלום מיום שלישי?" }, { speaker: "tom", text: "אולי יש עוד תחנה. רגע, גם בה האריח ליד הדלת עקום?" }],
+  opening: [{ speaker: "dad", text: `רק ״${stationFormerName}״? ככה היה כתוב על השלט הישן. היום כתוב ״${stationGermanName}״. אולי העתיקו כתובת ישנה.` }, { speaker: "sister", text: "אז למה השלט הישן מופיע בתצלום מיום שלישי?" }, { speaker: "tom", text: "אולי יש עוד תחנה. רגע, גם בה האריח ליד הדלת עקום?" }],
   places: { yard: { label: "אולם התחנה", art: "station-hall" }, cafe: { label: "בית הקפה", art: "station-cafe" }, bridge: { label: "כיכר הכפר", art: "square" } },
   spots: [
     { id: "dad", place: "yard", x: 87, y: 37 }, { id: "ribbon", place: "yard", x: 76, y: 53 }, { id: "tracks", place: "yard", x: 23, y: 65 },
@@ -73,7 +74,7 @@ const parcel: CaseContent = {
   ],
   interactions: {
     dad: source("רשומת המסירה של אבא", "dad", "אבא, מתי חבילה 27 נכנסה לתחנה?", [["fridayArrival", "מסירה 27: מפת שבילים מקורית. הגיעה ברכבת ביום שישי בשעה 14:20."], ["todayTimetable", "לוח הזמנים הציבורי מציג הגעה ביום שישי בשעה 14:20."]], "talk"),
-    ribbon: source("תגי חבילה 27", "sister", "שתי תוויות, שתי כתובות.", [["familyTag", "על תג התערוכה כתוב: ״כתבנו תחנת הגבעה, השם הישן, לכבוד התערוכה.״"], ["currentSlip", "על פתק האיסוף מופיעים כתובת התחנה הנוכחית, תחנת הגבעות, ומספר החבילה 27."]]),
+    ribbon: source("תגי חבילה 27", "sister", "שתי תוויות, שתי כתובות.", [["familyTag", `על תג התערוכה כתוב: השתמשנו בשם הישן, ״${stationFormerName}״, לכבוד התערוכה.`], ["currentSlip", `על פתק האיסוף כתוב ״${stationGermanName}״, ולידו מספר החבילה 27.`]]),
     tracks: source("האריח העקום", "tom", "האריח ליד הכניסה בולט גם מקרוב.", [["tileMatch", "האריח העקום ליד הדלת מופיע באותו מקום בתצלום. זו התחנה שלנו."]]),
     postman: source("בעלת בית הקפה והתצלומים", "cafeOwner", "מה צילמת ביום שלישי?", [["tuesdaySign", "צילמתי את המארגנת מרימה את השלט הישן ואז תולה אותו לפני תצוגת יום שלישי."], ["witnessBundle", "ראיתי חבילה עם עטיפה מפוספסת יוצאת מהתחנה. חשבתי שהגיעה ברכבת."]], "talk"),
     basket: source("פרס הכריך", "tom", "פיצי ביקש בדיקה מקצועית.", [["sandwichAward", "תמונה קטנה מציגה את הכריך לפני שהשתפר. הייתה לו נטייה להתפרק."]]),

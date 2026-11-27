@@ -1,18 +1,27 @@
 import { useState } from "react";
-import { stationArt, stationPrizes, stationShopTabs, stationStages, type StationPrizeId } from "../content/station";
+import { stationArt, stationName, stationPrizes, stationShopTabs, stationStages, type StationPrizeId } from "../content/station";
 import type { Mode, PrizeId } from "../content/chapter";
 
+const pictureSizes = {
+  "station-hall": [1057, 674], "family-lineup": [1250, 833], square: [752, 498], forecourt: [751, 497],
+} as const;
+type StationPictureArt = keyof typeof pictureSizes;
+
 export function StationPicture({ art = "station-hall", equipped = [], preview, lap = 0, pinWearer = "sister" }: {
-  art?: string; equipped?: PrizeId[]; preview?: StationPrizeId; lap?: number; pinWearer?: "brother" | "sister";
+  art?: StationPictureArt; equipped?: PrizeId[]; preview?: StationPrizeId; lap?: number; pinWearer?: "brother" | "sister";
 }) {
+  const [ready, setReady] = useState(false);
+  const [width, height] = pictureSizes[art];
   const objects = stationPrizes.filter(item => item.art === art && (item.id === preview || equipped.includes(item.id)));
   return <figure className={`station-picture station-picture-${art}`}>
-    <img src={stationArt(art)} alt={art === "station-hall" ? "אולם התחנה. אבא ליד הדלפק, האחים ליד ארגז 27 ופיצי מתחת לספסל." : "איור מתוך תחנת הגבעות"} />
-    {objects.map(item => <span
+    <img className="station-picture-base" src={stationArt(art)} width={width} height={height} onLoad={() => setReady(true)} alt={art === "station-hall" ? "אולם התחנה. אבא ליד הדלפק, האחים ליד ארגז 27 ופיצי מתחת לספסל." : `איור מתוך ${stationName}`} />
+    {ready && objects.map(item => <img
       key={item.id === "modelTrain" ? `${item.id}:${lap}` : item.id}
-      aria-hidden="true" className={`station-decoration ${item.id === preview ? "station-preview-item" : ""} ${item.id === "modelTrain" && lap > 0 ? "station-model-lap" : ""}`}
-      style={{ left: `${item.id === "trainPin" && pinWearer === "sister" ? 45 : item.x}%`, top: `${item.y}%` }}
-    >{item.icon}</span>)}
+      alt="" src={stationArt(`prize-${item.id}`)}
+      className={`station-decoration ${item.id === preview ? "station-preview-item" : ""} ${item.id === "modelTrain" && lap > 0 ? "station-model-lap" : ""}`}
+      style={{ left: `${item.id === "trainPin" && pinWearer === "sister" ? 45 : item.x}%`, top: `${item.y}%`, width: `${item.width}%` }}
+    />)}
+    {ready && art === "station-hall" && objects.some(item => item.id === "dogCushion") && <img className="station-bench-arm" src={stationArt("bench-arm")} alt="" />}
   </figure>;
 }
 
@@ -53,7 +62,7 @@ export function StationShop({ balance, owned, equipped, toggle, back, pinWearer 
   const [selected, setSelected] = useState<StationPrizeId | null>(null);
   const [lap, setLap] = useState(0);
   const item = stationPrizes.find(prize => prize.id === selected);
-  const art = item?.art ?? ["family-lineup", "station-hall", "forecourt"][tab];
+  const art = item?.art ?? (["family-lineup", "station-hall", "forecourt"] as const)[tab];
   return <section className="panel station-shop">
     <div className="section-title"><div><h1>חנות התחנה</h1><b aria-live="polite">🔔 {balance} פעמונים</b></div><button className="secondary" onClick={back}>לתחנה</button></div>
     <div className="station-shop-body">
@@ -63,13 +72,13 @@ export function StationShop({ balance, owned, equipped, toggle, back, pinWearer 
         </nav>
         <div className="station-prize-list">
           {stationPrizes.filter(prize => prize.tab === tab).map(prize => <div className="station-prize" key={prize.id}>
-            <button className="secondary" aria-pressed={selected === prize.id} onClick={() => { setSelected(prize.id); setLap(0); }}><span aria-hidden="true">{prize.icon}</span> {prize.title}</button>
+            <button className="secondary" aria-pressed={selected === prize.id} onClick={() => { setSelected(prize.id); setLap(0); }}><img src={stationArt(`prize-${prize.id}`)} alt="" />{prize.title}</button>
             <small>{equipped.includes(prize.id) ? "מוצג בתחנה" : owned.includes(prize.id) ? "כבר שלכם" : `${prize.price} פעמונים`}</small>
           </div>)}
         </div>
       </div>
       <div className="station-shop-preview">
-        <StationPicture art={art} equipped={equipped} preview={selected ?? undefined} lap={lap} pinWearer={pinWearer} />
+        <StationPicture key={art} art={art} equipped={equipped} preview={selected ?? undefined} lap={lap} pinWearer={pinWearer} />
         <div className="station-purchase-actions" aria-live="polite">
           {item ? <><strong>{item.title}</strong>
             {selected === "modelTrain" && <button className="secondary" onClick={() => setLap(lap + 1)}>סיבוב לרכבת</button>}

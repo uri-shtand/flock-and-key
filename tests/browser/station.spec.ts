@@ -81,7 +81,9 @@ test("station storage, Hebrew corrections, saved choice and paid decorations", a
   await page.getByRole("button", { name: "לחנות התחנה ←" }).click();
   await page.getByRole("button", { name: "אולם התחנה" }).click();
   await page.getByRole("button", { name: "כרית לפיצי" }).click();
-  await expect(page.locator(".station-preview-item")).toBeVisible();
+  const preview = page.locator("img.station-preview-item");
+  await expect(preview).toBeVisible();
+  await expect.poll(() => preview.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await page.getByRole("button", { name: "לקנות · 65 פעמונים" }).click();
   await expect(page.locator(".station-prize").filter({ hasText: "כרית לפיצי" })).toContainText("מוצג בתחנה");
   await page.screenshot({ path: test.info().outputPath("station-shop.png") });
@@ -136,7 +138,11 @@ test("both station mysteries and the square rehearsal have separate resumable sa
   page.on("pageerror", error => errors.push(error.message));
   await page.setViewportSize({ width: 1024, height: 600 });
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: "תחנת ראטן" })).toBeVisible();
+  await expect(page.getByText("Kurort Rathen", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "יוצאים לחקירה", exact: true }).click();
+  await expect(page.getByText(/רק ״ראטן״.*Kurort Rathen/)).toBeVisible();
+  await checkDesktopLayouts(page);
   await page.getByRole("button", { name: "פותחים בחקירה" }).click();
   await page.getByRole("button", { name: "רשומת המסירה של אבא" }).click();
   await checkDesktopLayouts(page);
@@ -199,7 +205,17 @@ test("station menu, activity board, shop and Gatekeepers entry fit desktop sizes
     await page.getByRole("button", { name: "חנות התחנה", exact: true }).click();
     for (const category of ["פיצי והמשפחה", "אולם התחנה", "הכניסה והכיכר"]) {
       await page.getByRole("button", { name: category, exact: true }).click();
+      await expect.poll(() => page.locator(".station-prize button img").evaluateAll(images => images.length === 4 && images.every(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0))).toBe(true);
       await checkLayout(page);
+    }
+    if (width === 1024) {
+      await page.getByRole("button", { name: "שרשרת אורות לכיכר" }).click();
+      await expect(page.locator(".station-picture-square img.station-preview-item")).toBeVisible();
+      await page.screenshot({ path: test.info().outputPath("station-shop-square.png") });
+      await page.getByRole("button", { name: "פיצי והמשפחה" }).click();
+      await page.getByRole("button", { name: "מטפחת לפיצי" }).click();
+      await expect(page.locator(".station-picture-family-lineup img.station-preview-item")).toBeVisible();
+      await page.screenshot({ path: test.info().outputPath("station-shop-family.png") });
     }
     await page.getByRole("button", { name: "לתחנה", exact: true }).click();
   }

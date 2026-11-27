@@ -1,6 +1,6 @@
 # Rural Station Concept Art
 
-These five studies apply the [agreed art direction](../rural-station-art-direction.md) to the first cast and locations. Use the lineups to review character design and the scenes to review framing, palette and visual humor.
+These five studies record the original cast and locations. The game now uses the [flatter production art](flat-style/README.md) following the [updated art direction](../rural-station-art-direction.md).
 
 | Study | What it shows |
 | --- | --- |
@@ -9,6 +9,14 @@ These five studies apply the [agreed art direction](../rural-station-art-directi
 | [Station hall](station-hall.png) | Parcel 27 at the counter, the café owner's arrival, and Pitsi under the bench. |
 | [Station café](station-cafe.png) | The framed sandwich award, an embarrassing photograph and Pitsi's worn spot on the bench. |
 | [Village locations](village-locations.png) | The square, orchard path, repair workshop and former station, in reading order from the upper left. |
+
+## Shop style study
+
+The [station shop style study](station-shop-style-study.png) compares the same hall with an empty bench, plain collar and empty shelf on the left, and the cushion, bandana and model train fitted into their places on the right. The approved style uses broader color shapes, fewer surface details and crisper silhouettes. It keeps the hall layout, cast and sandwich gag. The game uses an empty base and separate prop layers, with the bench arm overlapping the cushion.
+
+Built-in ImageGen used [the original station hall](station-hall.png) as the visual reference. The generation prompt was:
+
+> Use case: stylized-concept. Create a new landscape art-direction comparison for the original rural station game, using the attached station hall as the edit target for character identity, camera, architecture and palette. The old image is a layout and cast reference. Redraw it in a materially flatter 2D cartoon style. Show the new station scene twice, in two equal widescreen frames side by side on a wide landscape board, divided by one cream gutter. Same camera and artwork composition in both frames: teal wooden bench with Pitsi the charcoal-and-tan dog underneath in the front left, arched doorway and orchard, very large simple clock, open public floor, simple teal counter on the right with Dad and the two siblings. Simplify the busy background by roughly two thirds. Original graphic silhouettes, chunky playful shapes, hand-drawn irregular curves, dark teal outlines on characters and props, muted cream and teal environment, terracotta floor, one solid shadow tone at most per form, crisp edges. No woodgrain, weathering, tiny floor seams, rendered highlights, realistic light rays, gradients, heavy texture, 3D, or photorealism. Keep the dog's ears expressive and a tiny sandwich wrapper near his nose for one quiet wink. Left frame: plain bench, plain collar, short empty wall shelf. Right frame: selected cosmetics at those exact locations, a large plum oval cushion ON the bench with a two-tone seam, a small coral triangle bandana actually TIED around Pitsi's neck, and a toothy turquoise-and-ochre model locomotive actually resting on the wall shelf. The cosmetic objects share the scene's scale, flat fills, shadow logic, line weight and perspective, with strong silhouettes visible at small preview size. Keep all other positions and details identical as closely as possible. No floating badges, emojis, selection outlines, text, UI, labels, stylization samples, or watermarks. Original character designs only.
 
 ## Continuity for production art
 

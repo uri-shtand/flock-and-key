@@ -5,7 +5,7 @@ import type { GameCommand, WorldView } from "../bridge";
 export class StationScene extends Phaser.Scene {
   private backdrop!: Phaser.GameObjects.Image;
   private props!: Phaser.GameObjects.Graphics;
-  private dog!: Phaser.GameObjects.Container;
+  private dog!: Phaser.GameObjects.Image;
   private labels!: Phaser.GameObjects.Container;
   private view?: WorldView;
   private stopped = false;
@@ -14,23 +14,15 @@ export class StationScene extends Phaser.Scene {
   constructor(private readonly ready: () => void) { super("station-word-games"); }
 
   preload() {
-    for (const art of ["station-hall", "station-cafe", "orchard", "square", "workshop"]) this.load.image(art, stationArt(art));
+    for (const art of ["station-hall", "station-cafe", "orchard", "square", "workshop", "pitsi-walking"]) this.load.image(art, stationArt(art));
   }
 
   create() {
     this.backdrop = this.add.image(480, 200, "station-hall");
     this.props = this.add.graphics();
     this.labels = this.add.container();
-    this.dog = this.add.container(130, 336, [
-      this.add.ellipse(0, 20, 98, 16, 0x362a25, .28),
-      this.add.ellipse(-43, -15, 12, 50, 0x484844).setRotation(-.8),
-      this.add.rectangle(-24, 8, 12, 27, 0xbf9468), this.add.rectangle(23, 8, 12, 27, 0xbf9468),
-      this.add.ellipse(0, -9, 77, 39, 0x484844), this.add.circle(34, -27, 20, 0x484844),
-      this.add.triangle(29, -47, 0, 25, 5, 0, 17, 19, 0x484844), this.add.triangle(42, -50, 0, 21, 14, 0, 16, 23, 0x484844),
-      this.add.ellipse(45, -18, 26, 16, 0xe4bf8e), this.add.circle(56, -20, 4, 0x272923),
-      this.add.circle(40, -31, 4, 0xfff0d4), this.add.circle(41, -31, 2, 0x272923),
-      this.add.rectangle(30, -8, 24, 5, 0xa94b3f),
-    ]).setVisible(false);
+    this.dog = this.add.image(130, 336, "pitsi-walking").setOrigin(.5, .74).setVisible(false);
+    this.dog.setScale(108 / this.dog.width);
     this.ready();
   }
 

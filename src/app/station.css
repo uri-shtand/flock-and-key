@@ -1,13 +1,12 @@
 .station-shell { --station-ink: #223c3a; --station-paper: #fff5df; }
 .station-shell .station-home, .station-shell .station-activities, .station-shell .station-shop { background: var(--station-paper); color: var(--station-ink); }
 .station-picture { position: relative; margin: 0; overflow: hidden; border-radius: 13px; background: #ebd9b8; }
-.station-picture img { display: block; width: 100%; height: auto; }
-.station-decoration { position: absolute; transform: translate(-50%, -50%); font-size: clamp(1rem, 2vw, 2.5rem); line-height: 1; filter: drop-shadow(0 2px 2px #4233219e); }
-.station-preview-item { outline: 2px solid #ffdd7c; outline-offset: 3px; border-radius: 5px; }
-.station-picture-family-lineup .station-decoration { font-size: clamp(.8rem, 1.65vw, 1.7rem); }
+.station-picture-base { display: block; width: 100%; height: auto; }
+.station-decoration { position: absolute; transform: translate(-50%, -50%); height: auto; pointer-events: none; }
+.station-bench-arm { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 @media (prefers-reduced-motion: no-preference) {
   .station-model-lap { animation: station-model-lap 1.6s ease-in-out; }
-  @keyframes station-model-lap { 50% { transform: translate(calc(-50% - 2rem), -50%); } }
+  @keyframes station-model-lap { 50% { transform: translate(-74%, -50%); } }
 }
 .station-home h1, .station-activities h1, .station-shop h1 { margin: 0 0 8px; }
 .station-home .station-primary-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
@@ -26,9 +25,11 @@
 .station-shop-tabs button[aria-pressed="true"], .station-prize button[aria-pressed="true"] { background: #efcd87; color: #223c3a; }
 .station-prize-list { display: grid; gap: 6px; }
 .station-prize { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.station-prize button { display: inline-flex; align-items: center; gap: 7px; }
+.station-prize button img { width: 27px; height: 23px; object-fit: contain; }
 .station-purchase-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .station-shop-preview .station-picture { width: min(100%, 58.5svh, 540px); margin-inline: auto; }
-.station-shop-preview .station-picture-station-hall { width: min(100%, 69.3svh, 640px); }
+.station-shop-preview .station-picture-station-hall { width: min(100%, 61svh, 570px); }
 .station-route-options, .station-shelf-options { display: flex; flex-wrap: wrap; gap: 6px; margin-block: 5px; }
 .station-route-options button, .station-shelf-options button { padding: 5px 9px; }
 .station-route-options button[aria-pressed="true"] { background: #efcd87; color: #223c3a; }

@@ -2,12 +2,12 @@
 
 **Agreed direction for the station redesign**
 
-Use bold, expressive cartoon characters in a hand-painted point-and-click world. Keep the rural station believable, with a few exaggerated details that the siblings would know by heart. Save the biggest shapes and movements for character reactions and performances. Build visual humor into the places, poses and objects children encounter during play.
+Use bold, expressive cartoon characters in a flat, hand-drawn point-and-click world. Build the rooms from broad color shapes, clear silhouettes and simple shadows. Keep the rural station recognizable through its layout and familiar objects. Let a few exaggerated details and poses carry the humor.
 
 ## Visual references
 
 - **Phineas and Ferb** informs the character acting. Use clear silhouettes, flat color shapes and strong poses that can carry a joke before anyone speaks. Give the siblings, Dad and the postman original proportions, clothes and expressions grounded in their lives in the village. [Disney’s series page](https://shows.disney.com/phineas-and-ferb)
-- **Day of the Tentacle** informs how a room welcomes exploration. Frame each location as a distinct scene, with visible entrances, spaces for the cast to move through and a few props worth examining. Use a fixed three-quarter view and painted surfaces with restrained irregularities. [Double Fine’s game page](https://www.doublefine.com/games/day-of-the-tentacle-remastered)
+- **Day of the Tentacle** informs how a room welcomes exploration. Frame each location as a distinct scene, with visible entrances, spaces for the cast to move through and a few props worth examining. Use a fixed three-quarter view, simple color planes and a few hand-drawn irregularities. [Double Fine’s game page](https://www.doublefine.com/games/day-of-the-tentacle-remastered)
 
 ## Family and character acting
 
@@ -19,7 +19,7 @@ Draw important poses so they read as stills. Prepare separate parts where they s
 
 ## Station and village
 
-Start with cream plaster, faded teal trim and warm ochre afternoon light. Give the family and key props stronger color and clearer edges than the wall behind them. Use texture where it tells the player how a place is used. A worn patch belongs by the ticket window where people rest their elbows. The crooked entrance tile earns a clear outline because it matters to the case.
+Start with cream walls, faded teal trim and a terracotta floor. Use solid fills and one principal shadow tone per object. Reserve visible lines for a change in shape, a useful seam or a deliberate clue. A single flat patch can show where the bench has worn. Give the crooked entrance tile a clear silhouette because it matters to the case.
 
 Carry that approach from the hall to the café, the orchard path and the village square. Give each place a different silhouette and a recognizable detail the player can remember. In the hall, the counter, bench and doorway define where people stand and what they can see. In the square, let the rehearsal props and performers become more exaggerated during the encore. The village itself can stay familiar between visits, with a few changes that show what has happened since the player was last there.
 
@@ -36,13 +36,13 @@ For the first scene, give the parcel the strongest visual emphasis. Add one imme
 
 Use the world to establish where a clue was found, then show a close-up large enough to compare it with other evidence. The old sign and parcel label need sharp Hebrew lettering. The photograph and the real entrance should show the same crooked tile clearly. Keep essential clues clear of equipped shop decorations.
 
-The shared notebook can look like something the siblings carry. The illustrated station noticeboard can supply the visual language for the menu. Use readable Hebrew RTL text, real controls and visible keyboard focus. Shop previews should show an item in its intended place or on its wearer. Use the accessory, prop and lighting ideas in the [menu and shop proposal](rural-station-menu-and-shop.md) as applications of the same style.
+The shared notebook can look like something the siblings carry. The illustrated station noticeboard can supply the visual language for the menu. Use readable Hebrew RTL text, real controls and visible keyboard focus. Illustrate the shop objects in the same palette, line weight, perspective and shadow treatment as the scene. Draw each object on a transparent layer anchored to the furniture, wall, floor or wearer. The seat supports the cushion, the dog's collar holds the tag, and the shelf supports the model train. Use the same illustration in the catalog so the player can recognize what they picked. [Approved shop style study](rural-station-concept-art/station-shop-style-study.png)
 
 ## First scene to review
 
 Use the hall from [the opening case](rural-station-opening-case.md). Dad presents parcel 27 at the counter, the siblings react to its retired station name, and Pitsi lies under the bench. Then the café owner arrives with the photograph. Use the same composition to judge a still at 1024×600 and the scene in motion.
 
-The [first concept art set](rural-station-concept-art/README.md) includes the cast, the hall scene and studies of the café and village.
+The [production art sources](rural-station-concept-art/flat-style/README.md) include the refreshed cast, scene studies and independent prop layers.
 
 - Can the player distinguish the siblings, Dad and Pitsi at their normal gameplay size?
 - Does the parcel draw the eye first, and are the label and photo clear when opened?

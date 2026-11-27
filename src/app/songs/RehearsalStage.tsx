@@ -14,7 +14,14 @@ class BarnScene extends Phaser.Scene {
   private props!: Phaser.GameObjects.Container;
 
   constructor(private ready: () => void, private station: boolean) { super("rehearsal-stage"); }
-  preload() { if (this.station) this.load.image("village-square", stationArt("square")); }
+  preload() {
+    if (this.station) {
+      this.load.image("village-square", stationArt("square"));
+      this.load.image("station-dog", stationArt("pitsi-walking"));
+      this.load.image("stage-sister", stationArt("performer-sister"));
+      this.load.image("stage-dad", stationArt("performer-dad"));
+    }
+  }
 
   create() {
     const g = this.add.graphics();
@@ -77,23 +84,21 @@ class BarnScene extends Phaser.Scene {
     if (this.station) {
       this.sheep.destroy();
       this.duck.destroy();
-      this.sheep = this.actor(204, 359, 0xb45b4b, 0x58392a, 1);
-      this.duck = this.actor(613, 369, 0x3f4d65, 0x524337, 1.22);
+      this.dog.destroy();
+      this.sheep = this.actor(204, 359, "stage-sister", 188);
+      this.duck = this.actor(613, 369, "stage-dad", 221);
+      const dog = this.add.image(0, 36, "station-dog").setOrigin(.5, 1);
+      dog.setScale(111 / dog.width);
+      this.dog = this.add.container(402, 364, dog);
     }
     this.props = this.add.container();
     this.ready();
   }
 
-  private actor(x: number, y: number, coat: number, hair: number, scale: number) {
-    return this.add.container(x, y, [
-      this.add.ellipse(0, 39, 76, 15, 0x563f30, .32),
-      this.add.rectangle(-13, 18, 15, 37, 0x574253), this.add.rectangle(13, 18, 15, 37, 0x574253),
-      this.add.ellipse(-15, 38, 25, 11, 0x324543), this.add.ellipse(15, 38, 25, 11, 0x324543),
-      this.add.ellipse(0, -15, 60, 48, coat), this.add.circle(0, -43, 25, hair),
-      this.add.circle(1, -39, 20, 0xe4b287), this.add.ellipse(-5, -56, 46, 18, hair).setAngle(-10),
-      this.add.circle(-6, -41, 3, 0x302a28), this.add.circle(8, -40, 3, 0x302a28),
-      this.add.graphics().lineStyle(2, 0x794a40).lineBetween(-1, -30, 10, -32),
-    ]).setScale(scale);
+  private actor(x: number, y: number, texture: string, height: number) {
+    const sprite = this.add.image(0, 39, texture).setOrigin(.5, 1);
+    sprite.setScale(height / sprite.height);
+    return this.add.container(x, y, [this.add.ellipse(0, 39, 76, 15, 0x563f30, .32), sprite]);
   }
 
   command(view: StageCommand) {
@@ -109,7 +114,7 @@ class BarnScene extends Phaser.Scene {
     this.props.removeAll(true);
     this.sheep.setPosition(204, 359).setAngle(0).setScale(1);
     this.dog.setPosition(402, 364).setAngle(0).setScale(1);
-    this.duck.setPosition(613, 369).setAngle(0).setScale(this.station ? 1.22 : 1);
+    this.duck.setPosition(613, 369).setAngle(0).setScale(1);
     const bounce = (target: Phaser.GameObjects.Container, height: number) => {
       if (!reduced) this.tweens.add({ targets: target, y: target.y - height, duration: 250, ease: "Sine.easeOut", yoyo: true, repeat: 1 });
     };

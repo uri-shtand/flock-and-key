@@ -4,7 +4,7 @@ import { crateDifficultyLevels, difficultyLevels } from "../content/difficulty";
 import { GatesPrototype } from "./gates/GatesPrototype";
 import { DadCratePrompt, CrateBackdrop } from "../components/CrateTask";
 import { StationActivities, StationPicture, StationShop } from "./StationHub";
-import { courierRoutes, spellingFromStation, stationStages, trail, type CourierRoute } from "../content/station";
+import { courierRoutes, spellingFromStation, stationGermanName, stationName, stationStages, trail, type CourierRoute } from "../content/station";
 import "./station.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PhaserStage } from "../components/PhaserStage";
@@ -633,7 +633,7 @@ export function GameShell() {
           </span>
           <span>
             <b dir="ltr">Flock & Key</b>
-            <small>{station ? "תחנת הגבעות" : "תעלומת הכבשים הנעלמות"}</small>
+            <small>{station ? <bdi lang="de">{stationGermanName}</bdi> : "תעלומת הכבשים הנעלמות"}</small>
           </span>
         </button>
         <button className="icon-button mobile-tools-toggle" aria-expanded={toolsOpen} aria-controls="game-tools" onClick={() => setToolsOpen((open) => !open)}>
@@ -696,7 +696,7 @@ export function GameShell() {
         <>
           <div className="station-home-art"><StationPicture equipped={progress.equipped} /></div>
           <section className="panel home station-home">
-            <h1>תחנת הגבעות</h1>
+            <h1>{stationName}</h1>
             <p className="lead">חבילה הגיעה לכתובת ישנה. למה אותו שם מופיע בתצלום חדש?</p>
             <div className="station-primary-actions">
               <button id="station-story-button" onClick={() => { setFreshParcel(false); setScreen("parcel"); }}>{parcelPlace === "ending" ? "לתיק החבילה" : parcelRun ? "ממשיכים בחקירה" : "יוצאים לחקירה"}</button>
@@ -872,7 +872,7 @@ export function GameShell() {
                 פרק ראשון · תעלומה בשני משחקונים
               </span>
               <h1>מי חגג בחווה בלילה?</h1>
-              <a className="station-legacy" href="?">חזרה לתחנת הגבעות</a>
+              <a className="station-legacy" href="?">חזרה ל{stationName}</a>
               <p className="lead">
                 שלטים הפוכים, עקבות מנצנצים והזמנה שנרטבה. עזרו לתום ולפיצי
                 לגלות מה קרה כאן.

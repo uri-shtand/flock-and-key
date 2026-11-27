@@ -1,6 +1,6 @@
 # Flock & Key
 
-A Hebrew typing and spelling mystery for ages 9–14. The default game takes place at a rural village station. It includes a parcel mystery, four word games, an English rehearsal, a separate detective case, Gatekeepers, a local shop and a parent dashboard with JSON/CSV export.
+A Hebrew typing and spelling mystery for ages 9–14. The default game takes place at Kurort Rathen, a rural station on the Elbe. It includes a parcel mystery, four word games, an English rehearsal, a separate detective case, Gatekeepers, a local shop and a parent dashboard with JSON/CSV export.
 
 ## Run on Windows
 

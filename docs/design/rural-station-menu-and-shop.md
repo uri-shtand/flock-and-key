@@ -2,9 +2,9 @@
 
 **Design proposal · For review**
 
-## The main menu · תחנת הגבעות
+## The main menu · תחנת ראטן
 
-Use the station hall and forecourt as the home screen. The siblings stand by the public noticeboard, Dad is at the counter, and Pitsi sleeps under the bench until the family looks ready to leave. An orchard wall and the path up to the square establish the village beyond the station. The scene can show one or two equipped decorations and react when the player previews a purchase. **תחנת הגבעות** is the current station name and a proposed menu heading. The game title is still open.
+Use the station hall and forecourt as the home screen. The siblings stand by the public noticeboard, Dad is at the counter, and Pitsi sleeps under the bench until the family looks ready to leave. An orchard wall and the path up to the square establish the village beyond the station. The scene can show one or two equipped decorations and react when the player previews a purchase. The menu heading is **תחנת ראטן** and the game header shows the German name **Kurort Rathen**.
 
 Use a readable action panel on the right and the station illustration on the left. Keep navigation in labeled Hebrew buttons. The main story has one primary button. Offer a short, specific description of where a saved chapter will resume, such as **פרק 1 · בית הקפה**.
 
