@@ -1,0 +1,31 @@
+.vocabulary-panel { width: min(100%, 1000px); margin-inline: auto; padding: 16px 22px; }
+.vocabulary-heading, .vocabulary-heading > div, .vocabulary-actions {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+.vocabulary-heading { justify-content: space-between; margin-bottom: 14px; }
+.vocabulary-heading h1, .vocabulary-task h2 { margin: 0; }
+.vocabulary-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center; }
+.vocabulary-task p { margin-block: 8px; }
+.vocabulary-english { font-size: 1.25rem; text-align: left; background: #fff7e7; color: #49372c; border-radius: 12px; padding: 10px 14px; }
+.vocabulary-feedback { min-height: 2.6em; }
+.vocabulary-dialog { max-width: min(90vw, 530px); border: 1px solid #966c50; border-radius: 16px; padding: 20px; color: #3d2e26; background: #fff7e7; }
+.vocabulary-dialog::backdrop { background: #21160db0; }
+.vocabulary-dialog form { margin-top: 10px; }
+.vocabulary-screen > footer { display: none; }
+.lost-counter { display: flex; justify-content: space-evenly; gap: 8px; align-items: center; padding: 18px 12px; border-radius: 14px; background: linear-gradient(#ead6bb 70%, #aa7554 70%); }
+.lost-counter > div { text-align: center; }
+.lost-object { display: grid; justify-items: center; margin: 0 auto 8px; }
+.lost-object svg, .lost-result svg { width: 110px; display: block; margin-inline: auto; }
+.lost-object[aria-pressed="true"] { outline: 3px solid #366555; }
+.lost-counter p { margin: 6px 0 0; color: #24150e; background: #fff7e7; border-radius: 8px; }
+.lost-result { background: #fff7e7; color: #49372c; border-radius: 12px; padding: 12px; }
+@media (max-width: 720px) {
+  .vocabulary-layout { grid-template-columns: 1fr; }
+}
+@media (max-height: 700px) and (min-width: 721px) {
+  main.vocabulary-screen { padding-block: 12px; gap: 10px; }
+  main .vocabulary-panel { padding: 14px 20px; }
+  .vocabulary-panel button { padding: 7px 14px; min-height: 38px; }
+  .vocabulary-heading { margin-bottom: 8px; }
+  .vocabulary-task p { margin-block: 5px; }
+}

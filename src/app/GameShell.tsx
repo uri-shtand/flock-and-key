@@ -48,7 +48,9 @@ import {
 import { caseState } from "../typing/DetectiveCase";
 import { adventureContent } from "../content/stationCases";
 
-type Screen = "home" | "activities" | "game" | "parent" | "shop" | "gates" | "detective" | "parcel" | "songs" | "gallery";
+import { LostFound } from "./vocabulary/LostFound";
+
+type Screen = "lost-found" | "home" | "activities" | "game" | "parent" | "shop" | "gates" | "detective" | "parcel" | "songs" | "gallery";
 const prizesPerPage = 5;
 const versionDate = new Intl.DateTimeFormat("he-IL", {
   timeZone: "Asia/Jerusalem",
@@ -624,7 +626,7 @@ export function GameShell() {
           ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
           : screen === "home"
             ? "home-screen"
-            : screen === "gallery" ? "concept-gallery-screen" : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" || screen === "parcel" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : screen === "activities" ? "station-activities-screen" : ""}`
+            : screen === "lost-found" ? "vocabulary-screen" : screen === "gallery" ? "concept-gallery-screen" : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" || screen === "parcel" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : screen === "activities" ? "station-activities-screen" : ""}`
       }
     >
       <header className="topbar">
@@ -679,7 +681,9 @@ export function GameShell() {
           {warning}
         </p>
       )}
-      {screen === "gallery" ? (
+      {screen === "lost-found" ? (
+        <LostFound exit={() => setScreen("activities")} />
+      ) : screen === "gallery" ? (
         <ConceptGallery onExit={leave} />
       ) : screen === "songs" ? (
         <Rehearsal runs={progress.rehearsals ?? []} save={run => setProgress(previous => ({
@@ -720,7 +724,7 @@ export function GameShell() {
           </section>
         </>
       ) : station && screen === "activities" ? (
-        <StationActivities start={openActivity} resumeMode={standaloneSave && stationStages[standaloneSave.stage].mode}
+        <StationActivities vocabulary={() => setScreen("lost-found")} start={openActivity} resumeMode={standaloneSave && stationStages[standaloneSave.stage].mode}
           resume={() => { if (standaloneSave) resume(standaloneSave); }} savedDetective={Boolean(progress.detective?.some(run => run.version === 3))}
           savedSong={Boolean(progress.rehearsals?.some(run => run.song === "soundcheck"))} back={leave} />
       ) : station && screen === "shop" ? (
