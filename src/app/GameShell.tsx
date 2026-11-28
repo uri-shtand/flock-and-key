@@ -54,7 +54,9 @@ import { CafeShift } from "./vocabulary/CafeShift";
 
 import { FixItDad } from "./vocabulary/FixItDad";
 
-type Screen = "fix-it-dad" | "cafe-shift" | "lost-found" | "home" | "activities" | "game" | "parent" | "shop" | "gates" | "detective" | "parcel" | "songs" | "gallery";
+import { MessageRelay } from "./vocabulary/MessageRelay";
+
+type Screen = "message-relay" | "fix-it-dad" | "cafe-shift" | "lost-found" | "home" | "activities" | "game" | "parent" | "shop" | "gates" | "detective" | "parcel" | "songs" | "gallery";
 const prizesPerPage = 5;
 const versionDate = new Intl.DateTimeFormat("he-IL", {
   timeZone: "Asia/Jerusalem",
@@ -630,7 +632,7 @@ export function GameShell() {
           ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
           : screen === "home"
             ? "home-screen"
-            : (screen === "lost-found" || screen === "cafe-shift" || screen === "fix-it-dad") ? "vocabulary-screen" : screen === "gallery" ? "concept-gallery-screen" : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" || screen === "parcel" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : screen === "activities" ? "station-activities-screen" : ""}`
+            : (screen === "lost-found" || screen === "cafe-shift" || screen === "fix-it-dad" || screen === "message-relay") ? "vocabulary-screen" : screen === "gallery" ? "concept-gallery-screen" : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" || screen === "parcel" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : screen === "activities" ? "station-activities-screen" : ""}`
       }
     >
       <header className="topbar">
@@ -685,7 +687,9 @@ export function GameShell() {
           {warning}
         </p>
       )}
-      {screen === "fix-it-dad" ? (
+      {screen === "message-relay" ? (
+        <MessageRelay exit={() => setScreen("activities")} />
+      ) : screen === "fix-it-dad" ? (
         <FixItDad exit={() => setScreen("activities")} />
       ) : screen === "cafe-shift" ? (
         <CafeShift exit={() => setScreen("activities")} />
