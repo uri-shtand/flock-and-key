@@ -56,7 +56,9 @@ import { FixItDad } from "./vocabulary/FixItDad";
 
 import { MessageRelay } from "./vocabulary/MessageRelay";
 
-type Screen = "message-relay" | "fix-it-dad" | "cafe-shift" | "lost-found" | "home" | "activities" | "game" | "parent" | "shop" | "gates" | "detective" | "parcel" | "songs" | "gallery";
+import { WordDetectives } from "./vocabulary/WordDetectives";
+
+type Screen = "word-detectives" | "message-relay" | "fix-it-dad" | "cafe-shift" | "lost-found" | "home" | "activities" | "game" | "parent" | "shop" | "gates" | "detective" | "parcel" | "songs" | "gallery";
 const prizesPerPage = 5;
 const versionDate = new Intl.DateTimeFormat("he-IL", {
   timeZone: "Asia/Jerusalem",
@@ -632,7 +634,7 @@ export function GameShell() {
           ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
           : screen === "home"
             ? "home-screen"
-            : (screen === "lost-found" || screen === "cafe-shift" || screen === "fix-it-dad" || screen === "message-relay") ? "vocabulary-screen" : screen === "gallery" ? "concept-gallery-screen" : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" || screen === "parcel" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : screen === "activities" ? "station-activities-screen" : ""}`
+            : (screen === "lost-found" || screen === "cafe-shift" || screen === "fix-it-dad" || screen === "message-relay" || screen === "word-detectives") ? "vocabulary-screen" : screen === "gallery" ? "concept-gallery-screen" : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" || screen === "parcel" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : screen === "activities" ? "station-activities-screen" : ""}`
       }
     >
       <header className="topbar">
@@ -687,7 +689,9 @@ export function GameShell() {
           {warning}
         </p>
       )}
-      {screen === "message-relay" ? (
+      {screen === "word-detectives" ? (
+        <WordDetectives exit={() => setScreen("activities")} />
+      ) : screen === "message-relay" ? (
         <MessageRelay exit={() => setScreen("activities")} />
       ) : screen === "fix-it-dad" ? (
         <FixItDad exit={() => setScreen("activities")} />

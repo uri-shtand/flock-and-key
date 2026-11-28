@@ -15,9 +15,11 @@ Open http://localhost:5173 and choose **יוצאים לחקירה** to investiga
 
 Use **לחווה הקודמת ולשמירות שלה** to open the earlier farm edition. Its unfinished chapter, word game, detective case, rehearsal tracks and decorations remain available there. The editions share the bell balance, past learning results and parent dashboard. See [the station implementation notes](docs/design/rural-station-implementation.md) and [concept art](docs/design/rural-station-concept-art/README.md).
 
-### Vocabulary design and concept gallery
+### Vocabulary games and concept gallery
 
-Station home → **גלריית קונספט ארט** opens five new vocabulary-game concept illustrations. Choose a thumbnail or use previous/next; open the selected image at full size, or press Escape to return with focus restored. This is a view-only gallery, not five playable games, and browsing does not change learning progress or bells. It fits the same three desktop target sizes; narrower layouts can scroll.
+Station home → **משחקונים** opens the five English vocabulary activities: Lost & Found, Café Shift, Fix It, Dad!, Message Relay, and Word Detectives. The activities use Hebrew controls and English requests, with free help and local resume.
+
+Station home → **גלריית קונספט ארט** opens the five vocabulary-game concept illustrations separately. Choose a thumbnail or use previous/next; open the selected image at full size, or press Escape to return with focus restored. The gallery is view-only. Browsing does not change learning progress or bells. It fits the same three desktop target sizes; narrower layouts can scroll.
 
 The [five Hebrew game-design documents](docs/english-grade-7/vocabulary-games/README.md), [learning-studies synthesis](docs/english-grade-7/vocabulary-learning-studies.he.md) and [original product/mechanics research](docs/english-grade-7/vocabulary-mini-game-research.he.md) separate proposed learning mechanisms from implemented behavior. See [concept images, local AI provenance and remaining art limitations](docs/design/vocabulary-concept-art/README.md).
 
