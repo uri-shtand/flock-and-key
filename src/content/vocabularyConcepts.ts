@@ -1,0 +1,42 @@
+export const vocabularyConcepts = [
+  {
+    id: "lost-and-found",
+    title: "מחלקת האבידות של פיצי",
+    englishTitle: "Lost & Found",
+    alt: "השוואת צעיף מפוספס וצעיף מנוקד בדלפק האבידות של התחנה, עם האחים, אבא ופיצי.",
+    description: "איזה צעיף מתאים לתיאור? מילים על חפצים, תכונות ומיקום הופכות לבחירה ולמסירה בדלפק האבידות.",
+    words: "striped · missing · beside · return",
+  },
+  {
+    id: "cafe-shift",
+    title: "המשמרת בבית הקפה",
+    englishTitle: "Café Shift",
+    alt: "האחים ובעלת בית הקפה ליד כריכים ומרכיבים נפרדים על דלפק בצבע טורקיז; פיצי מחכה ליד הקערה.",
+    description: "בקשה קטנה משנה את המנה: בלי עגבנייה, חצי כריך לשמור לאחר כך. שירות רגוע, בלי מרוץ נגד השעון.",
+    words: "without · half · order · enough",
+  },
+  {
+    id: "fix-it-dad",
+    title: "הסדנה של אבא",
+    englishTitle: "Fix It, Dad!",
+    alt: "האחים בוחנים חלק לאביזר על שולחן סדנה, אבא מצביע ופיצי עומד לצדם.",
+    description: "מחברים, מסירים ומנסים שוב. פעלים באנגלית משנים אביזרי במה בניסוי הפיך, לא ציוד רכבת אמיתי.",
+    words: "attach · remove · handle · repair",
+  },
+  {
+    id: "message-relay",
+    title: "רדיו התחנה",
+    englishTitle: "Message Relay",
+    alt: "פתק, רדיו ומפת הכפר בדלפק התחנה; האחים ואבא מתאמים הודעה ופיצי מחכה ליד הספסל.",
+    description: "מעבירים הודעה, בוחרים נמען ומוצאים נקודת מפגש. משמעות המסר משנה את התוכנית בכיכר הכפר.",
+    words: "message · delayed · reply · across from",
+  },
+  {
+    id: "word-detectives",
+    title: "מועדון המילים החשאיות",
+    englishTitle: "Word Detectives",
+    alt: "האחים בוחנים מחברת רמזים ופנס ליד בית הקפה; פיצי משגיח מהכיסא.",
+    description: "אוספים ראיות, מציעים משמעות ובודקים אותה מול הסצנה. פותרים תעלומה קטנה וגם מוודאים שהמילה הובנה.",
+    words: "borrow · return · notice · discover",
+  },
+] as const;

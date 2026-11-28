@@ -1,4 +1,5 @@
 import { Rehearsal } from "./songs/Rehearsal";
+import { ConceptGallery } from "./ConceptGallery";
 import { DetectiveCase } from "./detective/DetectiveCase";
 import { crateDifficultyLevels, difficultyLevels } from "../content/difficulty";
 import { GatesPrototype } from "./gates/GatesPrototype";
@@ -47,7 +48,7 @@ import {
 import { caseState } from "../typing/DetectiveCase";
 import { adventureContent } from "../content/stationCases";
 
-type Screen = "home" | "activities" | "game" | "parent" | "shop" | "gates" | "detective" | "parcel" | "songs";
+type Screen = "home" | "activities" | "game" | "parent" | "shop" | "gates" | "detective" | "parcel" | "songs" | "gallery";
 const prizesPerPage = 5;
 const versionDate = new Intl.DateTimeFormat("he-IL", {
   timeZone: "Asia/Jerusalem",
@@ -301,7 +302,7 @@ export function GameShell() {
     audio.current?.resume();
   }
   function leave() {
-    if (station && screen !== "home") homeFocus.current = screen === "shop" ? "station-shop-button" : screen === "parcel" ? "station-story-button" : "station-activities-button";
+    if (station && screen !== "home") homeFocus.current = screen === "gallery" ? "station-gallery-button" : screen === "shop" ? "station-shop-button" : screen === "parcel" ? "station-story-button" : "station-activities-button";
     setDadReaction("");
     audio.current?.stopSpeech();
     setScreen("home");
@@ -623,7 +624,7 @@ export function GameShell() {
           ? `playing phase-${session?.phase}${session?.phase === "play" && stage.mode === "guided" ? " crate-game" : ""}`
           : screen === "home"
             ? "home-screen"
-            : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" || screen === "parcel" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : screen === "activities" ? "station-activities-screen" : ""}`
+            : screen === "gallery" ? "concept-gallery-screen" : screen === "shop" ? "shop-screen" : screen === "gates" ? "gates-screen" : screen === "detective" || screen === "parcel" ? "detective-screen" : screen === "songs" ? "rehearsal-screen" : screen === "activities" ? "station-activities-screen" : ""}`
       }
     >
       <header className="topbar">
@@ -678,7 +679,9 @@ export function GameShell() {
           {warning}
         </p>
       )}
-      {screen === "songs" ? (
+      {screen === "gallery" ? (
+        <ConceptGallery onExit={leave} />
+      ) : screen === "songs" ? (
         <Rehearsal runs={progress.rehearsals ?? []} save={run => setProgress(previous => ({
           ...previous, rehearsals: [...(previous.rehearsals ?? []).filter(item => item.song !== run.song), run],
         }))} onExit={leave} station={station} />
@@ -712,6 +715,7 @@ export function GameShell() {
               </dialog>
             </div>}
             {standaloneSave && <button className="text-button" onClick={() => resume(standaloneSave)}>ממשיכים · {stationStages[standaloneSave.stage].title} · {standaloneSave.phase === "play" ? `משימה ${standaloneSave.index + 1}` : "הכנה"}</button>}
+            <button id="station-gallery-button" className="text-button" onClick={() => setScreen("gallery")}>גלריית קונספט ארט</button>
             <p><a className="station-legacy" href="?edition=farm">לחווה הקודמת ולשמירות שלה</a></p>
           </section>
         </>

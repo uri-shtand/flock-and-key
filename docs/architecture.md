@@ -6,6 +6,12 @@ The default entry is the station. `?edition=farm` opens the earlier edition for 
 
 Station word sessions add an optional edition and courier route in the existing local profile. The edition distinguishes saved tasks and active slots from the farm. Authored route words are checked when reloading a station save. The same catalog ledger keeps historical prize IDs alongside new station prizes. Detective editions 3 and 4 use the existing replayable notebook and evidence model with station-specific places, sources and proof groups. The parcel receipt is tracked as a case event, separate from independent spelling. The new soundcheck uses the existing rehearsal score and save format under its own song ID. All are included in the existing export and reset behavior. Gatekeepers retains its own storage and implementation. See the [station implementation notes](design/rural-station-implementation.md).
 
+## Vocabulary concept gallery
+
+`GameShell` exposes a `gallery` screen from station home. `ConceptGallery` uses the authored `src/content/vocabularyConcepts.ts` catalogue and local WebP files; the selected index and image-error state are transient React state. It creates no learning events, runs, rewards, progress schema or separate store. Existing audio controls remain available. Escape/back restores focus to the gallery entry. A failed illustration has a text fallback and does not prevent choosing another image or leaving. See [art provenance and implementation notes](design/vocabulary-concept-art/README.md).
+
+The five vocabulary mini-games and their shared learning model remain design proposals; their images are not interactive scenes. Production PNG sources live under `docs/design/vocabulary-concept-art/`, with smaller runtime derivatives in `public/assets/vocabulary-concepts/`. No generation service runs in the browser.
+
 ## Farm edition and shared engines
 
 The first four mini-games use the React/Phaser architecture described below. The fifth mini-game, **שומרי השערים**, has a standalone five-level React/SVG game with a pure simulation, a tuning lab and separate local persistence. The current group routes are documented in [Gates groups](gates-groups.md), following [the playtest revision](gates-playtest-revision.md), with earlier experiments retained in [Gates polish](gates-polish.md). See [its current architecture and planned extensions](minigame-five-architecture.he.md), [game description](minigame-five.he.md), [map decisions](minigame-five-map.he.md), and [remaining build work](minigame-five-build-plan.he.md).

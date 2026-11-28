@@ -15,6 +15,12 @@ Open http://localhost:5173 and choose **יוצאים לחקירה** to investiga
 
 Use **לחווה הקודמת ולשמירות שלה** to open the earlier farm edition. Its unfinished chapter, word game, detective case, rehearsal tracks and decorations remain available there. The editions share the bell balance, past learning results and parent dashboard. See [the station implementation notes](docs/design/rural-station-implementation.md) and [concept art](docs/design/rural-station-concept-art/README.md).
 
+### Vocabulary design and concept gallery
+
+Station home → **גלריית קונספט ארט** opens five new vocabulary-game concept illustrations. Choose a thumbnail or use previous/next; open the selected image at full size, or press Escape to return with focus restored. This is a view-only gallery, not five playable games, and browsing does not change learning progress or bells. It fits the same three desktop target sizes; narrower layouts can scroll.
+
+The [five Hebrew game-design documents](docs/english-grade-7/vocabulary-games/README.md), [learning-studies synthesis](docs/english-grade-7/vocabulary-learning-studies.he.md) and [original product/mechanics research](docs/english-grade-7/vocabulary-mini-game-research.he.md) separate proposed learning mechanisms from implemented behavior. See [concept images, local AI provenance and remaining art limitations](docs/design/vocabulary-concept-art/README.md).
+
 ### Earlier farm edition
 
 Open http://localhost:5173 and choose **יוצאים לחקירה**. The chapter currently connects sign painting and reconstructing letters. Tracks and Pitsi’s chase are temporarily hidden after playtest feedback that they were too easy and not interesting enough; their code and history are retained. A saved run inside either hidden game stays stored, with an explanatory home notice instead of resume. You can also enter each mini-game directly. Home keeps one save for the chapter and one for standalone word games, and shows the build time in Israel time. Help and skipping remain free; speed never blocks story completion.
