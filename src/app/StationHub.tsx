@@ -36,7 +36,7 @@ const activities = [
 type Activity = Mode | "songs" | "detective";
 
 export function StationActivities({ start, resumeMode, resume, savedDetective, savedSong, back, vocabulary }: {
-  start: (mode: Activity | "gates") => void; resumeMode?: Mode; resume: () => void; savedDetective: boolean; savedSong: boolean; back: () => void; vocabulary: () => void;
+  start: (mode: Activity | "gates") => void; resumeMode?: Mode; resume: () => void; savedDetective: boolean; savedSong: boolean; back: () => void; vocabulary: (id: "lost-found" | "cafe-shift") => void;
 }) {
   return <section className="panel station-activities">
     <div className="section-title"><h1 tabIndex={-1} autoFocus>משחקונים בתחנה</h1><button className="secondary" onClick={back}>לתחנה</button></div>
@@ -50,8 +50,11 @@ export function StationActivities({ start, resumeMode, resume, savedDetective, s
         </article>;
       })}
     </div>
-    <button className="secondary" onClick={vocabulary}>מחלקת האבידות של פיצי</button>
-    <button className="secondary station-gates-link" aria-label="🐑 שומרי השערים (משחקון 5)" onClick={() => start("gates")}>🐑 שומרי השערים</button>
+    <div className="vocabulary-menu">
+      <button className="secondary" onClick={() => vocabulary("lost-found")}>מחלקת האבידות של פיצי</button>
+      <button className="secondary" onClick={() => vocabulary("cafe-shift")}>המשמרת בבית הקפה</button>
+      <button className="secondary" aria-label="🐑 שומרי השערים (משחקון 5)" onClick={() => start("gates")}>🐑 שומרי השערים</button>
+    </div>
   </section>;
 }
 
